@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Tracking System API</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <!-- Feather Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h4 mb-0">Pet Tracking System API</h1>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h2 class="h5">API Status</h2>
+                            <div class="alert alert-success">
+                                <i data-feather="check-circle"></i> API is running
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h2 class="h5">Authentication</h2>
+                            <p>This API uses Google OAuth for authentication. To authenticate:</p>
+                            <ol>
+                                <li>Send a GET request to <code>/api/auth/login</code></li>
+                                <li>You will receive a redirect URL to the Google login page</li>
+                                <li>After successful login, you will receive a JWT token</li>
+                                <li>Include this token in the Authorization header for subsequent requests</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h2 class="h5">API Endpoints</h2>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Endpoint</th>
+                                            <th>Method</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>/api/auth/login</code></td>
+                                            <td>GET</td>
+                                            <td>Start Google OAuth flow</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/auth/logout</code></td>
+                                            <td>POST</td>
+                                            <td>Logout current user</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/auth/user</code></td>
+                                            <td>GET</td>
+                                            <td>Get current user info</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/pets</code></td>
+                                            <td>GET</td>
+                                            <td>List all pets</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/pets</code></td>
+                                            <td>POST</td>
+                                            <td>Create new pet</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/pets/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get pet details</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/pets/:id</code></td>
+                                            <td>PUT</td>
+                                            <td>Update pet</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/pets/:id</code></td>
+                                            <td>DELETE</td>
+                                            <td>Delete pet</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/devices</code></td>
+                                            <td>GET</td>
+                                            <td>List all devices</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/devices</code></td>
+                                            <td>POST</td>
+                                            <td>Register new device</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/devices/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get device details</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/devices/:id</code></td>
+                                            <td>PUT</td>
+                                            <td>Update device</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/devices/:id</code></td>
+                                            <td>DELETE</td>
+                                            <td>Delete device</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/device/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get device location history</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/pet/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get pet location history</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/latest/device/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get device latest location</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/latest/pet/:id</code></td>
+                                            <td>GET</td>
+                                            <td>Get pet latest location</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/record</code></td>
+                                            <td>POST</td>
+                                            <td>Record new location</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>/api/locations/all-pets-latest</code></td>
+                                            <td>GET</td>
+                                            <td>Get latest location for all pets</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h2 class="h5">808 Protocol Support</h2>
+                            <p>This API includes a server for the 808 protocol used by tracking devices.</p>
+                            <ul>
+                                <li>Server listens on port 8080</li>
+                                <li>Supports standard 808 protocol messages</li>
+                                <li>Automatically records location data from tracking devices</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>Pet Tracking System API | Version 1.0</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Feather icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+        });
+    </script>
+</body>
+</html>
