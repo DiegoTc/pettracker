@@ -230,3 +230,79 @@ def get_all_pets_latest_locations():
         result.append(pet_data)
     
     return jsonify(result)
+
+@locations_bp.route('/simulate', methods=['POST'])
+def simulate_device_location():
+    """
+    Simulate a location update from a device
+    
+    This endpoint is designed for testing purposes to simulate device locations
+    without needing to connect through the 808 Protocol server.
+    
+    Example request body:
+    {
+        "device_id": "9c96e35f",
+        "latitude": 37.7749,
+        "longitude": -122.4194,
+        "altitude": 10,
+        "speed": 0.5,
+        "heading": 90,
+        "battery_level": 95
+    }
+    """
+    # Get request data
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    # Validate required fields
+    required_fields = ['device_id', 'latitude', 'longitude']
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+    
+    # Find the device by device_id (allowing partial match to make testing easier)
+    device_query = Device.query.filter(Device.device_id.like(f"%{data['device_id']}%"))
+    device = device_query.first()
+    
+    if not device:
+        return jsonify({"error": f"Device with ID containing '{data['device_id']}' not found"}), 404
+    
+    # Create a new location with the current timestamp
+    location = Location(
+        device_id=device.id,
+        latitude=data['latitude'],
+        longitude=data['longitude'],
+        altitude=data.get('altitude'),
+        speed=data.get('speed'),
+        heading=data.get('heading'),
+        timestamp=datetime.utcnow(),
+        accuracy=data.get('accuracy'),
+        battery_level=data.get('battery_level', device.battery_level)
+    )
+    
+    # Update device battery level if provided
+    if 'battery_level' in data:
+        device.battery_level = data['battery_level']
+    
+    # Update device's last ping
+    device.last_ping = datetime.utcnow()
+    
+    # Save to database
+    try:
+        db.session.add(location)
+        db.session.commit()
+        
+        logger.info(f"Simulated location recorded for device {device.device_id}: " 
+                  f"({data['latitude']}, {data['longitude']})")
+        
+        return jsonify({
+            "message": "Location simulated successfully",
+            "location_id": location.id,
+            "device": device.to_dict(),
+            "location": location.to_dict()
+        })
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error recording simulated location: {str(e)}")
+        return jsonify({"error": "Failed to record location"}), 500

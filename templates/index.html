@@ -3,175 +3,1543 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Tracking System API</title>
-    <!-- Bootstrap CSS -->
+    <title>Pet Tracker</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <!-- Custom CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="/static/css/main.css">
-    <!-- Feather Icons -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h1 class="h4 mb-0">Pet Tracking System API</h1>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Pet Tracker</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#" data-page="dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="pets">My Pets</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="devices">Devices</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="account">Account</a>
+                    </li>
+                </ul>
+                <div class="d-flex" id="auth-section">
+                    <a class="btn btn-primary" id="login-btn" href="/api/auth/login">Login with Google</a>
+                    <div class="d-none" id="user-profile">
+                        <span class="navbar-text me-2" id="username-display"></span>
+                        <a class="btn btn-outline-secondary btn-sm" id="logout-btn" href="/api/auth/logout">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Alert messages -->
+        <div class="alert alert-info alert-dismissible fade show d-none" id="info-alert" role="alert">
+            <span id="info-message"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div class="alert alert-danger alert-dismissible fade show d-none" id="error-alert" role="alert">
+            <span id="error-message"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Loading spinner -->
+        <div class="d-flex justify-content-center my-5 d-none" id="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Not logged in message -->
+        <div id="not-logged-in" class="text-center my-5">
+            <h2>Welcome to Pet Tracker</h2>
+            <p class="lead">Please login with your Google account to access your pets and devices</p>
+            <p><a class="btn btn-primary btn-lg" href="/api/auth/login">Login with Google</a></p>
+        </div>
+
+        <!-- App pages -->
+        <div id="app-content" class="d-none">
+            <!-- Dashboard -->
+            <div id="dashboard-page">
+                <h2>Dashboard</h2>
+                <div class="row">
+                    <div class="col-md-8 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Pet Locations</h5>
+                                <button class="btn btn-sm btn-outline-primary" id="refresh-map-btn">Refresh</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="map-container" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">My Pets</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="pet-list">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading pets...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-grid gap-2 mt-3">
+                                    <button class="btn btn-primary" id="add-pet-btn">Add New Pet</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Device Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="device-list">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading devices...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-grid gap-2 mt-3">
+                                    <button class="btn btn-primary" id="add-device-btn">Register New Device</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="activity-list">
+                                    <p class="text-muted">No recent activity yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pets Page -->
+            <div id="pets-page" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>My Pets</h2>
+                    <button class="btn btn-primary" id="add-pet-btn-page">Add New Pet</button>
+                </div>
+                <div class="row" id="pets-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading pets...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devices Page -->
+            <div id="devices-page" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>My Devices</h2>
+                    <button class="btn btn-primary" id="add-device-btn-page">Register New Device</button>
+                </div>
+                <div class="row" id="devices-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading devices...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Page -->
+            <div id="account-page" class="d-none">
+                <h2>My Account</h2>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Profile Information</h5>
                     </div>
                     <div class="card-body">
-                        <div class="mb-4">
-                            <h2 class="h5">API Status</h2>
-                            <div class="alert alert-success">
-                                <i data-feather="check-circle"></i> API is running
+                        <div class="row" id="profile-info">
+                            <div class="col-md-4 text-center mb-3">
+                                <img id="profile-picture" src="" alt="Profile Picture" class="img-thumbnail rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <p class="form-control" id="profile-username"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <p class="form-control" id="profile-email"></p>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">First Name</label>
+                                        <p class="form-control" id="profile-firstname"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Last Name</label>
+                                        <p class="form-control" id="profile-lastname"></p>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Member Since</label>
+                                    <p class="form-control" id="profile-created"></p>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-4">
-                            <h2 class="h5">Authentication</h2>
-                            <p>This API uses Google OAuth for authentication. To authenticate:</p>
-                            <ol>
-                                <li>Send a GET request to <code>/api/auth/login</code></li>
-                                <li>You will receive a redirect URL to the Google login page</li>
-                                <li>After successful login, you will receive a JWT token</li>
-                                <li>Include this token in the Authorization header for subsequent requests</li>
-                            </ol>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <h2 class="h5">API Endpoints</h2>
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Endpoint</th>
-                                            <th>Method</th>
-                                            <th>Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><code>/api/auth/login</code></td>
-                                            <td>GET</td>
-                                            <td>Start Google OAuth flow</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/auth/logout</code></td>
-                                            <td>POST</td>
-                                            <td>Logout current user</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/auth/user</code></td>
-                                            <td>GET</td>
-                                            <td>Get current user info</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/pets</code></td>
-                                            <td>GET</td>
-                                            <td>List all pets</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/pets</code></td>
-                                            <td>POST</td>
-                                            <td>Create new pet</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/pets/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get pet details</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/pets/:id</code></td>
-                                            <td>PUT</td>
-                                            <td>Update pet</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/pets/:id</code></td>
-                                            <td>DELETE</td>
-                                            <td>Delete pet</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/devices</code></td>
-                                            <td>GET</td>
-                                            <td>List all devices</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/devices</code></td>
-                                            <td>POST</td>
-                                            <td>Register new device</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/devices/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get device details</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/devices/:id</code></td>
-                                            <td>PUT</td>
-                                            <td>Update device</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/devices/:id</code></td>
-                                            <td>DELETE</td>
-                                            <td>Delete device</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/device/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get device location history</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/pet/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get pet location history</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/latest/device/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get device latest location</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/latest/pet/:id</code></td>
-                                            <td>GET</td>
-                                            <td>Get pet latest location</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/record</code></td>
-                                            <td>POST</td>
-                                            <td>Record new location</td>
-                                        </tr>
-                                        <tr>
-                                            <td><code>/api/locations/all-pets-latest</code></td>
-                                            <td>GET</td>
-                                            <td>Get latest location for all pets</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <h2 class="h5">808 Protocol Support</h2>
-                            <p>This API includes a server for the 808 protocol used by tracking devices.</p>
-                            <ul>
-                                <li>Server listens on port 8080</li>
-                                <li>Supports standard 808 protocol messages</li>
-                                <li>Automatically records location data from tracking devices</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="card-footer text-muted">
-                        <small>Pet Tracking System API | Version 1.0</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <!-- Modal for adding a new pet -->
+    <div class="modal fade" id="add-pet-modal" tabindex="-1" aria-labelledby="add-pet-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-pet-modal-label">Add New Pet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-pet-form">
+                        <div class="mb-3">
+                            <label for="pet-name" class="form-label">Pet Name</label>
+                            <input type="text" class="form-control" id="pet-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-type" class="form-label">Pet Type</label>
+                            <select class="form-select" id="pet-type" required>
+                                <option value="">Select type</option>
+                                <option value="Dog">Dog</option>
+                                <option value="Cat">Cat</option>
+                                <option value="Bird">Bird</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-breed" class="form-label">Breed</label>
+                            <input type="text" class="form-control" id="pet-breed">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-color" class="form-label">Color</label>
+                            <input type="text" class="form-control" id="pet-color">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-birthdate" class="form-label">Birth Date</label>
+                            <input type="date" class="form-control" id="pet-birthdate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-weight" class="form-label">Weight (kg)</label>
+                            <input type="number" step="0.1" class="form-control" id="pet-weight">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pet-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="pet-description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-pet-btn">Save Pet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding a new device -->
+    <div class="modal fade" id="add-device-modal" tabindex="-1" aria-labelledby="add-device-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add-device-modal-label">Register New Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-device-form">
+                        <div class="mb-3">
+                            <label for="device-name" class="form-label">Device Name</label>
+                            <input type="text" class="form-control" id="device-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="device-type" class="form-label">Device Type</label>
+                            <select class="form-select" id="device-type" required>
+                                <option value="">Select type</option>
+                                <option value="GPS Tracker">GPS Tracker</option>
+                                <option value="Collar Tag">Collar Tag</option>
+                                <option value="Smart Collar">Smart Collar</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="device-serial" class="form-label">Serial Number (optional)</label>
+                            <input type="text" class="form-control" id="device-serial">
+                        </div>
+                        <div class="mb-3">
+                            <label for="device-imei" class="form-label">IMEI (optional)</label>
+                            <input type="text" class="form-control" id="device-imei">
+                        </div>
+                        <div class="mb-3">
+                            <label for="device-firmware" class="form-label">Firmware Version (optional)</label>
+                            <input type="text" class="form-control" id="device-firmware">
+                        </div>
+                        <div class="mb-3">
+                            <label for="device-pet" class="form-label">Assign to Pet (optional)</label>
+                            <select class="form-select" id="device-pet">
+                                <option value="">Select pet</option>
+                                <!-- Pet options will be populated dynamically -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-device-btn">Register Device</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for pet details -->
+    <div class="modal fade" id="pet-details-modal" tabindex="-1" aria-labelledby="pet-details-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pet-details-modal-label">Pet Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img id="pet-details-image" src="" alt="Pet" class="img-fluid rounded mb-3">
+                            <div id="pet-details-devices" class="mb-3">
+                                <h6>Assigned Devices</h6>
+                                <div id="pet-devices-list">
+                                    <p class="text-muted">No devices assigned</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <p class="form-control" id="pet-details-name"></p>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Type</label>
+                                    <p class="form-control" id="pet-details-type"></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Breed</label>
+                                    <p class="form-control" id="pet-details-breed"></p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Color</label>
+                                    <p class="form-control" id="pet-details-color"></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Weight</label>
+                                    <p class="form-control" id="pet-details-weight"></p>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Birth Date</label>
+                                <p class="form-control" id="pet-details-birthdate"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <p class="form-control" id="pet-details-description"></p>
+                            </div>
+                            <div id="pet-location-map" style="height: 200px;" class="mb-3"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="edit-pet-btn">Edit</button>
+                    <button type="button" class="btn btn-danger" id="delete-pet-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for device details -->
+    <div class="modal fade" id="device-details-modal" tabindex="-1" aria-labelledby="device-details-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="device-details-modal-label">Device Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <p class="form-control" id="device-details-name"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Type</label>
+                                <p class="form-control" id="device-details-type"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Device ID</label>
+                                <p class="form-control" id="device-details-id"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <p class="form-control" id="device-details-status"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Serial Number</label>
+                                <p class="form-control" id="device-details-serial"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">IMEI</label>
+                                <p class="form-control" id="device-details-imei"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Firmware Version</label>
+                                <p class="form-control" id="device-details-firmware"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Battery Level</label>
+                                <div class="progress">
+                                    <div id="device-details-battery" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small id="device-details-battery-text" class="form-text"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assigned Pet</label>
+                        <p class="form-control" id="device-details-pet"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Update</label>
+                        <p class="form-control" id="device-details-lastping"></p>
+                    </div>
+                    <div id="device-location-map" style="height: 200px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="edit-device-btn">Edit</button>
+                    <button type="button" class="btn btn-success" id="assign-device-btn">Assign to Pet</button>
+                    <button type="button" class="btn btn-danger" id="delete-device-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main JavaScript -->
     <script>
-        // Initialize Feather icons
         document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
+            // Globals
+            let map = null;
+            let petMarkers = {};
+            let currentUser = null;
+            let pets = [];
+            let devices = [];
+            
+            // Pet icons based on type
+            const petIcons = {
+                'Dog': L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }),
+                'Cat': L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }),
+                'Bird': L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }),
+                'Other': L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            };
+
+            // Initialize the map
+            function initMap() {
+                // Create map if it doesn't exist
+                if (!map) {
+                    map = L.map('map-container').setView([37.7749, -122.4194], 13);
+                    
+                    // Add tile layer
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                }
+            }
+
+            // Initialize pet detail map
+            function initPetDetailMap() {
+                return L.map('pet-location-map').setView([37.7749, -122.4194], 13);
+            }
+            
+            // Initialize device detail map
+            function initDeviceDetailMap() {
+                return L.map('device-location-map').setView([37.7749, -122.4194], 13);
+            }
+
+            // Check if user is logged in
+            async function checkAuth() {
+                try {
+                    showLoading(true);
+                    const response = await fetch('/api/auth/check');
+                    const data = await response.json();
+                    
+                    if (data.authenticated) {
+                        // Get user details
+                        getUserInfo();
+                        return true;
+                    } else {
+                        showLoggedOutState();
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error checking authentication:', error);
+                    showError('Error checking authentication status');
+                    showLoggedOutState();
+                    return false;
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Get user information
+            async function getUserInfo() {
+                try {
+                    const response = await fetch('/api/auth/user');
+                    if (!response.ok) {
+                        throw new Error('Failed to get user information');
+                    }
+                    
+                    const user = await response.json();
+                    currentUser = user;
+                    showLoggedInState(user);
+                    
+                    // Load pets and devices
+                    loadPets();
+                    loadDevices();
+                    loadAllPetsLocations();
+                    
+                    // Initialize map
+                    initMap();
+                } catch (error) {
+                    console.error('Error getting user info:', error);
+                    showError('Error loading user information');
+                }
+            }
+
+            // Show logged in state
+            function showLoggedInState(user) {
+                document.getElementById('login-btn').classList.add('d-none');
+                document.getElementById('user-profile').classList.remove('d-none');
+                document.getElementById('username-display').textContent = user.username;
+                document.getElementById('not-logged-in').classList.add('d-none');
+                document.getElementById('app-content').classList.remove('d-none');
+                
+                // Update profile page
+                document.getElementById('profile-username').textContent = user.username || 'Not set';
+                document.getElementById('profile-email').textContent = user.email || 'Not set';
+                document.getElementById('profile-firstname').textContent = user.first_name || 'Not set';
+                document.getElementById('profile-lastname').textContent = user.last_name || 'Not set';
+                
+                // Format date
+                const createdDate = new Date(user.created_at);
+                document.getElementById('profile-created').textContent = createdDate.toLocaleDateString();
+                
+                // Set profile picture if available
+                if (user.profile_picture) {
+                    document.getElementById('profile-picture').src = user.profile_picture;
+                } else {
+                    document.getElementById('profile-picture').src = 'https://via.placeholder.com/150';
+                }
+            }
+
+            // Show logged out state
+            function showLoggedOutState() {
+                document.getElementById('login-btn').classList.remove('d-none');
+                document.getElementById('user-profile').classList.add('d-none');
+                document.getElementById('not-logged-in').classList.remove('d-none');
+                document.getElementById('app-content').classList.add('d-none');
+            }
+
+            // Load pets
+            async function loadPets() {
+                try {
+                    const response = await fetch('/api/pets');
+                    if (!response.ok) {
+                        throw new Error('Failed to load pets');
+                    }
+                    
+                    const petData = await response.json();
+                    pets = petData;
+                    
+                    // Update pet list on dashboard
+                    updatePetList(petData);
+                    
+                    // Update pets page
+                    updatePetsPage(petData);
+                    
+                    // Update pet dropdown in device registration
+                    updatePetDropdown(petData);
+                } catch (error) {
+                    console.error('Error loading pets:', error);
+                    showError('Error loading pets');
+                }
+            }
+
+            // Update pet list on dashboard
+            function updatePetList(pets) {
+                const petList = document.getElementById('pet-list');
+                
+                if (pets.length === 0) {
+                    petList.innerHTML = '<p class="text-muted">No pets added yet.</p>';
+                    return;
+                }
+                
+                let html = '<div class="list-group">';
+                
+                pets.forEach(pet => {
+                    html += `
+                        <a href="#" class="list-group-item list-group-item-action pet-item" data-pet-id="${pet.id}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${pet.name}</h6>
+                                <small>${pet.pet_type}</small>
+                            </div>
+                            <small class="d-block">${pet.breed || 'No breed specified'}</small>
+                        </a>
+                    `;
+                });
+                
+                html += '</div>';
+                petList.innerHTML = html;
+                
+                // Add click event to pet items
+                document.querySelectorAll('.pet-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const petId = item.getAttribute('data-pet-id');
+                        showPetDetails(petId);
+                    });
+                });
+            }
+
+            // Update pets page
+            function updatePetsPage(pets) {
+                const petsContainer = document.getElementById('pets-container');
+                
+                if (pets.length === 0) {
+                    petsContainer.innerHTML = '<div class="col-12"><p class="text-muted">No pets added yet.</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                
+                pets.forEach(pet => {
+                    html += `
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">${pet.name}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text"><strong>Type:</strong> ${pet.pet_type}</p>
+                                    <p class="card-text"><strong>Breed:</strong> ${pet.breed || 'Not specified'}</p>
+                                    <p class="card-text"><strong>Color:</strong> ${pet.color || 'Not specified'}</p>
+                                    ${pet.birthdate ? `<p class="card-text"><strong>Birth Date:</strong> ${new Date(pet.birthdate).toLocaleDateString()}</p>` : ''}
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-primary btn-sm view-pet-btn" data-pet-id="${pet.id}">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                petsContainer.innerHTML = html;
+                
+                // Add click event to view buttons
+                document.querySelectorAll('.view-pet-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const petId = btn.getAttribute('data-pet-id');
+                        showPetDetails(petId);
+                    });
+                });
+            }
+
+            // Update pet dropdown in device registration
+            function updatePetDropdown(pets) {
+                const dropdown = document.getElementById('device-pet');
+                
+                // Clear existing options except the first one
+                while (dropdown.options.length > 1) {
+                    dropdown.remove(1);
+                }
+                
+                // Add options for each pet
+                pets.forEach(pet => {
+                    const option = document.createElement('option');
+                    option.value = pet.id;
+                    option.textContent = pet.name;
+                    dropdown.appendChild(option);
+                });
+            }
+
+            // Load devices
+            async function loadDevices() {
+                try {
+                    const response = await fetch('/api/devices');
+                    if (!response.ok) {
+                        throw new Error('Failed to load devices');
+                    }
+                    
+                    const deviceData = await response.json();
+                    devices = deviceData;
+                    
+                    // Update device list on dashboard
+                    updateDeviceList(deviceData);
+                    
+                    // Update devices page
+                    updateDevicesPage(deviceData);
+                } catch (error) {
+                    console.error('Error loading devices:', error);
+                    showError('Error loading devices');
+                }
+            }
+
+            // Update device list on dashboard
+            function updateDeviceList(devices) {
+                const deviceList = document.getElementById('device-list');
+                
+                if (devices.length === 0) {
+                    deviceList.innerHTML = '<p class="text-muted">No devices registered yet.</p>';
+                    return;
+                }
+                
+                let html = '<div class="list-group">';
+                
+                devices.forEach(device => {
+                    const batteryClass = getBatteryStatusClass(device.battery_level);
+                    
+                    html += `
+                        <a href="#" class="list-group-item list-group-item-action device-item" data-device-id="${device.id}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${device.name}</h6>
+                                <small class="badge ${device.is_active ? 'bg-success' : 'bg-danger'}">${device.is_active ? 'Active' : 'Inactive'}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>${device.device_type || 'Unknown type'}</small>
+                                <div class="progress" style="width: 60px; height: 6px;">
+                                    <div class="progress-bar ${batteryClass}" role="progressbar" style="width: ${device.battery_level}%"></div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+                
+                html += '</div>';
+                deviceList.innerHTML = html;
+                
+                // Add click event to device items
+                document.querySelectorAll('.device-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const deviceId = item.getAttribute('data-device-id');
+                        showDeviceDetails(deviceId);
+                    });
+                });
+            }
+
+            // Get battery status CSS class
+            function getBatteryStatusClass(level) {
+                if (level === null || level === undefined) return 'bg-secondary';
+                if (level < 20) return 'bg-danger';
+                if (level < 50) return 'bg-warning';
+                return 'bg-success';
+            }
+
+            // Update devices page
+            function updateDevicesPage(devices) {
+                const devicesContainer = document.getElementById('devices-container');
+                
+                if (devices.length === 0) {
+                    devicesContainer.innerHTML = '<div class="col-12"><p class="text-muted">No devices registered yet.</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                
+                devices.forEach(device => {
+                    const batteryClass = getBatteryStatusClass(device.battery_level);
+                    
+                    html += `
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">${device.name}</h5>
+                                    <span class="badge ${device.is_active ? 'bg-success' : 'bg-danger'}">${device.is_active ? 'Active' : 'Inactive'}</span>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text"><strong>Device ID:</strong> ${device.device_id}</p>
+                                    <p class="card-text"><strong>Type:</strong> ${device.device_type || 'Not specified'}</p>
+                                    <p class="card-text"><strong>Last Ping:</strong> ${device.last_ping ? new Date(device.last_ping).toLocaleString() : 'Never'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>Battery:</strong>
+                                        <div class="progress" style="width: 70%; height: 10px;">
+                                            <div class="progress-bar ${batteryClass}" role="progressbar" style="width: ${device.battery_level}%"></div>
+                                        </div>
+                                        <span>${device.battery_level ? Math.round(device.battery_level) + '%' : 'N/A'}</span>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-primary btn-sm view-device-btn" data-device-id="${device.id}">View Details</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                devicesContainer.innerHTML = html;
+                
+                // Add click event to view buttons
+                document.querySelectorAll('.view-device-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const deviceId = btn.getAttribute('data-device-id');
+                        showDeviceDetails(deviceId);
+                    });
+                });
+            }
+
+            // Load all pets locations for the map
+            async function loadAllPetsLocations() {
+                try {
+                    const response = await fetch('/api/locations/pets/latest');
+                    if (!response.ok) {
+                        throw new Error('Failed to load pet locations');
+                    }
+                    
+                    const locations = await response.json();
+                    updateMapMarkers(locations);
+                } catch (error) {
+                    console.error('Error loading pet locations:', error);
+                    showError('Error loading pet locations');
+                }
+            }
+
+            // Update map markers with pet locations
+            function updateMapMarkers(locations) {
+                // Clear existing markers
+                Object.values(petMarkers).forEach(marker => {
+                    map.removeLayer(marker);
+                });
+                petMarkers = {};
+                
+                // Add markers for each pet location
+                locations.forEach(location => {
+                    // Find the pet in our pet list
+                    const pet = pets.find(p => p.id === location.pet_id);
+                    if (!pet) return;
+                    
+                    // Create marker with appropriate icon
+                    const icon = petIcons[pet.pet_type] || petIcons['Other'];
+                    const marker = L.marker([location.latitude, location.longitude], { icon: icon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <strong>${pet.name}</strong><br>
+                            Last seen: ${new Date(location.timestamp).toLocaleString()}<br>
+                            ${location.speed ? `Speed: ${formatSpeed(location.speed)}<br>` : ''}
+                            ${location.heading ? `Heading: ${formatHeading(location.heading)}<br>` : ''}
+                            <button class="btn btn-sm btn-primary mt-2 view-pet-popup" data-pet-id="${pet.id}">View Details</button>
+                        `);
+                    
+                    // Store marker for later reference
+                    petMarkers[pet.id] = marker;
+                    
+                    // Add click event to the view button in popup
+                    marker.on('popupopen', () => {
+                        setTimeout(() => {
+                            const btn = document.querySelector('.view-pet-popup');
+                            if (btn) {
+                                btn.addEventListener('click', () => {
+                                    const petId = btn.getAttribute('data-pet-id');
+                                    showPetDetails(petId);
+                                });
+                            }
+                        }, 100);
+                    });
+                });
+                
+                // Adjust map bounds if we have markers
+                if (Object.keys(petMarkers).length > 0) {
+                    const markers = Object.values(petMarkers);
+                    const group = L.featureGroup(markers);
+                    map.fitBounds(group.getBounds().pad(0.2));
+                }
+            }
+
+            // Format speed for display
+            function formatSpeed(speedInMPS) {
+                // Convert m/s to km/h
+                const kmh = speedInMPS * 3.6;
+                return `${kmh.toFixed(1)} km/h`;
+            }
+
+            // Format heading for display
+            function formatHeading(heading) {
+                const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+                const index = Math.round(heading / 45) % 8;
+                return `${directions[index]} (${Math.round(heading)}°)`;
+            }
+
+            // Show pet details modal
+            async function showPetDetails(petId) {
+                try {
+                    showLoading(true);
+                    
+                    // Find pet in our list
+                    const pet = pets.find(p => p.id == petId);
+                    if (!pet) {
+                        throw new Error('Pet not found');
+                    }
+                    
+                    // Set basic pet details
+                    document.getElementById('pet-details-modal-label').textContent = pet.name;
+                    document.getElementById('pet-details-name').textContent = pet.name;
+                    document.getElementById('pet-details-type').textContent = pet.pet_type;
+                    document.getElementById('pet-details-breed').textContent = pet.breed || 'Not specified';
+                    document.getElementById('pet-details-color').textContent = pet.color || 'Not specified';
+                    document.getElementById('pet-details-weight').textContent = pet.weight ? `${pet.weight} kg` : 'Not specified';
+                    document.getElementById('pet-details-birthdate').textContent = pet.birthdate ? new Date(pet.birthdate).toLocaleDateString() : 'Not specified';
+                    document.getElementById('pet-details-description').textContent = pet.description || 'No description available';
+                    
+                    // Set image if available
+                    if (pet.image_url) {
+                        document.getElementById('pet-details-image').src = pet.image_url;
+                        document.getElementById('pet-details-image').classList.remove('d-none');
+                    } else {
+                        document.getElementById('pet-details-image').src = 'https://via.placeholder.com/150?text=No+Image';
+                        document.getElementById('pet-details-image').classList.remove('d-none');
+                    }
+                    
+                    // Get pet's devices
+                    const petDevices = devices.filter(d => d.pet_id == petId);
+                    updatePetDevicesList(petDevices);
+                    
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('pet-details-modal'));
+                    modal.show();
+                    
+                    // Initialize the map in the modal
+                    setTimeout(() => {
+                        const petMap = initPetDetailMap();
+                        
+                        // Add tile layer
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(petMap);
+                        
+                        // Load and show the pet's latest location
+                        loadPetLocation(petId, petMap);
+                    }, 500);
+                    
+                    // Set up event handlers for the modal buttons
+                    document.getElementById('edit-pet-btn').onclick = () => {
+                        // TODO: Implement edit functionality
+                        showInfo('Edit functionality not implemented yet');
+                    };
+                    
+                    document.getElementById('delete-pet-btn').onclick = () => {
+                        if (confirm(`Are you sure you want to delete ${pet.name}?`)) {
+                            deletePet(petId);
+                        }
+                    };
+                } catch (error) {
+                    console.error('Error showing pet details:', error);
+                    showError('Error loading pet details');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Update the list of devices assigned to a pet
+            function updatePetDevicesList(petDevices) {
+                const devicesList = document.getElementById('pet-devices-list');
+                
+                if (petDevices.length === 0) {
+                    devicesList.innerHTML = '<p class="text-muted">No devices assigned</p>';
+                    return;
+                }
+                
+                let html = '<ul class="list-group">';
+                petDevices.forEach(device => {
+                    const batteryClass = getBatteryStatusClass(device.battery_level);
+                    
+                    html += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${device.name}
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 50px; height: 6px;">
+                                    <div class="progress-bar ${batteryClass}" role="progressbar" style="width: ${device.battery_level}%"></div>
+                                </div>
+                                <span class="badge ${device.is_active ? 'bg-success' : 'bg-danger'} rounded-pill">${device.is_active ? 'Active' : 'Inactive'}</span>
+                            </div>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                
+                devicesList.innerHTML = html;
+            }
+
+            // Load and display a pet's latest location
+            async function loadPetLocation(petId, petMap) {
+                try {
+                    const response = await fetch(`/api/locations/pet/${petId}/latest`);
+                    if (!response.ok) {
+                        throw new Error('Failed to load pet location');
+                    }
+                    
+                    const location = await response.json();
+                    
+                    // Check if we have a valid location
+                    if (location && location.latitude && location.longitude) {
+                        // Find the pet
+                        const pet = pets.find(p => p.id == petId);
+                        
+                        // Create marker with appropriate icon
+                        const icon = petIcons[pet.pet_type] || petIcons['Other'];
+                        const marker = L.marker([location.latitude, location.longitude], { icon: icon })
+                            .addTo(petMap)
+                            .bindPopup(`
+                                <strong>${pet.name}</strong><br>
+                                Last seen: ${new Date(location.timestamp).toLocaleString()}<br>
+                                ${location.speed ? `Speed: ${formatSpeed(location.speed)}<br>` : ''}
+                                ${location.heading ? `Heading: ${formatHeading(location.heading)}` : ''}
+                            `);
+                        
+                        // Center map on marker
+                        petMap.setView([location.latitude, location.longitude], 15);
+                    } else {
+                        // No location data
+                        petMap.setView([37.7749, -122.4194], 10);
+                        L.popup()
+                            .setLatLng([37.7749, -122.4194])
+                            .setContent('<p>No location data available for this pet</p>')
+                            .openOn(petMap);
+                    }
+                } catch (error) {
+                    console.error('Error loading pet location:', error);
+                    petMap.setView([37.7749, -122.4194], 10);
+                    L.popup()
+                        .setLatLng([37.7749, -122.4194])
+                        .setContent('<p>Error loading location data</p>')
+                        .openOn(petMap);
+                }
+            }
+
+            // Delete a pet
+            async function deletePet(petId) {
+                try {
+                    showLoading(true);
+                    
+                    const response = await fetch(`/api/pets/${petId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to delete pet');
+                    }
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('pet-details-modal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    showInfo('Pet deleted successfully');
+                    
+                    // Reload pets
+                    loadPets();
+                    
+                    // Reload pet locations on map
+                    loadAllPetsLocations();
+                } catch (error) {
+                    console.error('Error deleting pet:', error);
+                    showError('Error deleting pet');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Show device details modal
+            async function showDeviceDetails(deviceId) {
+                try {
+                    showLoading(true);
+                    
+                    // Find device in our list
+                    const device = devices.find(d => d.id == deviceId);
+                    if (!device) {
+                        throw new Error('Device not found');
+                    }
+                    
+                    // Set basic device details
+                    document.getElementById('device-details-modal-label').textContent = device.name;
+                    document.getElementById('device-details-name').textContent = device.name;
+                    document.getElementById('device-details-type').textContent = device.device_type || 'Not specified';
+                    document.getElementById('device-details-id').textContent = device.device_id;
+                    document.getElementById('device-details-status').textContent = device.is_active ? 'Active' : 'Inactive';
+                    document.getElementById('device-details-status').className = `form-control ${device.is_active ? 'text-success' : 'text-danger'}`;
+                    document.getElementById('device-details-serial').textContent = device.serial_number || 'Not specified';
+                    document.getElementById('device-details-imei').textContent = device.imei || 'Not specified';
+                    document.getElementById('device-details-firmware').textContent = device.firmware_version || 'Not specified';
+                    
+                    // Set battery level
+                    const batteryBar = document.getElementById('device-details-battery');
+                    const batteryText = document.getElementById('device-details-battery-text');
+                    
+                    if (device.battery_level !== null && device.battery_level !== undefined) {
+                        batteryBar.style.width = `${device.battery_level}%`;
+                        batteryBar.className = `progress-bar ${getBatteryStatusClass(device.battery_level)}`;
+                        batteryText.textContent = `${Math.round(device.battery_level)}%`;
+                    } else {
+                        batteryBar.style.width = '0%';
+                        batteryBar.className = 'progress-bar bg-secondary';
+                        batteryText.textContent = 'Unknown';
+                    }
+                    
+                    // Set assigned pet
+                    const petField = document.getElementById('device-details-pet');
+                    if (device.pet_id) {
+                        const pet = pets.find(p => p.id == device.pet_id);
+                        if (pet) {
+                            petField.textContent = pet.name;
+                        } else {
+                            petField.textContent = 'Unknown pet';
+                        }
+                    } else {
+                        petField.textContent = 'Not assigned';
+                    }
+                    
+                    // Set last ping
+                    document.getElementById('device-details-lastping').textContent = device.last_ping ? new Date(device.last_ping).toLocaleString() : 'Never';
+                    
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('device-details-modal'));
+                    modal.show();
+                    
+                    // Initialize the map in the modal
+                    setTimeout(() => {
+                        const deviceMap = initDeviceDetailMap();
+                        
+                        // Add tile layer
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(deviceMap);
+                        
+                        // Load and show the device's latest location
+                        loadDeviceLocation(device.id, deviceMap);
+                    }, 500);
+                    
+                    // Set up event handlers for the modal buttons
+                    document.getElementById('edit-device-btn').onclick = () => {
+                        // TODO: Implement edit functionality
+                        showInfo('Edit functionality not implemented yet');
+                    };
+                    
+                    document.getElementById('assign-device-btn').onclick = () => {
+                        // TODO: Implement assign functionality
+                        showInfo('Assign functionality not implemented yet');
+                    };
+                    
+                    document.getElementById('delete-device-btn').onclick = () => {
+                        if (confirm(`Are you sure you want to delete ${device.name}?`)) {
+                            deleteDevice(device.id);
+                        }
+                    };
+                } catch (error) {
+                    console.error('Error showing device details:', error);
+                    showError('Error loading device details');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Load and display a device's latest location
+            async function loadDeviceLocation(deviceId, deviceMap) {
+                try {
+                    const response = await fetch(`/api/locations/device/${deviceId}/latest`);
+                    if (!response.ok) {
+                        throw new Error('Failed to load device location');
+                    }
+                    
+                    const location = await response.json();
+                    
+                    // Check if we have a valid location
+                    if (location && location.latitude && location.longitude) {
+                        // Find the device
+                        const device = devices.find(d => d.id == deviceId);
+                        
+                        // Create marker
+                        const marker = L.marker([location.latitude, location.longitude])
+                            .addTo(deviceMap)
+                            .bindPopup(`
+                                <strong>${device.name}</strong><br>
+                                Last seen: ${new Date(location.timestamp).toLocaleString()}<br>
+                                ${location.speed ? `Speed: ${formatSpeed(location.speed)}<br>` : ''}
+                                ${location.heading ? `Heading: ${formatHeading(location.heading)}` : ''}
+                            `);
+                        
+                        // Center map on marker
+                        deviceMap.setView([location.latitude, location.longitude], 15);
+                    } else {
+                        // No location data
+                        deviceMap.setView([37.7749, -122.4194], 10);
+                        L.popup()
+                            .setLatLng([37.7749, -122.4194])
+                            .setContent('<p>No location data available for this device</p>')
+                            .openOn(deviceMap);
+                    }
+                } catch (error) {
+                    console.error('Error loading device location:', error);
+                    deviceMap.setView([37.7749, -122.4194], 10);
+                    L.popup()
+                        .setLatLng([37.7749, -122.4194])
+                        .setContent('<p>Error loading location data</p>')
+                        .openOn(deviceMap);
+                }
+            }
+
+            // Delete a device
+            async function deleteDevice(deviceId) {
+                try {
+                    showLoading(true);
+                    
+                    const response = await fetch(`/api/devices/${deviceId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to delete device');
+                    }
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('device-details-modal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    showInfo('Device deleted successfully');
+                    
+                    // Reload devices
+                    loadDevices();
+                } catch (error) {
+                    console.error('Error deleting device:', error);
+                    showError('Error deleting device');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Create a new pet
+            async function createPet() {
+                try {
+                    // Get form values
+                    const name = document.getElementById('pet-name').value.trim();
+                    const petType = document.getElementById('pet-type').value;
+                    const breed = document.getElementById('pet-breed').value.trim();
+                    const color = document.getElementById('pet-color').value.trim();
+                    const birthdate = document.getElementById('pet-birthdate').value;
+                    const weight = document.getElementById('pet-weight').value;
+                    const description = document.getElementById('pet-description').value.trim();
+                    
+                    // Validate required fields
+                    if (!name || !petType) {
+                        showError('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    showLoading(true);
+                    
+                    // Prepare request data
+                    const petData = {
+                        name: name,
+                        pet_type: petType
+                    };
+                    
+                    // Add optional fields if provided
+                    if (breed) petData.breed = breed;
+                    if (color) petData.color = color;
+                    if (birthdate) petData.birthdate = birthdate;
+                    if (weight) petData.weight = parseFloat(weight);
+                    if (description) petData.description = description;
+                    
+                    // Send request
+                    const response = await fetch('/api/pets', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(petData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to create pet');
+                    }
+                    
+                    // Get created pet
+                    const pet = await response.json();
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('add-pet-modal'));
+                    modal.hide();
+                    
+                    // Reset form
+                    document.getElementById('add-pet-form').reset();
+                    
+                    // Show success message
+                    showInfo(`Pet "${pet.name}" created successfully`);
+                    
+                    // Reload pets
+                    loadPets();
+                } catch (error) {
+                    console.error('Error creating pet:', error);
+                    showError('Error creating pet');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Create a new device
+            async function createDevice() {
+                try {
+                    // Get form values
+                    const name = document.getElementById('device-name').value.trim();
+                    const deviceType = document.getElementById('device-type').value;
+                    const serial = document.getElementById('device-serial').value.trim();
+                    const imei = document.getElementById('device-imei').value.trim();
+                    const firmware = document.getElementById('device-firmware').value.trim();
+                    const petId = document.getElementById('device-pet').value;
+                    
+                    // Validate required fields
+                    if (!name || !deviceType) {
+                        showError('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    showLoading(true);
+                    
+                    // Prepare request data
+                    const deviceData = {
+                        name: name,
+                        device_type: deviceType
+                    };
+                    
+                    // Add optional fields if provided
+                    if (serial) deviceData.serial_number = serial;
+                    if (imei) deviceData.imei = imei;
+                    if (firmware) deviceData.firmware_version = firmware;
+                    
+                    // Send request to create device
+                    const response = await fetch('/api/devices', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(deviceData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to create device');
+                    }
+                    
+                    // Get created device
+                    const device = await response.json();
+                    
+                    // Assign to pet if selected
+                    if (petId) {
+                        const assignResponse = await fetch(`/api/devices/${device.id}/assign/${petId}`, {
+                            method: 'POST'
+                        });
+                        
+                        if (!assignResponse.ok) {
+                            console.error('Failed to assign device to pet');
+                        }
+                    }
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('add-device-modal'));
+                    modal.hide();
+                    
+                    // Reset form
+                    document.getElementById('add-device-form').reset();
+                    
+                    // Show success message
+                    showInfo(`Device "${device.name}" registered successfully`);
+                    
+                    // Reload devices
+                    loadDevices();
+                } catch (error) {
+                    console.error('Error creating device:', error);
+                    showError('Error creating device');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Show loading spinner
+            function showLoading(show) {
+                const spinner = document.getElementById('loading-spinner');
+                if (show) {
+                    spinner.classList.remove('d-none');
+                } else {
+                    spinner.classList.add('d-none');
+                }
+            }
+
+            // Show info alert
+            function showInfo(message) {
+                const alert = document.getElementById('info-alert');
+                document.getElementById('info-message').textContent = message;
+                alert.classList.remove('d-none');
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    alert.classList.add('d-none');
+                }, 5000);
+            }
+
+            // Show error alert
+            function showError(message) {
+                const alert = document.getElementById('error-alert');
+                document.getElementById('error-message').textContent = message;
+                alert.classList.remove('d-none');
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    alert.classList.add('d-none');
+                }, 5000);
+            }
+
+            // Navigation functionality
+            document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    document.querySelectorAll('.navbar-nav .nav-link').forEach(l => {
+                        l.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked link
+                    link.classList.add('active');
+                    
+                    // Get page to show
+                    const page = link.getAttribute('data-page');
+                    
+                    // Hide all pages
+                    document.querySelectorAll('#app-content > div').forEach(div => {
+                        div.classList.add('d-none');
+                    });
+                    
+                    // Show selected page
+                    document.getElementById(`${page}-page`).classList.remove('d-none');
+                    
+                    // Special handling for dashboard
+                    if (page === 'dashboard') {
+                        // Reset map size to fix rendering issues
+                        if (map) {
+                            setTimeout(() => {
+                                map.invalidateSize();
+                            }, 100);
+                        }
+                    }
+                });
+            });
+
+            // Add event listeners for buttons
+            document.querySelectorAll('#add-pet-btn, #add-pet-btn-page').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const modal = new bootstrap.Modal(document.getElementById('add-pet-modal'));
+                    modal.show();
+                });
+            });
+
+            document.querySelectorAll('#add-device-btn, #add-device-btn-page').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const modal = new bootstrap.Modal(document.getElementById('add-device-modal'));
+                    modal.show();
+                });
+            });
+
+            document.getElementById('save-pet-btn').addEventListener('click', createPet);
+            document.getElementById('save-device-btn').addEventListener('click', createDevice);
+
+            document.getElementById('refresh-map-btn').addEventListener('click', loadAllPetsLocations);
+
+            // Initial page load
+            checkAuth();
         });
     </script>
 </body>

@@ -275,8 +275,11 @@ class Protocol808Server:
                 logger.warning("Message missing device_id, cannot process")
                 return
             
+            # Import app for app context
+            from app import app
+            
             # Find the device in the database
-            with db.app.app_context():
+            with app.app_context():
                 device = Device.query.filter_by(device_id=device_id).first()
                 
                 if not device:
@@ -309,13 +312,18 @@ class Protocol808Server:
                     )
                     
                     db.session.add(location)
+                    logger.info(f"Recorded location for device {device_id}: " 
+                              f"({location_data['latitude']}, {location_data['longitude']})")
                 
                 # Commit changes to database
                 db.session.commit()
                 logger.info(f"Processed message from device {device_id}")
         
         except Exception as e:
-            db.session.rollback()
+            try:
+                db.session.rollback()
+            except:
+                pass
             logger.error(f"Error processing message: {str(e)}", exc_info=True)
 
 
@@ -326,14 +334,26 @@ def get_server_instance():
     """Get the singleton instance of the 808 protocol server"""
     global _server_instance
     if _server_instance is None:
-        port = current_app.config.get('PROTOCOL_808_PORT', 8080)
+        # Try to get port from current_app if in app context
+        try:
+            port = current_app.config.get('PROTOCOL_808_PORT', 8080)
+        except RuntimeError:
+            # Outside app context, use default port
+            from config import Config
+            port = int(Config.PROTOCOL_808_PORT)
+            
+        logger.info(f"Initializing 808 Protocol server on port {port}")
         _server_instance = Protocol808Server(port=port)
     return _server_instance
 
 def start_protocol_server():
     """Start the 808 protocol server in the background"""
     server = get_server_instance()
-    server.start()
+    # Start in a new thread to avoid blocking
+    thread = threading.Thread(target=server.start)
+    thread.daemon = True
+    thread.start()
+    return thread
 
 def stop_protocol_server():
     """Stop the 808 protocol server"""
