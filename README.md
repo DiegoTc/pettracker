@@ -1,131 +1,268 @@
-# Pet Tracking System API
+# Pet Tracking System
 
-A comprehensive backend API for multi-platform pet tracking applications, supporting web, Android, and iOS clients.
+A comprehensive multiplatform pet tracking platform that supports Google authentication, device tracking via 808 protocol, and provides a robust backend API for cross-platform pet monitoring.
 
 ## Features
 
-- **User Authentication**: Secure login with Google OAuth
-- **Pet Management**: Add, update, view, and delete pets
-- **Device Management**: Register, configure, and assign tracking devices to pets
-- **Location Tracking**: Record and retrieve real-time pet locations
-- **Protocol Support**: Support for the 808 GPS protocol used by many tracking devices
+- **Google OAuth Authentication**: Secure user login and management
+- **Pet Management**: Create, update, view, and delete pets
+- **Device Management**: Register GPS trackers and assign them to pets
+- **Location Tracking**: Real-time tracking using the 808 protocol
+- **RESTful API**: Backend support for web, Android, and iOS clients
+- **Interactive Map**: Visualize pet locations in real-time
+- **Device Simulator**: Test without physical hardware
 
 ## System Architecture
 
-The system consists of:
+The system consists of several components:
 
-1. **RESTful API**: A Flask-based backend API for client applications
-2. **Database**: PostgreSQL for storing user, pet, device, and location data
-3. **Protocol Server**: A TCP server that listens for 808 protocol messages from tracking devices
+1. **Backend API**: Flask application providing RESTful endpoints
+2. **Protocol808 Service**: TCP server for communicating with GPS devices
+3. **Device Simulator**: Tool for simulating GPS device data
+4. **Web Frontend**: Simple interface for managing pets and devices
 
-## API Endpoints
+## Local Development Setup (Step-by-Step)
 
-### Authentication
+### Prerequisites
 
-- `POST /api/auth/login`: Initiate Google OAuth login
-- `GET /api/auth/callback`: OAuth callback endpoint
-- `GET /api/auth/user`: Get current user information
-- `GET /api/auth/logout`: Log out the current user
+- Python 3.10 or higher
+- PostgreSQL database
+- Google Cloud Platform account (for OAuth)
 
-### Pets
+### 1. Clone the Repository
 
-- `GET /api/pets`: Get all pets for the current user
-- `GET /api/pets/<pet_id>`: Get a specific pet
-- `POST /api/pets`: Create a new pet
-- `PUT /api/pets/<pet_id>`: Update a pet
-- `DELETE /api/pets/<pet_id>`: Delete a pet
+```bash
+git clone https://github.com/yourusername/pet-tracking-system.git
+cd pet-tracking-system
+```
 
-### Devices
+### 2. Create Virtual Environment and Install Dependencies
 
-- `GET /api/devices`: Get all devices for the current user
-- `GET /api/devices/<device_id>`: Get a specific device
-- `POST /api/devices`: Register a new device
-- `PUT /api/devices/<device_id>`: Update a device
-- `DELETE /api/devices/<device_id>`: Delete a device
-- `POST /api/devices/<device_id>/assign/<pet_id>`: Assign a device to a pet
-- `POST /api/devices/<device_id>/unassign`: Unassign a device from a pet
-- `POST /api/devices/ping/<device_identifier>`: Record a device ping
+```bash
+# Create virtual environment
+python -m venv venv
 
-### Locations
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 
-- `GET /api/locations/device/<device_id>`: Get location history for a device
-- `GET /api/locations/pet/<pet_id>`: Get location history for a pet
-- `GET /api/locations/latest/device/<device_id>`: Get the latest location for a device
-- `GET /api/locations/latest/pet/<pet_id>`: Get the latest location for a pet
-- `POST /api/locations/record`: Record a new location from a device
-- `GET /api/locations/all-pets-latest`: Get the latest location for all pets
+# Install all required packages
+pip install email-validator Flask Flask-Cors Flask-JWT-Extended Flask-Limiter Flask-Login Flask-SQLAlchemy gunicorn oauthlib psycopg2-binary requests SQLAlchemy python-dotenv
+```
+
+Required packages:
+- email-validator
+- Flask
+- Flask-Cors
+- Flask-JWT-Extended
+- Flask-Limiter
+- Flask-Login
+- Flask-SQLAlchemy
+- gunicorn
+- oauthlib
+- psycopg2-binary
+- requests
+- SQLAlchemy
+- python-dotenv
+
+### 3. Set Up PostgreSQL Database
+
+```bash
+# Create database
+createdb pet_tracker
+
+# Alternative with psql
+psql
+CREATE DATABASE pet_tracker;
+\q
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env` file in the project root:
+
+```
+# Database configuration
+DATABASE_URL=postgresql://username:password@localhost/pet_tracker
+
+# Google OAuth credentials (required for login)
+GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here
+
+# Session security
+SESSION_SECRET=generate_a_secure_random_key_here
+
+# 808 Protocol server port (optional)
+PROTOCOL_808_PORT=8080
+```
+
+### 5. Initialize the Database
+
+```bash
+# Run directly with:
+flask db upgrade
+
+# Or if that doesn't work, try with Python explicitly:
+python -c "from app import app, db; app.app_context().push(); db.create_all()"
+```
+
+### 6. Start the Application
+
+```bash
+# Using gunicorn (recommended for production-like environment)
+gunicorn --bind 0.0.0.0:5000 --reload main:app
+
+# Or run directly with Python
+python main.py
+```
+
+The application will be available at http://localhost:5000
+
+## Google OAuth Setup
+
+To enable Google authentication, you need to create OAuth credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" > "OAuth client ID"
+5. Select "Web application" as the application type
+6. Add your domain to the "Authorized JavaScript origins"
+   - For local development: `http://localhost:5000`
+7. Add the callback URL to "Authorized redirect URIs"
+   - For local development: `http://localhost:5000/api/auth/callback`
+8. Click "Create" and note your Client ID and Client Secret
+9. Update your `.env` file with these credentials
 
 ## Testing Without Physical Hardware
 
-The system includes tools for testing without physical tracking devices:
+### Option 1: Running the 808 Protocol Server and Device Simulator
 
-### 1. Location Simulation API
+For the most realistic testing experience, run the Protocol Server and Device Simulator:
 
-Use the simulation API endpoint to send location updates:
+1. **Start the application normally** (this will automatically start the 808 Protocol Server)
+
+2. **Register a device through the web interface**
+   - Go to http://localhost:5000 in your browser
+   - Login with Google
+   - Create a pet
+   - Register a device
+   - Note the device ID (shown in the device details)
+
+3. **Run the device simulator in a separate terminal**
 
 ```bash
+# Activate your virtual environment if needed
+source venv/bin/activate
+
+# Run the simulator
+python tools/device_simulator.py --device-id your_device_id_here --interval 5
+```
+
+Additional options:
+- `--duration 300`: Run for 5 minutes then exit
+- `--latitude 37.7749 --longitude -122.4194`: Set starting position
+- `--imei 123456789012345`: Set device IMEI (not required for testing)
+
+### Option 2: Using the API Test Tool
+
+For a quick demonstration of the API:
+
+```bash
+# Get a development token and run a simple test flow
+python tools/test_api.py --dev
+```
+
+This will:
+1. Create a test pet
+2. Register a device
+3. Assign the device to the pet
+4. Simulate location updates
+5. Retrieve and display the location history
+
+### Option 3: Manual API Testing with curl
+
+```bash
+# Get a development JWT token (only for testing)
+curl -X GET http://localhost:5000/api/auth/dev-token
+
+# Create a pet
+curl -X POST http://localhost:5000/api/pets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_jwt_token" \
+  -d '{
+    "name": "Buddy",
+    "pet_type": "Dog",
+    "breed": "Golden Retriever"
+  }'
+
 # Simulate a location update
 curl -X POST http://localhost:5000/api/locations/simulate \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_jwt_token" \
   -d '{
-    "device_id": "your-device-id",
+    "device_id": "your_device_id",
     "latitude": 37.7749,
     "longitude": -122.4194,
-    "altitude": 10,
-    "speed": 0.5,
-    "heading": 90,
     "battery_level": 95
   }'
 ```
 
-### 2. Device Simulator Tool
+## API Endpoints Reference
 
-The project includes a command-line device simulator that connects to the 808 protocol server:
+### Authentication
+- `GET /api/auth/login`: Initiate Google OAuth flow
+- `GET /api/auth/callback`: OAuth callback URL
+- `GET /api/auth/logout`: Log out current user
+- `GET /api/auth/user`: Get current user info
+- `GET /api/auth/check`: Check if user is authenticated
+- `GET /api/auth/dev-token`: [Development only] Get a JWT token for testing
 
-```bash
-# Run the simulator with a registered device
-python tools/device_simulator.py \
-  --device-id your-device-id \
-  --imei your-device-imei \
-  --interval 10
-```
+### Pets
+- `GET /api/pets`: List all pets for current user
+- `POST /api/pets`: Create a new pet
+- `GET /api/pets/<id>`: Get a specific pet
+- `PUT /api/pets/<id>`: Update a pet
+- `DELETE /api/pets/<id>`: Delete a pet
 
-Options:
-- `--device-id`: The device ID (must be registered in the system)
-- `--imei`: The IMEI number to use in messages
-- `--host`: Server hostname (default: localhost)
-- `--port`: Server port (default: 8080)
-- `--interval`: Seconds between location updates (default: 30)
-- `--duration`: Duration in seconds (default: run continuously)
+### Devices
+- `GET /api/devices`: List all devices for current user
+- `POST /api/devices`: Register a new device
+- `GET /api/devices/<id>`: Get a specific device
+- `PUT /api/devices/<id>`: Update a device
+- `DELETE /api/devices/<id>`: Delete a device
+- `POST /api/devices/<device_id>/assign/<pet_id>`: Assign device to pet
+- `POST /api/devices/<device_id>/unassign`: Unassign device from pet
+- `POST /api/devices/ping/<device_id>`: Record a device ping
 
-## Development Setup
+### Locations
+- `GET /api/locations/device/<device_id>`: Get location history for a device
+- `GET /api/locations/pet/<pet_id>`: Get location history for a pet
+- `GET /api/locations/device/<device_id>/latest`: Get latest location for a device
+- `GET /api/locations/pet/<pet_id>/latest`: Get latest location for a pet
+- `GET /api/locations/pets/latest`: Get latest location for all pets
+- `POST /api/locations/simulate`: Simulate a location update (for testing)
+- `POST /api/locations`: Record a new location from a device
 
-1. Clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set up the database: `flask db upgrade`
-4. Configure environment variables:
-   - `DATABASE_URL`: PostgreSQL connection string
-   - `GOOGLE_OAUTH_CLIENT_ID`: Google OAuth client ID
-   - `GOOGLE_OAUTH_CLIENT_SECRET`: Google OAuth client secret
-   - `SESSION_SECRET`: Secret key for session encryption
-5. Start the server: `python main.py`
+## Troubleshooting
 
-## Testing the API
+### Database Issues
+- Ensure PostgreSQL is running: `pg_isready`
+- Check connection string in `.env`
+- Verify tables exist: `psql -d pet_tracker -c "\dt"`
 
-You can test the API using curl or any API testing tool like Postman:
+### Authentication Issues
+- Verify Google OAuth credentials
+- Check that redirect URLs match exactly
+- For testing, use the development token endpoint
 
-```bash
-# Get all pets
-curl -X GET http://localhost:5000/api/pets \
-  -H "Authorization: Bearer your-jwt-token"
+### 808 Protocol Server Issues
+- Check if server is running: `ps aux | grep protocol_server`
+- Ensure port 8080 is not in use: `netstat -tuln | grep 8080`
+- Run standalone server: `python tools/start_protocol_server.py`
 
-# Create a new pet
-curl -X POST http://localhost:5000/api/pets \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-jwt-token" \
-  -d '{
-    "name": "Fluffy",
-    "pet_type": "Dog",
-    "breed": "Golden Retriever"
-  }'
-```
+## License
+
+[MIT License](LICENSE)
