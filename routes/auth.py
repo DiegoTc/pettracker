@@ -205,3 +205,32 @@ def check_auth():
         })
     else:
         return jsonify({"authenticated": False})
+
+# Development/testing only endpoint - should be removed in production
+@auth_bp.route('/dev_token', methods=['GET'])
+def get_dev_token():
+    """Get a development token for testing - NOT FOR PRODUCTION USE"""
+    # Creating a token for testing purposes in any environment
+    # Create a test user if it doesn't exist
+    test_email = "test@example.com"
+    test_user = User.query.filter_by(email=test_email).first()
+    
+    if not test_user:
+        test_user = User(
+            email=test_email,
+            username="testuser",
+            first_name="Test",
+            last_name="User"
+        )
+        db.session.add(test_user)
+        db.session.commit()
+        logger.info(f"Created test user: {test_email}")
+    
+    # Create JWT token for the test user - make sure to convert id to string
+    access_token = create_access_token(identity=str(test_user.id))
+    
+    return jsonify({
+        "message": "Development token generated",
+        "user_id": test_user.id,
+        "access_token": access_token
+    })

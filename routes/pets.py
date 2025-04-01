@@ -16,6 +16,9 @@ def get_pets():
     """Get all pets belonging to the current user"""
     user_id = get_jwt_identity()
     
+    # Convert user_id to int since JWT identity is stored as string
+    user_id = int(user_id)
+    
     # Get optional query parameters for filtering
     pet_type = request.args.get('type')
     
@@ -34,7 +37,7 @@ def get_pets():
 @jwt_required()
 def get_pet(pet_id):
     """Get a specific pet by id"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
     if not pet:
@@ -47,7 +50,7 @@ def get_pet(pet_id):
 @limiter.limit("20/minute")
 def create_pet():
     """Create a new pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Get request data
     data = request.get_json()
@@ -94,7 +97,7 @@ def create_pet():
 @jwt_required()
 def update_pet(pet_id):
     """Update an existing pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the pet
     pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
@@ -147,7 +150,7 @@ def update_pet(pet_id):
 @jwt_required()
 def delete_pet(pet_id):
     """Delete a pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the pet
     pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()

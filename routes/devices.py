@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @limiter.limit("60/minute")
 def get_devices():
     """Get all devices belonging to the current user"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Get optional query parameters for filtering
     pet_id = request.args.get('pet_id', type=int)
@@ -38,7 +38,7 @@ def get_devices():
 @jwt_required()
 def get_device(device_id):
     """Get a specific device by id"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
     if not device:
@@ -51,7 +51,7 @@ def get_device(device_id):
 @limiter.limit("10/minute")
 def create_device():
     """Register a new device"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Get request data
     data = request.get_json()
@@ -106,7 +106,7 @@ def create_device():
 @jwt_required()
 def update_device(device_id):
     """Update an existing device"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
@@ -163,7 +163,7 @@ def update_device(device_id):
 @jwt_required()
 def delete_device(device_id):
     """Delete a device"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
@@ -216,7 +216,7 @@ def device_ping(device_identifier):
 @jwt_required()
 def assign_to_pet(device_id, pet_id):
     """Assign a device to a pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
@@ -247,7 +247,7 @@ def assign_to_pet(device_id, pet_id):
 @jwt_required()
 def unassign_from_pet(device_id):
     """Unassign a device from a pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()

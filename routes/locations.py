@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @limiter.limit("120/minute")
 def get_device_locations(device_id):
     """Get location history for a specific device"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
@@ -52,7 +52,7 @@ def get_device_locations(device_id):
 @limiter.limit("120/minute")
 def get_pet_locations(pet_id):
     """Get location history for a specific pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the pet
     pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
@@ -97,7 +97,7 @@ def get_pet_locations(pet_id):
 @jwt_required()
 def get_device_latest_location(device_id):
     """Get the latest location for a specific device"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
@@ -119,7 +119,7 @@ def get_device_latest_location(device_id):
 @jwt_required()
 def get_pet_latest_location(pet_id):
     """Get the latest location for a specific pet"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Find the pet
     pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
@@ -208,7 +208,7 @@ def record_location():
 @jwt_required()
 def get_all_pets_latest_locations():
     """Get the latest location for all pets belonging to the user"""
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Get all pets belonging to the user
     pets = Pet.query.filter_by(user_id=user_id).all()
