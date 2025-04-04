@@ -207,7 +207,7 @@ def check_auth():
         return jsonify({"authenticated": False})
 
 # Development/testing only endpoint - should be removed in production
-@auth_bp.route('/dev_token', methods=['GET'])
+@auth_bp.route('/dev-token', methods=['GET'])
 def get_dev_token():
     """Get a development token for testing - NOT FOR PRODUCTION USE"""
     # Creating a token for testing purposes in any environment
@@ -232,5 +232,6 @@ def get_dev_token():
     return jsonify({
         "message": "Development token generated",
         "user_id": test_user.id,
-        "access_token": access_token
+        "access_token": access_token,
+        "token": access_token  # Added for compatibility with test_api.py
     })

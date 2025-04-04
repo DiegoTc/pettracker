@@ -209,6 +209,7 @@ def get_dev_token():
     try:
         response = requests.get("http://localhost:5000/api/auth/dev-token")
         if response.status_code == 200:
+            # Using token field for compatibility (added in the API)
             return response.json().get("token")
         else:
             logger.error(f"Failed to get dev token: {response.status_code} - {response.text}")

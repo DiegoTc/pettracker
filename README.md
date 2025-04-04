@@ -166,9 +166,27 @@ Additional options:
 - `--latitude 37.7749 --longitude -122.4194`: Set starting position
 - `--imei 123456789012345`: Set device IMEI (not required for testing)
 
+## Local Testing Without Google OAuth
+
+During development, you may want to test the API without setting up Google OAuth credentials. The system provides a development token endpoint for this purpose.
+
+### Option 1: Using the Development Token Endpoint
+
+The application includes a special endpoint that generates a JWT token for testing:
+
+```bash
+# Get a development token
+curl -X GET http://localhost:5000/api/auth/dev-token
+```
+
+This will:
+1. Create a test user with email "test@example.com" if it doesn't exist
+2. Generate a JWT token for this user
+3. Return the token that you can use to authenticate API requests
+
 ### Option 2: Using the API Test Tool
 
-For a quick demonstration of the API:
+For a quick demonstration of the API with automatic authentication:
 
 ```bash
 # Get a development token and run a simple test flow
@@ -176,34 +194,45 @@ python tools/test_api.py --dev
 ```
 
 This will:
-1. Create a test pet
-2. Register a device
-3. Assign the device to the pet
-4. Simulate location updates
-5. Retrieve and display the location history
+1. Automatically get a development token
+2. Create a test pet
+3. Register a device
+4. Assign the device to the pet
+5. Simulate location updates
+6. Retrieve and display the location history
 
 ### Option 3: Manual API Testing with curl
 
 ```bash
-# Get a development JWT token (only for testing)
-curl -X GET http://localhost:5000/api/auth/dev-token
+# Step 1: Get a development JWT token
+TOKEN=$(curl -s -X GET http://localhost:5000/api/auth/dev-token | jq -r '.token')
 
-# Create a pet
+# Step 2: Use the token to create a pet
 curl -X POST http://localhost:5000/api/pets \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your_jwt_token" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "name": "Buddy",
     "pet_type": "Dog",
     "breed": "Golden Retriever"
   }'
 
-# Simulate a location update
+# Step 3: Create a device
+DEVICE_RESPONSE=$(curl -s -X POST http://localhost:5000/api/devices \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "name": "GPS Collar",
+    "device_type": "Tracker"
+  }')
+DEVICE_ID=$(echo $DEVICE_RESPONSE | jq -r '.device_id')
+
+# Step 4: Simulate a location update
 curl -X POST http://localhost:5000/api/locations/simulate \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your_jwt_token" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
-    "device_id": "your_device_id",
+    "device_id": "'$DEVICE_ID'",
     "latitude": 37.7749,
     "longitude": -122.4194,
     "battery_level": 95
@@ -257,6 +286,37 @@ curl -X POST http://localhost:5000/api/locations/simulate \
 - Verify Google OAuth credentials
 - Check that redirect URLs match exactly
 - For testing, use the development token endpoint
+
+### Testing the get_user_info() Method
+If you're testing the `get_user_info()` method in `test_api.py`, make sure the Authorization header is set correctly:
+
+```python
+def get_user_info(self):
+    """Get current user information"""
+    # The session should already have the Authorization header set in __init__
+    # But you can also manually ensure it's set:
+    # headers = {"Authorization": f"Bearer {self.jwt_token}"}
+    response = self.session.get(f"{self.base_url}/auth/user")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        logger.error(f"Failed to get user info: {response.status_code} - {response.text}")
+        return None
+```
+
+When initializing the APITester class, make sure to pass the JWT token:
+
+```python
+# Get the development token
+token_response = requests.get("http://localhost:5000/api/auth/dev-token").json()
+jwt_token = token_response.get("token")
+
+# Create API tester with the token
+tester = APITester(base_url="http://localhost:5000/api", jwt_token=jwt_token)
+
+# Now you can get user info
+user_info = tester.get_user_info()
+```
 
 ### 808 Protocol Server Issues
 - Check if server is running: `ps aux | grep protocol_server`
