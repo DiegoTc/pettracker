@@ -52,17 +52,27 @@ def login():
         authorization_endpoint = google_provider_cfg["authorization_endpoint"]
         
         # Build redirect URL for Google login
-        # Use https for production and http for local development
+        # Get the exact redirect URL to use in production and development
         is_local = "localhost" in request.host or "127.0.0.1" in request.host
         
+        # Print domain for debugging
+        logger.info(f"Current host: {request.host}, Is local: {is_local}")
+        
+        # For development, the URL should always exactly match what's in Google Console
+        # Instead of programmatically building it, let's use a consistent URL
         if is_local:
-            # For local development
-            callback_url = request.base_url.replace("/login", "/callback")
+            # This should exactly match what's in your Google OAuth settings
+            callback_url = "http://localhost:5000/api/auth/callback"
         else:
-            # For production
-            callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
+            # For production environment (Replit)
+            replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+            if replit_domain:
+                callback_url = f"https://{replit_domain}/api/auth/callback"
+            else:
+                # Fallback to generated URL for other production environments
+                callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
             
-        logger.debug(f"Using callback URL: {callback_url}")
+        logger.info(f"Using callback URL: {callback_url}")
         
         request_uri = client.prepare_request_uri(
             authorization_endpoint,
@@ -97,16 +107,25 @@ def callback():
         # Prepare and send token request
         is_local = "localhost" in request.host or "127.0.0.1" in request.host
         
+        # Print domain for debugging
+        logger.info(f"Callback - Current host: {request.host}, Is local: {is_local}")
+        
         if is_local:
-            # For local development
+            # For local development, use the exact same URL as in login method
             auth_response = request.url
-            redirect_url = request.base_url
+            redirect_url = "http://localhost:5000/api/auth/callback"
         else:
             # For production
             auth_response = request.url.replace("http://", "https://")
-            redirect_url = request.base_url.replace("http://", "https://")
             
-        logger.debug(f"Using redirect URL for token request: {redirect_url}")
+            # For Replit environments
+            replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+            if replit_domain:
+                redirect_url = f"https://{replit_domain}/api/auth/callback"
+            else:
+                redirect_url = request.base_url.replace("http://", "https://")
+            
+        logger.info(f"Callback - Using redirect URL for token request: {redirect_url}")
         
         token_url, headers, body = client.prepare_token_request(
             token_endpoint,
