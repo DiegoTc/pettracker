@@ -52,7 +52,18 @@ def login():
         authorization_endpoint = google_provider_cfg["authorization_endpoint"]
         
         # Build redirect URL for Google login
-        callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
+        # Use https for production and http for local development
+        is_local = "localhost" in request.host or "127.0.0.1" in request.host
+        
+        if is_local:
+            # For local development
+            callback_url = request.base_url.replace("/login", "/callback")
+        else:
+            # For production
+            callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
+            
+        logger.debug(f"Using callback URL: {callback_url}")
+        
         request_uri = client.prepare_request_uri(
             authorization_endpoint,
             redirect_uri=callback_url,
@@ -84,10 +95,23 @@ def callback():
         token_endpoint = google_provider_cfg["token_endpoint"]
         
         # Prepare and send token request
+        is_local = "localhost" in request.host or "127.0.0.1" in request.host
+        
+        if is_local:
+            # For local development
+            auth_response = request.url
+            redirect_url = request.base_url
+        else:
+            # For production
+            auth_response = request.url.replace("http://", "https://")
+            redirect_url = request.base_url.replace("http://", "https://")
+            
+        logger.debug(f"Using redirect URL for token request: {redirect_url}")
+        
         token_url, headers, body = client.prepare_token_request(
             token_endpoint,
-            authorization_response=request.url.replace("http://", "https://"),
-            redirect_url=request.base_url.replace("http://", "https://"),
+            authorization_response=auth_response,
+            redirect_url=redirect_url,
             code=code,
         )
         
