@@ -7,6 +7,10 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Create base class for SQLAlchemy models
 class Base(DeclarativeBase):

@@ -1,9 +1,11 @@
-from app import app
 import os
 import logging
-from services.protocol808 import start_protocol_server, get_server_instance
 import threading
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Setup logging early
 logging.basicConfig(
@@ -11,6 +13,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Import app after loading environment variables
+from app import app
+from services.protocol808 import start_protocol_server, get_server_instance
 
 def start_protocol_server_with_retry():
     """Start the 808 protocol server with retry logic in case of initial failure"""
