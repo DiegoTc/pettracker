@@ -130,6 +130,11 @@ class Location(db.Model):
     battery_level = db.Column(db.Float)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Pet-specific data fields from protocol extension
+    activity_level = db.Column(db.Float)  # 0-100% representing pet's activity
+    health_flags = db.Column(db.Integer)  # Bit flags for various health indicators
+    temperature = db.Column(db.Float)     # Pet body temperature in Celsius
+    
     # Foreign Keys
     device_id = db.Column(db.Integer, db.ForeignKey('device.id'), nullable=False)
     
@@ -138,7 +143,7 @@ class Location(db.Model):
     
     def to_dict(self):
         """Convert object to dictionary"""
-        return {
+        data = {
             'id': self.id,
             'latitude': self.latitude,
             'longitude': self.longitude,
@@ -151,3 +156,22 @@ class Location(db.Model):
             'device_id': self.device_id,
             'created_at': self.created_at.isoformat()
         }
+        
+        # Add pet-specific data if available
+        if self.activity_level is not None:
+            data['activity_level'] = self.activity_level
+            
+        if self.health_flags is not None:
+            # Decode health flags
+            flags = {
+                'temperature_warning': bool(self.health_flags & 0x01),
+                'inactivity_warning': bool(self.health_flags & 0x02),
+                'abnormal_movement': bool(self.health_flags & 0x04),
+                'potential_distress': bool(self.health_flags & 0x08)
+            }
+            data['health_flags'] = flags
+            
+        if self.temperature is not None:
+            data['temperature'] = self.temperature
+            
+        return data

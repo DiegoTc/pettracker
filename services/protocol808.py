@@ -629,14 +629,12 @@ class JT808Parser:
             
             # Process additional data fields if present
             remaining_data = body[min_size:]
-            while remaining_data:
-                if len(remaining_data) < 2:
-                    break  # Not enough data for ID and length
-                    
+            while len(remaining_data) >= 2:  # Need at least ID and length bytes
                 additional_id = remaining_data[0]
                 additional_length = remaining_data[1]
                 
                 if len(remaining_data) < 2 + additional_length:
+                    logger.warning(f"JT808: Additional data field too short. ID: {additional_id}, Length: {additional_length}, Available: {len(remaining_data)-2}")
                     break  # Not enough data for the content
                     
                 additional_content = remaining_data[2:2+additional_length]
@@ -671,6 +669,22 @@ class JT808Parser:
                     if additional_length == 1:
                         battery_level = struct.unpack('>B', additional_content)[0]  # In percentage
                         additional_data['battery_level'] = battery_level
+
+                # Pet-specific additional fields (based on JT808-V1.41 documentation)
+                elif additional_id == 0x31:  # Pet activity level 
+                    if additional_length == 1:
+                        activity_level = struct.unpack('>B', additional_content)[0]  # 0-100%
+                        additional_data['activity_level'] = activity_level
+                
+                elif additional_id == 0x32:  # Pet health status flags
+                    if additional_length == 2:
+                        health_flags = struct.unpack('>H', additional_content)[0]
+                        additional_data['health_flags'] = health_flags
+                
+                elif additional_id == 0x33:  # Temperature (for pet health monitoring)
+                    if additional_length == 2:
+                        temperature = struct.unpack('>h', additional_content)[0] / 10.0  # In Celsius
+                        additional_data['temperature'] = temperature
                 
                 # Move to next additional data field
                 remaining_data = remaining_data[2+additional_length:]

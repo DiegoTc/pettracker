@@ -32,6 +32,11 @@ JT808 messages follow this general format:
 3. Location Information Report (0x0200):
    - Contains GPS coordinates, speed, direction, etc.
    - Server responds with a general response (0x8001)
+   - Additional data fields for pet devices:
+     - 0x30: Battery level (percentage)
+     - 0x31: Pet activity level (percentage)
+     - 0x32: Pet health status flags
+     - 0x33: Temperature (for pet health monitoring, in Celsius)
 
 4. Heartbeat (0x0002):
    - Simple keep-alive message
@@ -117,3 +122,31 @@ Our system maintains compatibility by:
 4. Storing location data in a unified database schema
 
 This allows devices using either protocol to be managed through the same interface.
+
+## Pet Tracking Specific Protocol Extensions
+
+Our implementation includes specific extensions for pet tracking devices:
+
+1. Additional Data Fields:
+   - 0x30: Battery level (percentage)
+   - 0x31: Pet activity level (percentage, indicating movement/exercise)
+   - 0x32: Pet health status flags (bit-encoded status information)
+   - 0x33: Temperature (for health monitoring, in Celsius × 10)
+
+2. Status Interpretation:
+   - Activity level classifies pet behavior as:
+     - 0-25%: Resting/sleeping
+     - 26-50%: Light activity
+     - 51-75%: Moderate activity
+     - 76-100%: High activity
+   
+   - Health status flags (when supported by device):
+     - Bit 0: Temperature warning
+     - Bit 1: Inactivity warning
+     - Bit 2: Abnormal movement pattern
+     - Bit 3: Potential distress
+
+3. Implementation Notes:
+   - Not all pet tracking devices support these additional data fields
+   - Devices may implement a subset of the fields based on capabilities
+   - The server handles all data variations gracefully
