@@ -186,8 +186,8 @@ def callback():
         # Login the user
         login_user(user)
         
-        # Create JWT token
-        access_token = create_access_token(identity=user.id)
+        # Create JWT token - Convert user.id to string to prevent "Subject must be a string" error
+        access_token = create_access_token(identity=str(user.id))
         
         return jsonify({
             "message": "Login successful",
@@ -218,6 +218,10 @@ def logout():
 def get_user():
     """Get current user information"""
     user_id = get_jwt_identity()
+    # Convert to int if needed, since we stored it as a string in the token
+    if isinstance(user_id, str) and user_id.isdigit():
+        user_id = int(user_id)
+    
     user = User.query.get(user_id)
     
     if not user:
