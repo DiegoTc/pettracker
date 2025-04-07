@@ -279,35 +279,275 @@ class JT808Parser:
             decoded_body = None
             location_data = None
             
-            if message_id == 0x0200:  # Location Information Report
-                decoded_body = JT808Parser._decode_location_information_report(body)
-                location_data = decoded_body  # For consistency with Protocol808Parser return format
+            if message_id == 0x0001:  # Terminal General Response
+                decoded_body = JT808Parser._decode_terminal_general_response(body)
+            elif message_id == 0x8001:  # Platform General Response
+                decoded_body = JT808Parser._decode_platform_general_response(body)
             elif message_id == 0x0002:  # Heartbeat
                 decoded_body = "Heartbeat"  # Empty body
+            elif message_id == 0x0100:  # Terminal Registration
+                decoded_body = JT808Parser._decode_terminal_registration(body, body_length)
+            elif message_id == 0x8100:  # Terminal Registration Response
+                decoded_body = JT808Parser._decode_terminal_registration_response(body)
+            elif message_id == 0x0003:  # Terminal Logout
+                decoded_body = "Terminal Logout"  # Simple message
+            elif message_id == 0x0102:  # Terminal Authentication
+                decoded_body = JT808Parser._decode_terminal_authentication(body)
+            elif message_id == 0x8103:  # Set Terminal Parameters
+                decoded_body = JT808Parser._decode_set_terminal_parameters(body)
+            elif message_id == 0x0200:  # Location Information Report
+                decoded_body = JT808Parser._decode_location_information_report(body)
+                location_data = decoded_body  # For consistency with Protocol808Parser return format
+            elif message_id == 0x8201:  # Location Information Query Response
+                decoded_body = JT808Parser._decode_location_information_query_response(body)
+                location_data = decoded_body  # Might contain location data
             else:
                 decoded_body = f"Unsupported message type: 0x{message_id:04X}"
                 logger.info(f"Received unsupported JT808 message type: 0x{message_id:04X}")
 
             # 7. Construct and return the full message in a format compatible with our existing system
-            return {
+            response = {
                 "device_id": phone_number,  # Use phone number as device ID
                 "raw_message": binascii.hexlify(data).decode('ascii'),  # For debugging
                 "message_type": JT808Parser.MESSAGE_TYPES.get(message_id, f"Unknown (0x{message_id:04X})"),
                 "timestamp": datetime.utcnow(),
-                "location": location_data,
                 "status": {},  # Will be populated if status data is available
                 "jt808_data": {  # Store the original JT808 message details
                     "message_id": message_id,
                     "serial_number": serial_number,
                     "is_subpackage": is_subpackage,
                     "total_packages": total_packages,
-                    "package_number": package_number
+                    "package_number": package_number,
+                    "decoded_body": decoded_body
                 }
             }
+            
+            # Add location data if available
+            if location_data:
+                response["location"] = location_data
+                
+            return response
 
         except Exception as e:
             logger.error(f"Error parsing JT808 message: {str(e)}", exc_info=True)
             return None
+    
+    @staticmethod
+    def _decode_terminal_general_response(body):
+        """Decodes a terminal general response (0x0001) message body."""
+        try:
+            format_string = '>HHB'
+            unpacked_data = struct.unpack(format_string, body)
+            response_serial_number = unpacked_data[0]
+            reply_id = unpacked_data[1]
+            result = unpacked_data[2]
+
+            return {
+                'response_serial_number': response_serial_number,
+                'reply_id': reply_id,
+                'result': result
+            }
+        except Exception as e:
+            logger.error(f"Error decoding terminal general response: {str(e)}", exc_info=True)
+            return None
+
+    @staticmethod
+    def _decode_platform_general_response(body):
+        """Decodes a platform general response (0x8001) message."""
+        try:
+            # Ensure we have at least the minimum required bytes
+            if len(body) < 4:
+                return {"error": "Message body too short"}
+                
+            format_string = '>HHB'
+            unpacked_data = struct.unpack(format_string, body[:5])
+            response_serial_number = unpacked_data[0]
+            reply_id = unpacked_data[1]
+            result = unpacked_data[2]
+            
+            # Check if there's an additional alarm processing byte
+            alarm_process_confirmation = None
+            if len(body) > 5:
+                alarm_process_confirmation = body[5]
+
+            decoded = {
+                'response_serial_number': response_serial_number,
+                'reply_id': reply_id,
+                'result': result
+            }
+            
+            if alarm_process_confirmation is not None:
+                decoded['alarm_process_confirmation'] = alarm_process_confirmation
+                
+            return decoded
+        except Exception as e:
+            logger.error(f"Error decoding platform general response: {str(e)}", exc_info=True)
+            return None
+
+    @staticmethod
+    def _decode_terminal_registration(body, body_length):
+        """Decodes a terminal registration (0x0100) message body."""
+        try:
+            # According to JT808 0x0100 format:
+            #   2 bytes  provincial_id
+            #   2 bytes  city_id
+            #   5 bytes  manufacturer_id
+            #   20 bytes terminal_model (8+ bytes in some implementations)
+            #   7 bytes  terminal_id
+            #   1 byte   car_color (plate color)
+            #   variable plate_number in GBK encoding
+            
+            # Ensure we have at least the minimum required bytes
+            min_length = 37  # 2+2+5+20+7+1
+            if len(body) < min_length:
+                return {"error": "Message body too short"}
+            
+            # Extract fixed-size fields
+            provincial_id = struct.unpack('>H', body[0:2])[0]
+            city_id = struct.unpack('>H', body[2:4])[0]
+            manufacturer_id = body[4:9].decode('ascii', errors='ignore').strip()
+            terminal_model = body[9:29].decode('ascii', errors='ignore').strip()
+            terminal_id = body[29:36].decode('ascii', errors='ignore').strip()
+            car_color = body[36]
+            
+            # Extract plate number if present
+            plate_number = ""
+            if len(body) > min_length:
+                try:
+                    plate_number = body[37:].decode('gbk', errors='ignore').strip()
+                except:
+                    # Fall back to ascii if GBK decoding fails
+                    plate_number = body[37:].decode('ascii', errors='ignore').strip()
+            
+            return {
+                'provincial_id': provincial_id,
+                'city_id': city_id,
+                'manufacturer_id': manufacturer_id,
+                'terminal_model': terminal_model,
+                'terminal_id': terminal_id,
+                'car_color': car_color,
+                'plate_number': plate_number
+            }
+        except Exception as e:
+            logger.error(f"Error decoding terminal registration: {str(e)}", exc_info=True)
+            return None
+
+    @staticmethod
+    def _decode_terminal_registration_response(body):
+        """Decodes a terminal registration response (0x8100) message body."""
+        try:
+            # Ensure we have at least the minimum required bytes
+            if len(body) < 3:
+                return {"error": "Message body too short"}
+                
+            response_serial_number = struct.unpack('>H', body[0:2])[0]
+            result = body[2]
+            
+            # Authentication code is present only for successful registration (result=0)
+            authentication_code = ""
+            if result == 0 and len(body) > 3:
+                authentication_code = body[3:].decode('ascii', errors='ignore').strip()
+            
+            return {
+                'response_serial_number': response_serial_number,
+                'result': result,
+                'authentication_code': authentication_code
+            }
+        except Exception as e:
+            logger.error(f"Error decoding terminal registration response: {str(e)}", exc_info=True)
+            return None
+
+    @staticmethod
+    def _decode_terminal_authentication(body):
+        """Decodes a terminal authentication (0x0102) message."""
+        try:
+            # The body contains just the authentication code as a string
+            authentication_code = body.decode('ascii', errors='ignore').strip()
+            
+            return {
+                'authentication_code': authentication_code
+            }
+        except Exception as e:
+            logger.error(f"Error decoding terminal authentication: {str(e)}", exc_info=True)
+            return None
+
+    @staticmethod
+    def _decode_set_terminal_parameters(body):
+        """Decodes a set terminal parameters (0x8103) message."""
+        try:
+            if len(body) < 1:
+                return {"error": "Message body too short"}
+                
+            # First byte is the number of parameters
+            num_params = body[0]
+            params = []
+            
+            # Parse each parameter (ID, length, value)
+            i = 1
+            while i < len(body):
+                if i + 5 > len(body):  # Need at least 5 bytes (4 for ID, 1 for length)
+                    break
+                    
+                param_id = struct.unpack('>I', body[i:i+4])[0]
+                param_len = body[i+4]
+                
+                if i + 5 + param_len > len(body):  # Check if we have enough data for value
+                    break
+                    
+                param_value = body[i+5:i+5+param_len]
+
+                # Decode parameter value based on known parameter IDs
+                decoded_value = JT808Parser._decode_parameter_value(param_id, param_value)
+                
+                params.append({
+                    'param_id': param_id,
+                    'param_value': decoded_value
+                })
+                
+                i += 5 + param_len
+            
+            return {
+                'num_params': num_params,
+                'params': params
+            }
+        except Exception as e:
+            logger.error(f"Error decoding set terminal parameters: {str(e)}", exc_info=True)
+            return None
+    
+    @staticmethod
+    def _decode_parameter_value(param_id, param_value):
+        """Decode parameter value based on param_id. Helper for _decode_set_terminal_parameters."""
+        try:
+            # DWORD parameters
+            if param_id in [0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007]:
+                if len(param_value) == 4:
+                    return struct.unpack('>I', param_value)[0]
+            
+            # String parameters
+            elif param_id in [0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016]:
+                return param_value.decode('ascii', errors='ignore').strip()
+            
+            # BYTE parameters
+            elif param_id in [0x0020, 0x0021, 0x0022, 0x0027, 0x0028, 0x0029]:
+                if len(param_value) == 1:
+                    return struct.unpack('>B', param_value)[0]
+            
+            # WORD parameters
+            elif param_id in [0x0030, 0x0031, 0x0032]:
+                if len(param_value) == 2:
+                    return struct.unpack('>H', param_value)[0]
+            
+            # Specialized parameters for pet tracking devices
+            elif param_id in [0xF140, 0xF141, 0xF142]:  # Example custom parameters
+                if len(param_value) == 1:
+                    return struct.unpack('>B', param_value)[0]
+            
+            # Default: return hex string for unrecognized parameters
+            return binascii.hexlify(param_value).decode('ascii')
+            
+        except Exception as e:
+            logger.error(f"Error decoding parameter value: {str(e)}", exc_info=True)
+            return binascii.hexlify(param_value).decode('ascii')
     
     @staticmethod
     def _decode_location_information_report(body):
@@ -336,14 +576,7 @@ class JT808Parser:
             time_bcd = main_data[7]  # BCD encoded time (YYMMDDhhmmss)
             
             # Convert BCD time to datetime
-            time_hex = binascii.hexlify(time_bcd).decode('ascii')
-            year = 2000 + int(time_hex[0:2])
-            month = int(time_hex[2:4])
-            day = int(time_hex[4:6])
-            hour = int(time_hex[6:8])
-            minute = int(time_hex[8:10])
-            second = int(time_hex[10:12])
-            timestamp = datetime(year, month, day, hour, minute, second)
+            timestamp = JT808Parser._bcd_to_datetime(time_bcd)
             
             # Check validity based on status bit 1 (0=invalid, 1=valid)
             valid = bool((status >> 1) & 0x01)
@@ -426,6 +659,73 @@ class JT808Parser:
             return None
     
     @staticmethod
+    def _decode_location_information_query_response(body):
+        """Decodes a location information query response (0x8201) message body."""
+        try:
+            # For 0x8201, the first 2 bytes are the response serial number,
+            # followed by a standard 0x0200 location report structure
+            if len(body) < 2:
+                return {"error": "Message body too short"}
+                
+            response_serial_number = struct.unpack('>H', body[0:2])[0]
+            
+            # The rest is a standard location information report
+            location_data = None
+            if len(body) > 2:
+                location_data = JT808Parser._decode_location_information_report(body[2:])
+            
+            result = {
+                'response_serial_number': response_serial_number
+            }
+            
+            if location_data:
+                result.update(location_data)
+                
+            return result
+        except Exception as e:
+            logger.error(f"Error decoding location information query response: {str(e)}", exc_info=True)
+            return None
+    
+    @staticmethod
+    def _bcd_to_datetime(bcd_data):
+        """
+        Converts BCD-encoded time to a datetime object.
+        
+        Args:
+            bcd_data: 6 bytes of BCD-encoded date/time (YYMMDDhhmmss).
+            
+        Returns:
+            A datetime object, or current time on error
+        """
+        try:
+            time_hex = binascii.hexlify(bcd_data).decode('ascii')
+            year = 2000 + int(time_hex[0:2])
+            month = int(time_hex[2:4])
+            day = int(time_hex[4:6])
+            hour = int(time_hex[6:8])
+            minute = int(time_hex[8:10])
+            second = int(time_hex[10:12])
+            
+            # Validate ranges to avoid datetime exceptions
+            if not (2000 <= year <= 2099):
+                year = datetime.utcnow().year
+            if not (1 <= month <= 12):
+                month = 1
+            if not (1 <= day <= 31):
+                day = 1
+            if not (0 <= hour <= 23):
+                hour = 0
+            if not (0 <= minute <= 59):
+                minute = 0
+            if not (0 <= second <= 59):
+                second = 0
+                
+            return datetime(year, month, day, hour, minute, second)
+        except Exception as e:
+            logger.error(f"Error converting BCD to datetime: {str(e)}", exc_info=True)
+            return datetime.utcnow()  # Return current time as fallback
+    
+    @staticmethod
     def create_response(phone_number, message_id, serial_number, result=0):
         """
         Create a general response message in JT808 protocol format (0x8001)
@@ -502,6 +802,89 @@ class JT808Parser:
             
         except Exception as e:
             logger.error(f"Error creating JT808 response: {str(e)}", exc_info=True)
+            return None
+            
+    @staticmethod
+    def create_registration_response(phone_number, serial_number, result=0, auth_code=""):
+        """
+        Create a terminal registration response message (0x8100)
+        
+        Args:
+            phone_number: The phone number (device ID) to respond to
+            serial_number: The serial number of the message being responded to
+            result: Result code (0=success, 1=failure, 2=already registered, etc.)
+            auth_code: Authentication code string (only needed for successful registration)
+            
+        Returns:
+            Bytes containing the encoded response message
+        """
+        try:
+            # 1. Prepare response body (serial number, result, auth code if needed)
+            if result == 0 and auth_code:  # Success, include auth code
+                auth_bytes = auth_code.encode('ascii')
+                body = struct.pack('>HB', serial_number, result) + auth_bytes
+            else:  # Failure or no auth code needed
+                body = struct.pack('>HB', serial_number, result)
+                
+            body_length = len(body)
+            
+            # 2. Prepare header
+            msg_id = 0x8100  # Terminal registration response
+            msg_attributes = body_length & 0x1FFF  # Lower 13 bits for body length
+            
+            # Format phone number as bytes
+            if isinstance(phone_number, str):
+                phone_bytes = phone_number.encode('ascii')
+                # Ensure it's exactly 6 bytes
+                if len(phone_bytes) < 6:
+                    phone_bytes = phone_bytes.ljust(6, b'\x00')
+                elif len(phone_bytes) > 6:
+                    phone_bytes = phone_bytes[:6]
+            else:
+                phone_bytes = phone_number
+                if len(phone_bytes) < 6:
+                    phone_bytes = phone_bytes.ljust(6, b'\x00')
+                elif len(phone_bytes) > 6:
+                    phone_bytes = phone_bytes[:6]
+            
+            # Use a new serial for our response
+            resp_serial = serial_number
+            
+            header = struct.pack('>HH6sH', msg_id, msg_attributes, phone_bytes, resp_serial)
+            
+            # 3. Calculate checksum
+            checksum = 0
+            for b in header + body:
+                checksum ^= b
+            
+            # 4. Assemble full message
+            message = bytearray()
+            message.append(0x7e)  # Start flag
+            message.extend(header)
+            message.extend(body)
+            message.append(checksum)
+            message.append(0x7e)  # End flag
+            
+            # 5. Escape special bytes
+            escaped_message = bytearray()
+            for b in message[1:-1]:  # Skip start/end flags
+                if b == 0x7e:
+                    escaped_message.extend([0x7d, 0x02])
+                elif b == 0x7d:
+                    escaped_message.extend([0x7d, 0x01])
+                else:
+                    escaped_message.append(b)
+            
+            # Add back start/end flags
+            final_message = bytearray()
+            final_message.append(0x7e)
+            final_message.extend(escaped_message)
+            final_message.append(0x7e)
+            
+            return bytes(final_message)
+            
+        except Exception as e:
+            logger.error(f"Error creating JT808 registration response: {str(e)}", exc_info=True)
             return None
 
 
@@ -615,11 +998,49 @@ class Protocol808Server:
                 # Send acknowledgment back to the device based on protocol
                 if protocol_type == 'jt808' and 'jt808_data' in message:
                     jt_data = message['jt808_data']
-                    ack = self.parser_jt808.create_response(
-                        client_id, 
-                        jt_data['message_id'], 
-                        jt_data['serial_number']
-                    )
+                    message_id = jt_data['message_id']
+                    
+                    # Send specialized responses for certain message types
+                    if message_id == 0x0100:  # Terminal Registration
+                        # Generate auth code for successful registration
+                        # Ensure client_id is not None and has sufficient length
+                        safe_client_id = client_id if client_id else "UNKNOWN"
+                        safe_client_id_suffix = safe_client_id[-6:] if len(safe_client_id) >= 6 else safe_client_id
+                        auth_code = f"PET{safe_client_id_suffix}AUTH"
+                        ack = self.parser_jt808.create_registration_response(
+                            client_id,
+                            jt_data['serial_number'],
+                            result=0,  # Success
+                            auth_code=auth_code
+                        )
+                        logger.info(f"Sent registration response to device {client_id} with auth code: {auth_code}")
+                    elif message_id == 0x0102:  # Terminal Authentication
+                        # Authentication is always successful in this implementation
+                        ack = self.parser_jt808.create_response(
+                            client_id,
+                            jt_data['message_id'],
+                            jt_data['serial_number'],
+                            result=0  # Success
+                        )
+                        logger.info(f"Sent authentication response to device {client_id}")
+                    elif message_id == 0x0200:  # Location Report
+                        # Special handling for location reports
+                        ack = self.parser_jt808.create_response(
+                            client_id,
+                            jt_data['message_id'],
+                            jt_data['serial_number'],
+                            result=0  # Success
+                        )
+                        logger.debug(f"Sent location report response to device {client_id}")
+                    else:
+                        # Default general response
+                        ack = self.parser_jt808.create_response(
+                            client_id, 
+                            jt_data['message_id'], 
+                            jt_data['serial_number']
+                        )
+                        logger.debug(f"Sent general response to device {client_id} for message type: 0x{message_id:04X}")
+                    
                     if ack:
                         client_socket.send(ack)
                 else:
@@ -648,7 +1069,71 @@ class Protocol808Server:
             # Import app for app context
             from app import app
             
-            # Find the device in the database
+            # Check for JT808 specific messages that need special handling
+            is_jt808 = 'jt808_data' in message
+            
+            if is_jt808:
+                jt_data = message['jt808_data']
+                message_id = jt_data['message_id']
+                
+                # Special handling for registration and authentication
+                if message_id == 0x0100:  # Terminal Registration
+                    logger.info(f"Processing JT808 terminal registration from device {device_id}")
+                    decoded_body = jt_data.get('decoded_body', {})
+                    
+                    # Extract terminal info from registration message
+                    manufacturer_id = decoded_body.get('manufacturer_id', '')
+                    terminal_model = decoded_body.get('terminal_model', '')
+                    terminal_id = decoded_body.get('terminal_id', '')
+                    
+                    with app.app_context():
+                        # Look for the device
+                        device = Device.query.filter_by(device_id=device_id).first()
+                        
+                        # If device not found, it's a new device registration
+                        if not device:
+                            # Auto-register the device if configured to do so
+                            # For now we just log it; in production you may want 
+                            # to add the device to the database automatically
+                            logger.info(f"New device registration from {device_id}: "
+                                      f"[Manufacturer: {manufacturer_id}, Model: {terminal_model}, ID: {terminal_id}]")
+                            
+                            # If we had a default user to assign devices to, we'd:
+                            # Ensure device_id is safe for slicing
+                            # suffix = device_id[-6:] if len(device_id) >= 6 else device_id
+                            # device = Device(
+                            #    device_id=device_id,
+                            #    name=f"JT808 Device {suffix}",
+                            #    device_type="JT808 GPS Tracker",
+                            #    imei=terminal_id,
+                            #    firmware_version=terminal_model,
+                            #    user_id=default_user_id  # Would need to be configured
+                            # )
+                            # db.session.add(device)
+                            # db.session.commit()
+                            
+                            # For now, registration is complete but device needs to be manually added
+                            return
+                    
+                elif message_id == 0x0102:  # Terminal Authentication
+                    logger.info(f"Processing JT808 terminal authentication from device {device_id}")
+                    decoded_body = jt_data.get('decoded_body', {})
+                    auth_code = decoded_body.get('authentication_code', '')
+                    
+                    # Authentication always succeeds in this implementation
+                    # In production, validate the auth code
+                    with app.app_context():
+                        device = Device.query.filter_by(device_id=device_id).first()
+                        if device:
+                            device.last_ping = datetime.utcnow()
+                            db.session.commit()
+                            logger.info(f"Device {device_id} authenticated successfully")
+                        else:
+                            logger.warning(f"Authentication attempted for unknown device {device_id}")
+                    
+                    return
+            
+            # Normal processing for location updates and other messages
             with app.app_context():
                 device = Device.query.filter_by(device_id=device_id).first()
                 
@@ -695,7 +1180,7 @@ class Protocol808Server:
                     db.session.add(location)
                     
                     # Log the protocol type
-                    protocol_type = "JT808" if "jt808_data" in message else "808"
+                    protocol_type = "JT808" if is_jt808 else "808"
                     logger.info(f"Recorded location for device {device_id} ({protocol_type}): " 
                               f"({location_data['latitude']}, {location_data['longitude']})")
                 

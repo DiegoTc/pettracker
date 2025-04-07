@@ -1,0 +1,16 @@
+## Protocol Support Information
+
+The system supports two GPS tracking protocols:
+
+### Traditional 808 Protocol
+- Text-based protocol with command codes like BP01 (login), BP02 (GPS), etc.
+- Message format: `##,imei:IMEI,command,timestamp,device_id,...*checksum##`
+- Simpler string-based format popular with many basic GPS trackers
+
+### JT/T 808 Protocol
+- Chinese national standard for GPS communication (JT/T 808-2011/2013/2019)
+- Binary protocol with message IDs like 0x0100 (registration), 0x0200 (location)
+- More structured binary format with proper bit fields and BCD time encoding
+- Enhanced features like terminal authentication, registration, and extended data
+
+Both protocols are automatically detected by the server, allowing mixed device support.

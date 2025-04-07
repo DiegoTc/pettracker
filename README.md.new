@@ -18,8 +18,8 @@ A comprehensive multiplatform pet tracking platform that supports Google authent
 The system consists of several components:
 
 1. **Backend API**: Flask application providing RESTful endpoints
-2. **Protocol808 Service**: TCP server for communicating with GPS devices
-3. **Device Simulator**: Tool for simulating GPS device data
+2. **Protocol808 Service**: TCP server for communicating with GPS devices (both 808 and JT808)
+3. **Device Simulator**: Tool for simulating GPS device data with both protocol options
 4. **Web Frontend**: Simple interface for managing pets and devices
 
 ## Local Development Setup (Step-by-Step)
@@ -139,11 +139,11 @@ To enable Google authentication, you need to create OAuth credentials:
 
 ## Testing Without Physical Hardware
 
-### Option 1: Running the 808 Protocol Server and Device Simulator
+### Option 1: Running the Protocol Server and Device Simulator
 
 For the most realistic testing experience, run the Protocol Server and Device Simulator:
 
-1. **Start the application normally** (this will automatically start the 808 Protocol Server)
+1. **Start the application normally** (this will automatically start the Protocol Server)
 
 2. **Register a device through the web interface**
    - Go to http://localhost:5000 in your browser
@@ -158,9 +158,10 @@ For the most realistic testing experience, run the Protocol Server and Device Si
 # Activate your virtual environment if needed
 source venv/bin/activate
 
-# Run the simulator
+# Run the simulator with traditional 808 protocol (default)
 python tools/device_simulator.py --device-id your_device_id_here --interval 5
-\n# Or run with JT808 protocol
+
+# Or run with JT808 protocol
 python tools/device_simulator.py --device-id your_device_id_here --interval 5 --protocol jt808
 ```
 
@@ -186,7 +187,6 @@ The system supports two GPS tracking protocols:
 - Enhanced features like terminal authentication, registration, and extended data
 
 Both protocols are automatically detected by the server, allowing mixed device support.
-
 
 ## Local Testing Without Google OAuth
 
@@ -309,38 +309,7 @@ curl -X POST http://localhost:5000/api/locations/simulate \
 - Check that redirect URLs match exactly
 - For testing, use the development token endpoint
 
-### Testing the get_user_info() Method
-If you're testing the `get_user_info()` method in `test_api.py`, make sure the Authorization header is set correctly:
-
-```python
-def get_user_info(self):
-    """Get current user information"""
-    # The session should already have the Authorization header set in __init__
-    # But you can also manually ensure it's set:
-    # headers = {"Authorization": f"Bearer {self.jwt_token}"}
-    response = self.session.get(f"{self.base_url}/auth/user")
-    if response.status_code == 200:
-        return response.json()
-    else:
-        logger.error(f"Failed to get user info: {response.status_code} - {response.text}")
-        return None
-```
-
-When initializing the APITester class, make sure to pass the JWT token:
-
-```python
-# Get the development token
-token_response = requests.get("http://localhost:5000/api/auth/dev-token").json()
-jwt_token = token_response.get("token")
-
-# Create API tester with the token
-tester = APITester(base_url="http://localhost:5000/api", jwt_token=jwt_token)
-
-# Now you can get user info
-user_info = tester.get_user_info()
-```
-
-### 808 Protocol Server Issues
+### Protocol Server Issues
 - Check if server is running: `ps aux | grep protocol_server`
 - Ensure port 8080 is not in use: `netstat -tuln | grep 8080`
 - Run standalone server: `python tools/start_protocol_server.py`
