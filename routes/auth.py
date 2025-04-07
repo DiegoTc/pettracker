@@ -8,6 +8,9 @@ import requests
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+import os
+# Needed for local development only - allows OAuth over HTTP
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
