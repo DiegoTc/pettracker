@@ -121,17 +121,16 @@ class Protocol808Parser:
                 heading = float(gps_match.group(7))
                 
                 # Try to extract timestamp
-                date_match = re.search(r'(\d{2})(\d{2})(\d{2})', data_str)
-                timestamp = None
-                if date_match:
-                    # Note: This assumes YY/MM/DD format, might need adjustment
-                    year = 2000 + int(date_match.group(1))
-                    month = int(date_match.group(2))
-                    day = int(date_match.group(3))
-                    timestamp = datetime(year, month, day)
-                else:
-                    timestamp = datetime.utcnow()
+                timestamp_match = re.search(r'(\d{2})(\d{2})(\d{2})', data_str)
+                timestamp = datetime.utcnow()
                 
+                if timestamp_match:
+                    # Note: This assumes YY/MM/DD format, might need adjustment
+                    year = 2000 + int(timestamp_match.group(1))
+                    month = int(timestamp_match.group(2))
+                    day = int(timestamp_match.group(3))
+                    timestamp = datetime(year, month, day)
+                    
                 return {
                     "valid": valid,
                     "latitude": latitude,
@@ -140,6 +139,45 @@ class Protocol808Parser:
                     "heading": heading,
                     "timestamp": timestamp
                 }
+            
+            # Try to match our simulator format: BP02,timestamp,device_id,lat,lon,altitude,speed,heading,bat_level
+            elif "BP02" in data_str:
+                # Format from our simulator: BP02,timestamp,device_id,lat,lon,alt,speed,heading,battery
+                pattern = r'BP02,[^,]+,[^,]+,([+-]?\d+\.\d+),([+-]?\d+\.\d+),([+-]?\d+\.\d+),([+-]?\d+\.\d+),([+-]?\d+\.\d+),([+-]?\d+\.\d+)'
+                bp02_match = re.search(pattern, data_str)
+                
+                if bp02_match:
+                    latitude = float(bp02_match.group(1))
+                    longitude = float(bp02_match.group(2))
+                    altitude = float(bp02_match.group(3))
+                    speed = float(bp02_match.group(4))
+                    heading = float(bp02_match.group(5))
+                    battery_level = float(bp02_match.group(6))
+                    valid = True
+                    
+                    # Extract timestamp from message if possible, otherwise use current time
+                    timestamp_match = re.search(r'BP02,(\d{14})', data_str)
+                    timestamp = datetime.utcnow()
+                    if timestamp_match:
+                        try:
+                            timestamp_str = timestamp_match.group(1)
+                            timestamp = datetime.strptime(timestamp_str, "%Y%m%d%H%M%S")
+                        except:
+                            pass
+                    
+                    return {
+                        "valid": valid,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "speed": speed,
+                        "heading": heading,
+                        "altitude": altitude,
+                        "battery_level": battery_level,
+                        "timestamp": timestamp
+                    }
+                else:
+                    logger.warning(f"Could not parse BP02 format from message: {data_str}")
+                    return None
             
             # Alternative format checking
             alt_match = re.search(r'lat:(\d+\.\d+),long:(\d+\.\d+),speed:(\d+\.\d+)', data_str, re.IGNORECASE)

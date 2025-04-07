@@ -87,9 +87,9 @@ class GPS808Simulator:
     
     def _send_login(self):
         """Send a login message to the server"""
-        # Format: ##,imei:IMEI,A,date_time,device_id,*checksum##
+        # Format: *ID,IMEI:123456789012345,BP01,timestamp,device_id#
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        message = f"##,imei:{self.imei},BP01,{timestamp},{self.device_id},*FF##"
+        message = f"*ID,IMEI:{self.imei},BP01,{timestamp},{self.device_id}#"
         response = self._send_message(message)
         logger.info(f"Login response: {response}")
     
@@ -99,7 +99,7 @@ class GPS808Simulator:
             return False
             
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        message = f"##,imei:{self.imei},BP00,{timestamp},{self.device_id},{self.battery_level},*FF##"
+        message = f"*ID,IMEI:{self.imei},BP00,{timestamp},{self.device_id},{self.battery_level}#"
         response = self._send_message(message)
         logger.info(f"Heartbeat response: {response}")
         return True
@@ -114,10 +114,10 @@ class GPS808Simulator:
         # Slightly move position for simulation
         self._update_position()
         
-        # Format: ##,imei:IMEI,BP02,timestamp,device_id,lat,lon,altitude,speed,heading,bat_level,*checksum##
-        message = (f"##,imei:{self.imei},BP02,{timestamp},{self.device_id},"
+        # Format: *ID,IMEI:123456789012345,BP02,timestamp,device_id,lat,lon,altitude,speed,heading,bat_level#
+        message = (f"*ID,IMEI:{self.imei},BP02,{timestamp},{self.device_id},"
                    f"{self.latitude:.6f},{self.longitude:.6f},{self.altitude:.1f},"
-                   f"{self.speed:.1f},{self.heading:.1f},{self.battery_level:.1f},*FF##")
+                   f"{self.speed:.1f},{self.heading:.1f},{self.battery_level:.1f}#")
         
         response = self._send_message(message)
         logger.info(f"Location sent: lat={self.latitude:.6f}, lon={self.longitude:.6f}, speed={self.speed:.1f}, battery={self.battery_level:.1f}")
@@ -127,6 +127,11 @@ class GPS808Simulator:
     def _send_message(self, message):
         """Send a message to the server and receive response"""
         try:
+            if self.sock is None:
+                logger.error("Socket is not connected")
+                self.connected = False
+                return None
+                
             self.sock.sendall(message.encode())
             # Wait for response
             response = self.sock.recv(1024).decode().strip()
@@ -473,7 +478,7 @@ class JT808Simulator:
     
     def _send_jt808_message(self, msg_id, body):
         """Send a JT808 format message to the server"""
-        if not self.connected:
+        if not self.connected or self.sock is None:
             logger.warning("Not connected to server")
             return None
             
