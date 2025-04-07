@@ -1,0 +1,398 @@
+import socket
+import binascii
+import struct
+
+def decode_jt808_message(data):
+    """
+    Decodes a JT/T 808 message.
+
+    Args:
+        data: The raw byte string received from the socket.
+
+    Returns:
+        A dictionary containing the decoded message, or None on error.
+    """
+    try:
+        # 1. Unescape the data (reverse the 0x7d 0x02, 0x7d 0x01 escapes)
+        unescaped_data = bytearray()
+        i = 0
+        while i < len(data):
+            if data[i] == 0x7d:
+                if i + 1 < len(data):
+                    if data[i + 1] == 0x02:
+                        unescaped_data.append(0x7e)
+                        i += 2
+                        continue
+                    elif data[i + 1] == 0x01:
+                        unescaped_data.append(0x7d)
+                        i += 2
+                        continue
+                # Handle the case where 0x7d is at the end of the data
+                unescaped_data.append(data[i])
+                i += 1
+            else:
+                unescaped_data.append(data[i])
+                i += 1
+        data = bytes(unescaped_data)
+
+        # 2. Verify start and end flags (0x7e)
+        if data[0] != 0x7e or data[-1] != 0x7e:
+            print("Error: Invalid start or end flag.")
+            return None
+
+        # 3. Extract header (first 12 bytes, or 14 if sub-package)
+        # Message ID, Body Length, Phone Number, Serial Number
+        header_format = '>HH6sH'
+        header_size = struct.calcsize(header_format)
+
+        # check if it is a subpackage.
+        body_length_field = struct.unpack('>H', data[2:4])[0]
+        is_subpackage = (body_length_field >> 13) & 0x01
+
+        if is_subpackage:
+            # total packages, package serial number
+            header_format += '>HH'
+            header_size = struct.calcsize(header_format)
+
+        header_data = struct.unpack(header_format, data[1:header_size+1])  # skip start flag at index 0
+        message_id = header_data[0]
+        body_length = header_data[1] & 0x1FFF  # Get the lower 13 bits for body length
+        phone_number = header_data[2].decode('ascii', errors='ignore').strip()
+        serial_number = header_data[3]
+
+        if is_subpackage:
+            total_packages = header_data[4]
+            package_number = header_data[5]
+        else:
+            total_packages = None
+            package_number = None
+
+        # 4. Extract body and checksum
+        body = data[header_size+1 : header_size + 1 + body_length]  # skip the start flag (1 byte)
+
+        # 5. Verify checksum
+        received_checksum = data[header_size + 1 + body_length]
+        calculated_checksum = 0
+        for b in data[1 : header_size + 1 + body_length]:  # checksum excludes start/end flags
+            calculated_checksum ^= b
+
+        if received_checksum != calculated_checksum:
+            print(f"Error: Checksum mismatch. Received: {received_checksum}, Calculated: {calculated_checksum}")
+            return None
+
+        # 6. Decode message body based on message ID
+        decoded_body = {}
+        if message_id == 0x0001:
+            decoded_body = decode_terminal_general_response(body)
+        elif message_id == 0x8001:
+            decoded_body = decode_platform_general_response(body)
+        elif message_id == 0x0002:
+            decoded_body = "Heartbeat"  # Empty body
+        elif message_id == 0x0100:
+            decoded_body = decode_terminal_registration(body, body_length)
+        elif message_id == 0x8100:
+            decoded_body = decode_terminal_registration_response(body)
+        elif message_id == 0x0003:
+            decoded_body = "Terminal Logout"
+        elif message_id == 0x0102:
+            decoded_body = decode_terminal_authentication(body)
+        elif message_id == 0x8103:
+            decoded_body = decode_set_terminal_parameters(body)
+        elif message_id == 0x0200:
+            decoded_body = decode_location_information_report(body)
+        elif message_id == 0x8201:
+            decoded_body = decode_location_information_query_response(body)
+        else:
+            decoded_body = f"Message ID 0x{message_id:04X} not supported"
+
+        # 7. Construct and return the full message
+        message = {
+            'message_id': message_id,
+            'body_length': body_length,
+            'phone_number': phone_number,
+            'serial_number': serial_number,
+            'is_subpackage': is_subpackage,
+            'total_packages': total_packages,
+            'package_number': package_number,
+            'body': decoded_body,
+            'raw_hex': binascii.hexlify(data).decode('ascii')  # For debugging
+        }
+        return message
+
+    except Exception as e:
+        print(f"Error decoding message: {e}")
+        return None
+
+def decode_terminal_general_response(body):
+    """Decodes a terminal general response (0x0001) message body."""
+    try:
+        format_string = '>HHB'
+        unpacked_data = struct.unpack(format_string, body)
+        response_serial_number = unpacked_data[0]
+        reply_id = unpacked_data[1]
+        result = unpacked_data[2]
+
+        decoded_body = {
+            'response_serial_number': response_serial_number,
+            'reply_id': reply_id,
+            'result': result
+        }
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding terminal general response: {e}")
+        return None
+
+def decode_platform_general_response(body):
+    """Decodes a platform general response (0x8001) message."""
+    try:
+        format_string = '>HHBB'
+        unpacked_data = struct.unpack(format_string, body)
+        response_serial_number = unpacked_data[0]
+        reply_id = unpacked_data[1]
+        result = unpacked_data[2]
+        alarm_process_confirmation = unpacked_data[3]
+
+        decoded_body = {
+            'response_serial_number': response_serial_number,
+            'reply_id': reply_id,
+            'result': result,
+            'alarm_process_confirmation': alarm_process_confirmation
+        }
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding platform general response: {e}")
+        return None
+
+def decode_terminal_registration(body, body_length):
+    """Decodes a terminal registration (0x0100) message body."""
+    try:
+        # According to JT808 0x0100 format:
+        #   2 bytes  provincial_id
+        #   2 bytes  city_id
+        #   5 bytes  manufacturer_id
+        #   20 bytes terminal_model
+        #   7 bytes  terminal_id
+        #   1 byte   car_color
+        #   leftover for plate_number in GBK
+        #
+        # That totals 2+2+5+20+7+1 = 37 bytes before plate_number.
+        # So subtract 37 from body_length for the plate_number length.
+
+        format_string = '>HH5s20s7sB{}s'.format(body_length - 37)
+        unpacked_data = struct.unpack(format_string, body)
+
+        provincial_id   = unpacked_data[0]
+        city_id         = unpacked_data[1]
+        manufacturer_id = unpacked_data[2].decode('ascii', errors='ignore').strip()
+        terminal_model  = unpacked_data[3].decode('ascii', errors='ignore').strip()
+        terminal_id     = unpacked_data[4].decode('ascii', errors='ignore').strip()
+        car_color       = unpacked_data[5]
+        plate_number    = unpacked_data[6].decode('gbk', errors='ignore').strip()
+
+        decoded_body = {
+            'provincial_id': provincial_id,
+            'city_id': city_id,
+            'manufacturer_id': manufacturer_id,
+            'terminal_model': terminal_model,
+            'terminal_id': terminal_id,
+            'car_color': car_color,
+            'plate_number': plate_number
+        }
+        return decoded_body
+
+    except Exception as e:
+        print(f"Error decoding terminal registration: {e}")
+        return None
+
+def decode_terminal_registration_response(body):
+    """Decodes a terminal registration response (0x8100) message body."""
+    try:
+        format_string = '>HB{}s'.format(len(body) - 3)
+        unpacked_data = struct.unpack(format_string, body)
+        response_serial_number = unpacked_data[0]
+        result = unpacked_data[1]
+        authentication_code = unpacked_data[2].decode('ascii', errors='ignore').strip()
+
+        decoded_body = {
+            'response_serial_number': response_serial_number,
+            'result': result,
+            'authentication_code': authentication_code
+        }
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding terminal registration response: {e}")
+        return None
+
+def decode_terminal_authentication(body):
+    """Decodes a terminal authentication (0x0102) message."""
+    try:
+        format_string = '{}s'.format(len(body))
+        authentication_code = struct.unpack(format_string, body)[0].decode('ascii', errors='ignore').strip()
+
+        decoded_body = {
+            'authentication_code': authentication_code
+        }
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding terminal authentication: {e}")
+        return None
+
+def decode_set_terminal_parameters(body):
+    """Decodes a set terminal parameters (0x8103) message."""
+    try:
+        num_params = body[0]
+        params = []
+        i = 1
+        while i < len(body):
+            param_id = struct.unpack('>I', body[i:i+4])[0]
+            param_len = body[i+4]
+            param_value = body[i+5:i+5+param_len]
+
+            # Decode parameter value based on param_id
+            decoded_value = None
+            if param_id in [0x0001, 0x0002, 0x0003]:
+                decoded_value = struct.unpack('>I', param_value)[0]
+            elif param_id in [0x0010, 0x0011, 0x0012, 0x0013]:
+                decoded_value = param_value.decode('ascii', errors='ignore').strip()
+            elif param_id == 0xF141:
+                decoded_value = struct.unpack('>B', param_value)[0]
+            else:
+                decoded_value = binascii.hexlify(param_value).decode('ascii')
+
+            params.append({
+                'param_id': param_id,
+                'param_value': decoded_value
+            })
+            i += 5 + param_len
+
+        decoded_body = {
+            'num_params': num_params,
+            'params': params
+        }
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding set terminal parameters: {e}")
+        return None
+
+def decode_location_information_report(body):
+    """Decodes a location information report (0x0200) message."""
+    try:
+        # Example main body format (this is a custom approach):
+        # In your script, you used something like: '>IdddHHHBB6s'
+        # But that's not standard. Typically 0x0200 is 28 bytes + optional additional data.
+        # We'll keep your example, but ensure it matches your real device data.
+        body_format = '>IdddHHHBB6s'
+        body_size = struct.calcsize(body_format)
+        main_data = struct.unpack(body_format, body[:body_size])
+
+        latitude  = main_data[0] / 1000000
+        longitude = main_data[1] / 1000000
+        altitude  = main_data[2]
+        speed     = main_data[3] / 10.0
+        direction = main_data[4]
+        status    = main_data[5]
+        alarm     = main_data[6]
+        date_time_bcd = main_data[7]  # e.g. BCD time
+        # Next: main_data[8] might be 6s if you expected it
+
+        date_time = bcd_to_datetime(date_time_bcd)  # Implement accordingly
+
+        decoded_body = {
+            'latitude': latitude,
+            'longitude': longitude,
+            'altitude': altitude,
+            'speed': speed,
+            'direction': direction,
+            'status': status,
+            'alarm': alarm,
+            'date_time': date_time
+        }
+
+        # If you have additional fields (e.g. while remaining_data ... ), handle them:
+        remaining_data = body[body_size:]
+        additional_data = {}
+        while len(remaining_data) >= 2:
+            additional_id = remaining_data[0]
+            additional_length = remaining_data[1]
+            additional_content = remaining_data[2:2+additional_length]
+
+            # parse each additional_id as needed
+            # ...
+            # example
+            # if additional_id == 0x01:
+            #     mileage = struct.unpack('>I', additional_content)[0]
+            #     additional_data['mileage'] = mileage
+
+            remaining_data = remaining_data[2+additional_length:]
+
+        decoded_body['additional_data'] = additional_data
+        return decoded_body
+    except Exception as e:
+        print(f"Error decoding location information report: {e}")
+        return None
+
+def decode_location_information_query_response(body):
+    """Decodes a location information query response (0x8201) message."""
+    # Typically 0x0201 structure is 2 bytes (response serial) + 0x0200 body
+    return decode_location_information_report(body)
+
+def bcd_to_datetime(bcd_data):
+    """Converts BCD-encoded time to a datetime-like string.
+
+    Args:
+        bcd_data: 6 bytes of BCD-encoded date/time (YYMMDDhhmmss).
+
+    Returns:
+        A string like "YYYY-MM-DD HH:MM:SS", or None on error.
+    """
+    try:
+        hex_str = binascii.hexlify(bcd_data).decode('ascii')
+        year   = 2000 + int(hex_str[0:2])
+        month  = int(hex_str[2:4])
+        day    = int(hex_str[4:6])
+        hour   = int(hex_str[6:8])
+        minute = int(hex_str[8:10])
+        second = int(hex_str[10:12])
+        return f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}:{second:02d}"
+    except Exception as e:
+        print(f"Error converting BCD to datetime: {e}")
+        return None
+
+def test_gps_data_reception(host, port, imei):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((host, port))
+            s.listen()
+            print(f"Listening on {host}:{port}...")
+
+            conn, addr = s.accept()
+            print(f"Connection from {addr}")
+
+            data = conn.recv(4096)
+
+            if not data:
+                print("No data received.")
+                return
+
+            hex_data = binascii.hexlify(data).decode('utf-8')
+            print(f"Received data (hex): {hex_data}")
+
+            # Decode
+            decoded_message = decode_jt808_message(data)
+            if decoded_message:
+                print("Decoded message:")
+                print(decoded_message)
+            else:
+                print("Failed to decode the received data.")
+
+            with open("received_data.bin", "wb") as f:
+                f.write(data)
+
+            print("Data saved to received_data.bin")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+HOST = ''
+PORT = 8080
+IMEI = "45450029637"

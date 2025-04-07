@@ -3,6 +3,8 @@ import threading
 import logging
 import json
 import time
+import struct
+import binascii
 from datetime import datetime
 from app import db
 from models import Device, Location
@@ -170,9 +172,342 @@ class Protocol808Parser:
         return response.encode('utf-8')
 
 
+class JT808Parser:
+    """
+    Parser for the JT/T 808 protocol commonly used in GPS tracking devices
+    
+    The JT808 protocol typically includes:
+    - Header: Start and end markers (0x7e), message ID, attributes, phone number, etc.
+    - Body: Message content specific to the message type
+    - Checksum: XOR of all bytes excluding start/end markers
+    """
+    
+    # Common message types in JT808 protocol
+    MESSAGE_TYPES = {
+        0x0001: "Terminal General Response",
+        0x8001: "Platform General Response",
+        0x0002: "Heartbeat",
+        0x0100: "Terminal Registration",
+        0x8100: "Terminal Registration Response",
+        0x0003: "Terminal Logout",
+        0x0102: "Terminal Authentication",
+        0x8103: "Set Terminal Parameters",
+        0x0200: "Location Information Report",
+        0x8201: "Location Information Query Response"
+    }
+    
+    @staticmethod
+    def parse_message(data):
+        """
+        Decodes a JT/T 808 message.
+
+        Args:
+            data: The raw byte string received from the socket.
+
+        Returns:
+            A dictionary containing the decoded message, or None on error.
+        """
+        try:
+            # 1. Unescape the data (reverse the 0x7d 0x02, 0x7d 0x01 escapes)
+            unescaped_data = bytearray()
+            i = 0
+            while i < len(data):
+                if data[i] == 0x7d:
+                    if i + 1 < len(data):
+                        if data[i + 1] == 0x02:
+                            unescaped_data.append(0x7e)
+                            i += 2
+                            continue
+                        elif data[i + 1] == 0x01:
+                            unescaped_data.append(0x7d)
+                            i += 2
+                            continue
+                    # Handle the case where 0x7d is at the end of the data
+                    unescaped_data.append(data[i])
+                    i += 1
+                else:
+                    unescaped_data.append(data[i])
+                    i += 1
+            data = bytes(unescaped_data)
+
+            # 2. Verify start and end flags (0x7e)
+            if data[0] != 0x7e or data[-1] != 0x7e:
+                logger.warning("Invalid JT808 message: Missing start or end flags")
+                return None
+
+            # 3. Extract header (first 12 bytes, or 14 if sub-package)
+            # Message ID, Body Length, Phone Number, Serial Number
+            header_format = '>HH6sH'
+            header_size = struct.calcsize(header_format)
+
+            # Check if it is a subpackage.
+            body_length_field = struct.unpack('>H', data[2:4])[0]
+            is_subpackage = (body_length_field >> 13) & 0x01
+
+            if is_subpackage:
+                # Total packages, package serial number
+                header_format += '>HH'
+                header_size = struct.calcsize(header_format)
+
+            header_data = struct.unpack(header_format, data[1:header_size+1])  # Skip start flag at index 0
+            message_id = header_data[0]
+            body_length = header_data[1] & 0x1FFF  # Get the lower 13 bits for body length
+            phone_number = header_data[2].decode('ascii', errors='ignore').strip()
+            serial_number = header_data[3]
+
+            if is_subpackage:
+                total_packages = header_data[4]
+                package_number = header_data[5]
+            else:
+                total_packages = None
+                package_number = None
+
+            # 4. Extract body and checksum
+            body = data[header_size+1 : header_size + 1 + body_length]  # Skip the start flag (1 byte)
+
+            # 5. Verify checksum
+            received_checksum = data[header_size + 1 + body_length]
+            calculated_checksum = 0
+            for b in data[1 : header_size + 1 + body_length]:  # Checksum excludes start/end flags
+                calculated_checksum ^= b
+
+            if received_checksum != calculated_checksum:
+                logger.warning(f"Checksum mismatch. Received: {received_checksum}, Calculated: {calculated_checksum}")
+                return None
+
+            # 6. Decode message body based on message ID
+            decoded_body = None
+            location_data = None
+            
+            if message_id == 0x0200:  # Location Information Report
+                decoded_body = JT808Parser._decode_location_information_report(body)
+                location_data = decoded_body  # For consistency with Protocol808Parser return format
+            elif message_id == 0x0002:  # Heartbeat
+                decoded_body = "Heartbeat"  # Empty body
+            else:
+                decoded_body = f"Unsupported message type: 0x{message_id:04X}"
+                logger.info(f"Received unsupported JT808 message type: 0x{message_id:04X}")
+
+            # 7. Construct and return the full message in a format compatible with our existing system
+            return {
+                "device_id": phone_number,  # Use phone number as device ID
+                "raw_message": binascii.hexlify(data).decode('ascii'),  # For debugging
+                "message_type": JT808Parser.MESSAGE_TYPES.get(message_id, f"Unknown (0x{message_id:04X})"),
+                "timestamp": datetime.utcnow(),
+                "location": location_data,
+                "status": {},  # Will be populated if status data is available
+                "jt808_data": {  # Store the original JT808 message details
+                    "message_id": message_id,
+                    "serial_number": serial_number,
+                    "is_subpackage": is_subpackage,
+                    "total_packages": total_packages,
+                    "package_number": package_number
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"Error parsing JT808 message: {str(e)}", exc_info=True)
+            return None
+    
+    @staticmethod
+    def _decode_location_information_report(body):
+        """Decodes a location information report (0x0200) message body."""
+        try:
+            # Based on the JT808 spec, this should be:
+            # Alarm (4 bytes) + Status (4 bytes) + Latitude (4 bytes) + Longitude (4 bytes) + 
+            # Altitude (2 bytes) + Speed (2 bytes) + Direction (2 bytes) + 
+            # Time (6 bytes BCD) + Additional data (variable)
+            format_string = '>IIiiHHH6s'
+            min_size = struct.calcsize(format_string)
+            
+            if len(body) < min_size:
+                logger.warning(f"Location body too short: {len(body)} bytes, expected at least {min_size}")
+                return None
+                
+            main_data = struct.unpack(format_string, body[:min_size])
+            
+            alarm = main_data[0]
+            status = main_data[1]
+            latitude = main_data[2] / 1000000.0  # Convert from integer (millionths of a degree)
+            longitude = main_data[3] / 1000000.0  # Convert from integer (millionths of a degree)
+            altitude = main_data[4]  # In meters
+            speed = main_data[5] / 10.0  # Convert from 0.1 km/h to km/h
+            direction = main_data[6]  # In degrees, 0-359
+            time_bcd = main_data[7]  # BCD encoded time (YYMMDDhhmmss)
+            
+            # Convert BCD time to datetime
+            time_hex = binascii.hexlify(time_bcd).decode('ascii')
+            year = 2000 + int(time_hex[0:2])
+            month = int(time_hex[2:4])
+            day = int(time_hex[4:6])
+            hour = int(time_hex[6:8])
+            minute = int(time_hex[8:10])
+            second = int(time_hex[10:12])
+            timestamp = datetime(year, month, day, hour, minute, second)
+            
+            # Check validity based on status bit 1 (0=invalid, 1=valid)
+            valid = bool((status >> 1) & 0x01)
+            
+            # Extract battery level and other additional data if available
+            battery_level = None
+            additional_data = {}
+            
+            # Store the alarm and status in additional data for reference
+            additional_data['alarm'] = alarm
+            additional_data['status'] = status
+            
+            # Process additional data fields if present
+            remaining_data = body[min_size:]
+            while remaining_data:
+                if len(remaining_data) < 2:
+                    break  # Not enough data for ID and length
+                    
+                additional_id = remaining_data[0]
+                additional_length = remaining_data[1]
+                
+                if len(remaining_data) < 2 + additional_length:
+                    break  # Not enough data for the content
+                    
+                additional_content = remaining_data[2:2+additional_length]
+                
+                # Process known additional data types
+                if additional_id == 0x01:  # Mileage
+                    if additional_length == 4:
+                        mileage = struct.unpack('>I', additional_content)[0] / 10.0  # In km
+                        additional_data['mileage'] = mileage
+                        
+                elif additional_id == 0x02:  # Fuel level
+                    if additional_length == 2:
+                        fuel = struct.unpack('>H', additional_content)[0] / 10.0  # In liters
+                        additional_data['fuel_level'] = fuel
+                        
+                elif additional_id == 0x03:  # Speed from additional source
+                    if additional_length == 2:
+                        extra_speed = struct.unpack('>H', additional_content)[0] / 10.0  # In km/h
+                        additional_data['additional_speed'] = extra_speed
+                        
+                elif additional_id == 0x04:  # Vehicle signal status
+                    if additional_length == 4:
+                        signal_status = struct.unpack('>I', additional_content)[0]
+                        additional_data['signal_status'] = signal_status
+                        
+                elif additional_id == 0x11:  # Phone signal strength
+                    if additional_length == 1:
+                        signal_strength = struct.unpack('>B', additional_content)[0]
+                        additional_data['signal_strength'] = signal_strength
+                        
+                elif additional_id == 0x30:  # Battery level (custom/pet device specific)
+                    if additional_length == 1:
+                        battery_level = struct.unpack('>B', additional_content)[0]  # In percentage
+                        additional_data['battery_level'] = battery_level
+                
+                # Move to next additional data field
+                remaining_data = remaining_data[2+additional_length:]
+            
+            # Return location data in a format consistent with Protocol808Parser
+            location_data = {
+                "valid": valid,
+                "latitude": latitude,
+                "longitude": longitude,
+                "altitude": altitude,
+                "speed": speed,
+                "heading": direction,
+                "timestamp": timestamp,
+                "additional_data": additional_data
+            }
+            
+            if battery_level is not None:
+                location_data["battery_level"] = battery_level
+                
+            return location_data
+            
+        except Exception as e:
+            logger.error(f"Error decoding JT808 location information report: {str(e)}", exc_info=True)
+            return None
+    
+    @staticmethod
+    def create_response(phone_number, message_id, serial_number, result=0):
+        """
+        Create a general response message in JT808 protocol format (0x8001)
+        
+        Args:
+            phone_number: The phone number (device ID) to respond to
+            message_id: The message ID being responded to
+            serial_number: The serial number of the message being responded to
+            result: Result code (0=success, 1=failure, 2=message error, 3=not supported)
+            
+        Returns:
+            Bytes containing the encoded response message
+        """
+        try:
+            # 1. Prepare response body (response message ID, serial number, result)
+            body = struct.pack('>HHB', serial_number, message_id, result)
+            body_length = len(body)
+            
+            # 2. Prepare header (message ID 0x8001, body length, phone number, serial number)
+            msg_id = 0x8001
+            msg_attributes = body_length & 0x1FFF  # Lower 13 bits for body length
+            
+            # Get a new serial number for the response
+            resp_serial = serial_number  # Using the same serial number for simplicity
+            
+            # Format phone number as bytes, padded to 6 bytes
+            if isinstance(phone_number, str):
+                phone_bytes = phone_number.encode('ascii')
+                # Ensure it's exactly 6 bytes (pad with zeros if needed)
+                if len(phone_bytes) < 6:
+                    phone_bytes = phone_bytes.ljust(6, b'\x00')
+                elif len(phone_bytes) > 6:
+                    phone_bytes = phone_bytes[:6]
+            else:
+                # If it's already bytes, ensure it's the right length
+                phone_bytes = phone_number
+                if len(phone_bytes) < 6:
+                    phone_bytes = phone_bytes.ljust(6, b'\x00')
+                elif len(phone_bytes) > 6:
+                    phone_bytes = phone_bytes[:6]
+            
+            header = struct.pack('>HH6sH', msg_id, msg_attributes, phone_bytes, resp_serial)
+            
+            # 3. Calculate checksum (XOR of all bytes in header and body)
+            checksum = 0
+            for b in header + body:
+                checksum ^= b
+            
+            # 4. Assemble the full message (start flag + header + body + checksum + end flag)
+            message = bytearray()
+            message.append(0x7e)  # Start flag
+            message.extend(header)
+            message.extend(body)
+            message.append(checksum)
+            message.append(0x7e)  # End flag
+            
+            # 5. Escape special bytes (0x7e -> 0x7d, 0x02 and 0x7d -> 0x7d, 0x01)
+            escaped_message = bytearray()
+            for b in message[1:-1]:  # Skip the start and end flags
+                if b == 0x7e:
+                    escaped_message.extend([0x7d, 0x02])
+                elif b == 0x7d:
+                    escaped_message.extend([0x7d, 0x01])
+                else:
+                    escaped_message.append(b)
+            
+            # Add back the start and end flags
+            final_message = bytearray()
+            final_message.append(0x7e)
+            final_message.extend(escaped_message)
+            final_message.append(0x7e)
+            
+            return bytes(final_message)
+            
+        except Exception as e:
+            logger.error(f"Error creating JT808 response: {str(e)}", exc_info=True)
+            return None
+
+
 class Protocol808Server:
     """
-    TCP server that listens for 808 protocol messages from tracking devices
+    TCP server that listens for both 808 and JT808 protocol messages from tracking devices
     """
     def __init__(self, host='0.0.0.0', port=8080):
         self.host = host
@@ -180,10 +515,11 @@ class Protocol808Server:
         self.server_socket = None
         self.running = False
         self.clients = {}
-        self.parser = Protocol808Parser()
+        self.parser_808 = Protocol808Parser()
+        self.parser_jt808 = JT808Parser()
     
     def start(self):
-        """Start the 808 protocol server"""
+        """Start the dual-protocol server (supporting both 808 and JT808)"""
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -191,7 +527,7 @@ class Protocol808Server:
             self.server_socket.listen(5)
             self.running = True
             
-            logger.info(f"808 Protocol server started on {self.host}:{self.port}")
+            logger.info(f"Protocol server started on {self.host}:{self.port} (supporting 808 and JT808 protocols)")
             
             while self.running:
                 try:
@@ -220,15 +556,16 @@ class Protocol808Server:
                 self.server_socket.close()
     
     def stop(self):
-        """Stop the 808 protocol server"""
+        """Stop the protocol server"""
         self.running = False
         if self.server_socket:
             self.server_socket.close()
-        logger.info("808 Protocol server stopped")
+        logger.info("Protocol server stopped (808/JT808)")
     
     def handle_client(self, client_socket, addr):
         """Handle communication with a connected tracking device"""
         client_id = None
+        protocol_type = None  # 'jt808' or '808'
         
         try:
             while self.running:
@@ -238,10 +575,33 @@ class Protocol808Server:
                     logger.info(f"Client {addr} disconnected")
                     break
                 
-                # Parse the received message
-                message = self.parser.parse_message(data)
+                # Determine protocol type if not already known
+                if not protocol_type:
+                    # Check if it's JT808 protocol (starts with 0x7e)
+                    if data and len(data) > 0 and data[0] == 0x7e:
+                        protocol_type = 'jt808'
+                        logger.info(f"Client {addr} using JT808 protocol")
+                    # Check if it's 808 protocol (starts with *ID or *HQ)
+                    elif data and len(data) > 3 and data[0:1] == b'*':
+                        protocol_type = '808'
+                        logger.info(f"Client {addr} using 808 protocol")
+                    else:
+                        # Log the first few bytes for debugging
+                        hex_data = binascii.hexlify(data[:20] if len(data) > 20 else data).decode('ascii')
+                        logger.warning(f"Unable to determine protocol type from data: {hex_data}...")
+                        protocol_type = '808'  # Default to 808 protocol
+                
+                # Parse the received message based on protocol type
+                message = None
+                if protocol_type == 'jt808':
+                    message = self.parser_jt808.parse_message(data)
+                else:  # Default to 808 protocol
+                    message = self.parser_808.parse_message(data)
+                
                 if not message:
-                    logger.warning(f"Failed to parse message from {addr}: {data}")
+                    # Log the message in hex format for debugging
+                    hex_data = binascii.hexlify(data[:50] if len(data) > 50 else data).decode('ascii')
+                    logger.warning(f"Failed to parse message from {addr} using {protocol_type} protocol: {hex_data}...")
                     continue
                 
                 # Store client ID for future reference
@@ -252,9 +612,19 @@ class Protocol808Server:
                 # Process the message
                 self.process_message(message)
                 
-                # Send acknowledgment back to the device
-                ack = self.parser.create_response(client_id, "ACK", "OK")
-                client_socket.send(ack)
+                # Send acknowledgment back to the device based on protocol
+                if protocol_type == 'jt808' and 'jt808_data' in message:
+                    jt_data = message['jt808_data']
+                    ack = self.parser_jt808.create_response(
+                        client_id, 
+                        jt_data['message_id'], 
+                        jt_data['serial_number']
+                    )
+                    if ack:
+                        client_socket.send(ack)
+                else:
+                    ack = self.parser_808.create_response(client_id, "ACK", "OK")
+                    client_socket.send(ack)
         
         except socket.error as e:
             logger.error(f"Socket error with client {addr}: {str(e)}")
@@ -268,7 +638,7 @@ class Protocol808Server:
             logger.info(f"Connection closed with {addr}")
     
     def process_message(self, message):
-        """Process a parsed 808 protocol message"""
+        """Process a parsed protocol message (both 808 and JT808)"""
         try:
             device_id = message.get("device_id")
             if not device_id:
@@ -293,13 +663,22 @@ class Protocol808Server:
                 # Update device last ping time
                 device.last_ping = datetime.utcnow()
                 
-                # Update battery level if available
+                # Update battery level if available in status data
                 if message.get("status") and "battery_level" in message["status"]:
                     device.battery_level = message["status"]["battery_level"]
                 
                 # Process location data if available
                 location_data = message.get("location")
                 if location_data and location_data.get("valid"):
+                    # For JT808 devices, battery level might be in location data
+                    if "battery_level" in location_data and device.battery_level != location_data["battery_level"]:
+                        device.battery_level = location_data["battery_level"]
+                        logger.info(f"Updated battery level for device {device_id}: {device.battery_level}%")
+                    
+                    # If location has additional data, log it
+                    if "additional_data" in location_data:
+                        logger.debug(f"Additional data for device {device_id}: {location_data['additional_data']}")
+                    
                     # Create new location record
                     location = Location(
                         device_id=device.id,
@@ -307,12 +686,17 @@ class Protocol808Server:
                         longitude=location_data["longitude"],
                         speed=location_data.get("speed"),
                         heading=location_data.get("heading"),
+                        altitude=location_data.get("altitude"),
                         timestamp=location_data.get("timestamp", datetime.utcnow()),
-                        battery_level=device.battery_level
+                        battery_level=device.battery_level,
+                        accuracy=location_data.get("accuracy")
                     )
                     
                     db.session.add(location)
-                    logger.info(f"Recorded location for device {device_id}: " 
+                    
+                    # Log the protocol type
+                    protocol_type = "JT808" if "jt808_data" in message else "808"
+                    logger.info(f"Recorded location for device {device_id} ({protocol_type}): " 
                               f"({location_data['latitude']}, {location_data['longitude']})")
                 
                 # Commit changes to database
@@ -331,7 +715,7 @@ class Protocol808Server:
 _server_instance = None
 
 def get_server_instance():
-    """Get the singleton instance of the 808 protocol server"""
+    """Get the singleton instance of the protocol server (supports both 808 and JT808)"""
     global _server_instance
     if _server_instance is None:
         # Try to get port from current_app if in app context
@@ -342,12 +726,12 @@ def get_server_instance():
             from config import Config
             port = int(Config.PROTOCOL_808_PORT)
             
-        logger.info(f"Initializing 808 Protocol server on port {port}")
+        logger.info(f"Initializing dual-protocol server (808/JT808) on port {port}")
         _server_instance = Protocol808Server(port=port)
     return _server_instance
 
 def start_protocol_server():
-    """Start the 808 protocol server in the background"""
+    """Start the protocol server in the background (handles both 808 and JT808 protocols)"""
     server = get_server_instance()
     # Start in a new thread to avoid blocking
     thread = threading.Thread(target=server.start)
@@ -356,7 +740,7 @@ def start_protocol_server():
     return thread
 
 def stop_protocol_server():
-    """Stop the 808 protocol server"""
+    """Stop the protocol server"""
     global _server_instance
     if _server_instance:
         _server_instance.stop()
