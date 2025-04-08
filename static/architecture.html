@@ -385,6 +385,45 @@
                 <li>Temperature readings (for health monitoring)</li>
             </ul>
             
+            <h3>Environment Configuration</h3>
+            <p>The system relies on several environment variables for configuration:</p>
+            
+            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                <div style="flex: 1; background-color: #0d1117; border-radius: 6px; padding: 15px;">
+                    <h4 style="margin-top: 0; color: #0d6efd;">Backend Environment</h4>
+                    <ul style="padding-left: 20px;">
+                        <li><code>DATABASE_URL</code>: PostgreSQL connection string</li>
+                        <li><code>SESSION_SECRET</code>: Session encryption key</li>
+                        <li><code>GOOGLE_OAUTH_CLIENT_ID</code>: OAuth client ID</li>
+                        <li><code>GOOGLE_OAUTH_CLIENT_SECRET</code>: OAuth client secret</li>
+                        <li><code>PROTOCOL_808_PORT</code>: Protocol server port (default: 8080)</li>
+                    </ul>
+                </div>
+                
+                <div style="flex: 1; background-color: #0d1117; border-radius: 6px; padding: 15px;">
+                    <h4 style="margin-top: 0; color: #0d6efd;">Frontend Environment</h4>
+                    <ul style="padding-left: 20px;">
+                        <li><code>VITE_API_BASE_URL</code>: Backend API URL (default: http://localhost:5000)</li>
+                    </ul>
+                    <p>The <code>VITE_API_BASE_URL</code> is critical as it determines where the frontend sends API requests. It is used in the <code>api.js</code> service to construct all API endpoints.</p>
+                </div>
+            </div>
+            
+            <h3>Development and Testing</h3>
+            <p>The Device Simulator tool allows testing the system without physical devices:</p>
+            <pre style="background-color: #0d1117; padding: 15px; border-radius: 6px; overflow-x: auto;">
+python tools/device_simulator.py --device-id test123 --imei 123456789012345 --interval 5 --protocol jt808</pre>
+        </div>
+                
+                <div style="flex: 1; background-color: #0d1117; border-radius: 6px; padding: 15px;">
+                    <h4 style="margin-top: 0; color: #0d6efd;">Frontend Environment</h4>
+                    <ul style="padding-left: 20px;">
+                        <li><code>VITE_API_BASE_URL</code>: Backend API URL (default: http://localhost:5000)</li>
+                    </ul>
+                    <p>The <code>VITE_API_BASE_URL</code> is critical as it determines where the frontend sends API requests. It's used in the <code>api.js</code> service to construct all API endpoints.</p>
+                </div>
+            </div>
+            
             <h3>Development and Testing</h3>
             <p>The Device Simulator tool allows testing the system without physical devices:</p>
             <pre style="background-color: #0d1117; padding: 15px; border-radius: 6px; overflow-x: auto;">
