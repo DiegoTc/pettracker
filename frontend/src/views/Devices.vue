@@ -21,88 +21,87 @@
 
     <div v-else-if="devices.length === 0" class="text-center my-5">
       <i class="bi bi-cpu display-4 text-muted"></i>
-      <h4 class="mt-3">No devices registered yet</h4>
-      <p class="text-muted">Register your first tracking device to start monitoring your pets</p>
+      <h4 class="mt-3">No tracking devices registered</h4>
+      <p class="text-muted">Register a new device to start tracking your pets</p>
       <router-link to="/devices/new" class="btn btn-primary mt-2">
         Register New Device
       </router-link>
     </div>
 
-    <div v-else>
-      <div class="table-responsive">
-        <table class="table table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>Name</th>
-              <th>Device ID</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Battery</th>
-              <th>Last Ping</th>
-              <th>Assigned Pet</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="device in devices" :key="device.id">
-              <td>{{ device.name || 'Unnamed Device' }}</td>
-              <td>
-                <span class="badge bg-secondary">{{ device.device_id }}</span>
-              </td>
-              <td>{{ device.device_type || 'Unknown' }}</td>
-              <td>
-                <span 
-                  class="badge" 
-                  :class="device.is_active ? 'bg-success' : 'bg-danger'"
-                >
-                  {{ device.is_active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <div class="progress" style="height: 20px; width: 100px;">
-                  <div 
-                    class="progress-bar" 
-                    role="progressbar" 
-                    :style="{ width: `${device.battery_level || 0}%` }"
-                    :class="getBatteryColorClass(device.battery_level)"
-                  >
-                    {{ device.battery_level ? `${Math.round(device.battery_level)}%` : 'N/A' }}
-                  </div>
+    <div v-else class="row">
+      <div v-for="device in devices" :key="device.id" class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ device.name || 'Unnamed Device' }}</h5>
+            <span v-if="device.is_active" class="badge bg-success">Active</span>
+            <span v-else class="badge bg-secondary">Inactive</span>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <small class="text-muted">Device ID:</small>
+              <div class="font-monospace">{{ device.device_id }}</div>
+            </div>
+            
+            <div class="mb-3" v-if="device.device_type">
+              <small class="text-muted">Type:</small>
+              <div>{{ device.device_type }}</div>
+            </div>
+            
+            <div class="mb-3" v-if="device.serial_number">
+              <small class="text-muted">Serial Number:</small>
+              <div class="font-monospace">{{ device.serial_number }}</div>
+            </div>
+            
+            <div class="mb-3" v-if="device.imei">
+              <small class="text-muted">IMEI:</small>
+              <div class="font-monospace">{{ device.imei }}</div>
+            </div>
+            
+            <div class="mb-3">
+              <small class="text-muted">Last Connection:</small>
+              <div>{{ formatDate(device.last_ping) || 'Never' }}</div>
+            </div>
+            
+            <div class="battery-indicator mb-3" v-if="device.battery_level">
+              <small class="text-muted">Battery Level:</small>
+              <div class="progress">
+                <div 
+                  class="progress-bar" 
+                  :class="getBatteryClass(device.battery_level)"
+                  :style="{ width: `${device.battery_level}%` }"
+                  role="progressbar" 
+                  :aria-valuenow="device.battery_level" 
+                  aria-valuemin="0" 
+                  aria-valuemax="100">
+                  {{ device.battery_level }}%
                 </div>
-              </td>
-              <td>
-                <span v-if="device.last_ping">
-                  {{ formatDate(device.last_ping) }}
-                </span>
-                <span v-else class="text-muted">Never</span>
-              </td>
-              <td>
-                <span v-if="device.pet">
-                  {{ device.pet.name }}
-                </span>
-                <span v-else>
-                  <button 
-                    class="btn btn-sm btn-outline-primary" 
-                    @click="showAssignModal(device)"
-                    :disabled="pets.length === 0"
-                  >
-                    Assign
-                  </button>
-                </span>
-              </td>
-              <td>
-                <div class="btn-group">
-                  <router-link :to="`/devices/${device.id}/edit`" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-pencil"></i>
-                  </router-link>
-                  <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(device)">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+            
+            <div v-if="device.pet_id">
+              <small class="text-muted">Assigned to:</small>
+              <div>
+                <span class="badge bg-info">{{ getPetName(device.pet_id) }}</span>
+              </div>
+            </div>
+            <div v-else>
+              <small class="text-muted">Status:</small>
+              <div>
+                <span class="badge bg-warning text-dark">Not assigned to any pet</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <div class="d-flex justify-content-between">
+              <router-link :to="`/devices/${device.id}/edit`" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil-square"></i> Edit
+              </router-link>
+              <button class="btn btn-outline-danger btn-sm" @click="confirmDelete(device)">
+                <i class="bi bi-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -116,7 +115,7 @@
           </div>
           <div class="modal-body" v-if="deviceToDelete">
             <p>Are you sure you want to delete device <strong>{{ deviceToDelete.name || deviceToDelete.device_id }}</strong>?</p>
-            <p class="text-danger">This action cannot be undone and will delete all associated location data.</p>
+            <p class="text-danger">This action cannot be undone and will remove all location history for this device.</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -125,45 +124,12 @@
         </div>
       </div>
     </div>
-
-    <!-- Assign to Pet Modal -->
-    <div class="modal fade" id="assignModal" tabindex="-1" ref="assignModal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">Assign to Pet</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" v-if="deviceToAssign">
-            <p>Select a pet to assign device <strong>{{ deviceToAssign.name || deviceToAssign.device_id }}</strong> to:</p>
-            
-            <div class="form-group">
-              <select class="form-select" v-model="selectedPetId">
-                <option disabled value="">Choose a pet</option>
-                <option v-for="pet in pets" :key="pet.id" :value="pet.id">{{ pet.name }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              @click="assignToPet"
-              :disabled="!selectedPetId"
-            >
-              Assign
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
 import { Modal } from 'bootstrap';
+import { devicesAPI, petsAPI } from '../services/api';
 
 export default {
   name: 'Devices',
@@ -174,10 +140,7 @@ export default {
       loading: true,
       error: null,
       deviceToDelete: null,
-      deviceToAssign: null,
-      selectedPetId: '',
-      deleteModal: null,
-      assignModal: null
+      deleteModal: null
     };
   },
   async created() {
@@ -187,16 +150,15 @@ export default {
     ]);
   },
   mounted() {
-    // Initialize modals
+    // Initialize the delete modal
     this.deleteModal = new Modal(this.$refs.deleteModal);
-    this.assignModal = new Modal(this.$refs.assignModal);
   },
   methods: {
     async fetchDevices() {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/devices');
+        const response = await devicesAPI.getAll();
         this.devices = response.data;
       } catch (error) {
         console.error('Error fetching devices:', error);
@@ -207,34 +169,31 @@ export default {
     },
     async fetchPets() {
       try {
-        const response = await axios.get('/api/pets');
+        const response = await petsAPI.getAll();
         this.pets = response.data;
       } catch (error) {
         console.error('Error fetching pets:', error);
       }
     },
-    getBatteryColorClass(level) {
-      if (!level) return 'bg-secondary';
-      if (level < 20) return 'bg-danger';
-      if (level < 50) return 'bg-warning';
-      return 'bg-success';
+    getPetName(petId) {
+      const pet = this.pets.find(p => p.id === petId);
+      return pet ? pet.name : 'Unknown Pet';
     },
-    formatDate(dateStr) {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      // Check if date is today
-      const today = new Date();
-      if (date.toDateString() === today.toDateString()) {
-        return 'Today ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-      // Check if date is yesterday
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (date.toDateString() === yesterday.toDateString()) {
-        return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-      // Otherwise show full date
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    formatDate(dateString) {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('default', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    },
+    getBatteryClass(level) {
+      if (level <= 20) return 'bg-danger';
+      if (level <= 40) return 'bg-warning';
+      return 'bg-success';
     },
     confirmDelete(device) {
       this.deviceToDelete = device;
@@ -244,7 +203,7 @@ export default {
       if (!this.deviceToDelete) return;
       
       try {
-        await axios.delete(`/api/devices/${this.deviceToDelete.id}`);
+        await devicesAPI.delete(this.deviceToDelete.id);
         // Remove the device from the list
         this.devices = this.devices.filter(d => d.id !== this.deviceToDelete.id);
         this.deleteModal.hide();
@@ -255,33 +214,6 @@ export default {
         this.showAlert(error.response?.data?.message || 'Failed to delete device', 'danger');
       } finally {
         this.deviceToDelete = null;
-      }
-    },
-    showAssignModal(device) {
-      this.deviceToAssign = device;
-      this.selectedPetId = '';
-      this.assignModal.show();
-    },
-    async assignToPet() {
-      if (!this.deviceToAssign || !this.selectedPetId) return;
-      
-      try {
-        await axios.post(`/api/devices/${this.deviceToAssign.id}/assign/${this.selectedPetId}`);
-        // Update the device in the list
-        const petName = this.pets.find(p => p.id === this.selectedPetId)?.name || '';
-        
-        // Refresh the devices list to get updated data
-        await this.fetchDevices();
-        
-        this.assignModal.hide();
-        // Show success message
-        this.showAlert(`Device assigned to ${petName} successfully`, 'success');
-      } catch (error) {
-        console.error('Error assigning device:', error);
-        this.showAlert(error.response?.data?.message || 'Failed to assign device', 'danger');
-      } finally {
-        this.deviceToAssign = null;
-        this.selectedPetId = '';
       }
     },
     showAlert(message, type) {

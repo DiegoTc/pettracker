@@ -231,6 +231,50 @@ def get_all_pets_latest_locations():
     
     return jsonify(result)
 
+@locations_bp.route('/recent', methods=['GET'])
+@jwt_required()
+def get_recent_locations():
+    """Get recent location updates across all devices belonging to the user"""
+    user_id = int(get_jwt_identity())
+    
+    # Get query parameters
+    limit = request.args.get('limit', default=10, type=int)
+    hours = request.args.get('hours', default=24, type=int)
+    
+    # Get all devices belonging to the user
+    devices = Device.query.filter_by(user_id=user_id).all()
+    
+    if not devices:
+        return jsonify({
+            "recent": [],
+            "total_count": 0
+        })
+    
+    # Get device IDs
+    device_ids = [device.id for device in devices]
+    
+    # Time threshold for recent locations
+    time_threshold = datetime.utcnow() - timedelta(hours=hours)
+    
+    # Query for recent locations across all user devices
+    recent_locations = (Location.query
+                         .filter(Location.device_id.in_(device_ids))
+                         .filter(Location.timestamp >= time_threshold)
+                         .order_by(desc(Location.timestamp))
+                         .limit(limit)
+                         .all())
+    
+    # Get total count of locations in the time period
+    total_count = (Location.query
+                   .filter(Location.device_id.in_(device_ids))
+                   .filter(Location.timestamp >= time_threshold)
+                   .count())
+    
+    return jsonify({
+        "recent": [location.to_dict() for location in recent_locations],
+        "total_count": total_count
+    })
+
 @locations_bp.route('/simulate', methods=['POST'])
 def simulate_device_location():
     """

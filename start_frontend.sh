@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Navigate to the frontend directory
 cd frontend
 
-# Run the development server
-npm run dev
+# Run Vite development server with host parameter to make it accessible
+# from outside the container
+npm run dev -- --host 0.0.0.0

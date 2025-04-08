@@ -82,8 +82,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import { Modal } from 'bootstrap';
+import { petsAPI } from '../services/api';
 
 export default {
   name: 'Pets',
@@ -108,7 +108,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/pets');
+        const response = await petsAPI.getAll();
         this.pets = response.data;
       } catch (error) {
         console.error('Error fetching pets:', error);
@@ -125,7 +125,7 @@ export default {
       if (!this.petToDelete) return;
       
       try {
-        await axios.delete(`/api/pets/${this.petToDelete.id}`);
+        await petsAPI.delete(this.petToDelete.id);
         // Remove the pet from the list
         this.pets = this.pets.filter(p => p.id !== this.petToDelete.id);
         this.deleteModal.hide();
