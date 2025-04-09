@@ -26,6 +26,25 @@ A comprehensive multiplatform pet tracking platform that supports Google authent
 - Protocol 808 and JT808 message decoding services
 - MQTT integration for device data streaming
 
+## Port Configuration
+
+The system uses the following default port configuration:
+
+- **Flask Backend API**: Port 5000
+- **Frontend Development Server**: Port 3000
+- **Protocol Server (JT/T 808)**: Port 8080 (configurable via `PROTOCOL_808_PORT`)
+- **Development JT808 Simulator**: Default connects to port 8081
+
+> **Important**: JT/T 808 protocol traditionally uses port 808 in production, but our development environment uses port 8080/8081 to avoid requiring privileged ports. If you encounter connection issues, ensure the simulator is configured to connect to the correct port.
+
+### Testing Script
+
+A convenience testing script is included to test the JT/T 808 protocol adapter:
+
+```bash
+# Test the JT/T 808 protocol with the correct port configuration
+./test_jt808_protocol.sh
+```
 ## Getting Started
 
 ### Prerequisites
@@ -205,16 +224,8 @@ Multiple device simulators are included to test the pet tracking functionality:
 
 ```bash
 # For traditional 808 protocol
-python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5
 
 # For JT/T 808 protocol
-python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5 --protocol jt808
-
-# JT/T 808 specific simulator with more protocol features
-python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
-```
-
-### Multi-Device Simulator
 
 For testing with multiple devices simultaneously:
 
@@ -224,7 +235,6 @@ python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --in
 
 # Simulate 3 devices with different movement patterns
 python tools/simulate_808_devices.py --mode circular --count 3
-```
 
 ### Built-in Simulator Mode
 
@@ -236,150 +246,6 @@ python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-in
 
 # Or use the convenience script
 ./start_mqtt_adapter_with_simulator.sh --count=5
-```
 
-See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) and [Tools README](tools/README.md) for more details.
+See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) for more details on the MQTT adapter.
 
-python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5 --protocol jt808
-
-# JT/T 808 specific simulator with more protocol features
-python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
-```
-
-### Multi-Device Simulator
-
-For testing with multiple devices simultaneously:
-
-```bash
-# Simulate 5 devices connecting to localhost:8081
-python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --interval 10
-
-# Simulate 3 devices with different movement patterns
-python tools/simulate_808_devices.py --mode circular --count 3
-```
-
-### Built-in Simulator Mode
-
-The protocol adapter can also run with a built-in simulator:
-
-```bash
-# Start the adapter with 3 simulated devices
-python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-interval 10
-
-# Or use the convenience script
-./start_mqtt_adapter_with_simulator.sh --count=5
-```
-
-See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) and [Tools README](tools/README.md) for more details.
-
-## Components
-
-- **Frontend**: Vue.js application for user interface
-- **Backend API**: Flask server with RESTful endpoints
-- **Protocol Server**: TCP server handling both 808 and JT808 protocol messages from tracking devices
-- **Database**: PostgreSQL for data storage
-
-## Supported Protocols
-
-The system supports two GPS tracking protocols:
-
-### Traditional 808 Protocol
-- Text-based protocol with command codes like BP01 (login), BP02 (GPS), etc.
-- Message format: `*ID,IMEI:IMEI,command,timestamp,device_id,...#`
-- Simpler string-based format popular with many basic GPS trackers
-- Commands include:
-  - BP00: Heartbeat
-  - BP01: Login
-  - BP02: GPS position update
-
-### JT/T 808 Protocol
-- Chinese national standard for GPS communication (JT/T 808-2011/2013/2019)
-- Binary protocol with message IDs like 0x0100 (registration), 0x0200 (location)
-- More structured binary format with proper bit fields and BCD time encoding
-- Enhanced features like terminal authentication, registration, and extended data
-- Key message types:
-  - 0x0100: Terminal Registration
-  - 0x0102: Terminal Authentication
-  - 0x0200: Location Reporting
-  - 0x0002: Heartbeat
-
-### Automatic Protocol Detection
-Both protocols are automatically detected by the server:
-- Messages starting with `*ID` are processed as traditional 808 protocol
-- Messages starting with the byte `0x7e` are processed as JT808 protocol
-- This allows seamless support for mixed device fleets with no reconfiguration needed
-
-### Protocol Server Implementation
-- The protocol server runs on port 8080 (configurable via `PROTOCOL_808_PORT` environment variable)
-- It listens for TCP connections from tracking devices
-- Both protocol parsers maintain compatible outputs for database storage
-- Device identification is consistent across protocols for unified device management
-
-## MQTT Protocol Adapter
-
-The system includes a modular MQTT adapter that translates JT/T 808 protocol messages to MQTT for more flexible integrations:
-
-### Features
-- Listens for incoming JT/T 808 protocol messages on TCP port 8081 (configurable)
-- Parses messages according to the protocol specification, handling byte unescaping and checksum verification
-- Extracts and transforms device data into structured JSON
-- Publishes data to an MQTT broker on topics like `devices/{device_id}/location`
-- Supports all standard JT/T 808 message types plus pet-specific extensions
-- Manages device registration and authentication flows
-\n### Testing the MQTT Adapter
-
-The easiest way to test the adapter is with the all-in-one test script:
-
-```bash
-# Start all components (MQTT broker, adapter, and subscriber)
-python test_mqtt_system.py
-
-# To also start a simulator automatically
-python test_mqtt_system.py --with-simulator
-```
-
-
-1. **Start the MQTT broker**:
-   ```bash
-   # Start Mosquitto with the provided configuration
-   mosquitto -c mosquitto.conf
-   ```
-
-2. **Run the adapter**:
-   ```bash
-   # Start the JT/T 808 to MQTT adapter
-   python run_mqtt_adapter.py
-   ```
-
-3. **Monitor messages** (optional):
-   ```bash
-   # Subscribe to all device topics
-   python tools/mqtt_subscriber.py
-   ```
-
-4. **Test with a simulated device**:
-   ```bash
-   # Run the JT808 device simulator
-   python tools/jt808_simulator.py
-   ```
-
-### Configuration Options
-- `--protocol-host`: Host to bind the protocol server to (default: 0.0.0.0)
-- `--protocol-port`: Port to listen on for protocol messages (default: 8080)
-- `--mqtt-host`: MQTT broker host (default: localhost)
-- `--mqtt-port`: MQTT broker port (default: 1883)
-- `--mqtt-username`: MQTT broker username (if required)
-- `--mqtt-password`: MQTT broker password (if required)
-- `--debug`: Enable debug logging
-
-### MQTT Topic Structure
-- `devices/{device_id}/location`: Device location updates
-- `devices/{device_id}/status`: Device status updates (heartbeat, registration, etc.)
-
-### Message Format
-Location messages contain:
-- Latitude, longitude, altitude
-- Speed, heading
-- Battery level, satellite count
-- Pet-specific data: activity level, temperature, health flags
-- Timestamp and status flags
