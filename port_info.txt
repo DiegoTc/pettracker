@@ -1,0 +1,21 @@
+
+## Port Configuration
+
+The system uses the following default port configuration:
+
+- **Flask Backend API**: Port 5000
+- **Frontend Development Server**: Port 3000
+- **Protocol Server (JT/T 808)**: Port 8080 (configurable via `PROTOCOL_808_PORT`)
+- **Development JT808 Simulator**: Default connects to port 8081
+
+> **Important**: JT/T 808 protocol traditionally uses port 808 in production, but our development environment uses port 8080/8081 to avoid requiring privileged ports. If you encounter connection issues, ensure the simulator is configured to connect to the correct port.
+
+### Testing Script
+
+A convenience testing script is included to test the JT/T 808 protocol adapter:
+
+```bash
+# Test the JT/T 808 protocol with the correct port configuration
+./test_jt808_protocol.sh
+```
+

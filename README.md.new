@@ -1,0 +1,268 @@
+# Pet Tracking System
+
+A comprehensive multiplatform pet tracking platform that supports Google authentication, device tracking via both traditional 808 and JT/T 808 protocols, and provides a robust backend API for cross-platform pet monitoring.
+
+## Features
+
+- **Google OAuth Authentication**: Secure user login and management
+- **Pet Management**: Create, update, view, and delete pets
+- **Device Management**: Register GPS trackers and assign them to pets
+- **Location Tracking**: Real-time tracking using both 808 and JT808 protocols
+- **Dual Protocol Support**: Compatible with both traditional 808 protocol and Chinese JT/T 808 protocol
+- **RESTful API**: Backend support for web, Android, and iOS clients
+- **Interactive Map**: Visualize pet locations in real-time
+- **Device Simulator**: Test without physical hardware (supports both protocols)
+- **MQTT Adapter**: Transform tracking protocol messages to MQTT for flexible integrations
+
+## Key Technologies
+
+- Flask web framework
+- PostgreSQL database
+- Google OAuth authentication
+- RESTful API design
+- WebSocket real-time communication
+- Device tracking and geofencing capabilities
+- JWT authentication
+- Protocol 808 and JT808 message decoding services
+- MQTT integration for device data streaming
+
+## Port Configuration
+
+The system uses the following default port configuration:
+
+- **Flask Backend API**: Port 5000
+- **Frontend Development Server**: Port 3000
+- **Protocol Server (JT/T 808)**: Port 8080 (configurable via `PROTOCOL_808_PORT`)
+- **Development JT808 Simulator**: Default connects to port 8081
+
+> **Important**: JT/T 808 protocol traditionally uses port 808 in production, but our development environment uses port 8080/8081 to avoid requiring privileged ports. If you encounter connection issues, ensure the simulator is configured to connect to the correct port.
+
+### Testing Script
+
+A convenience testing script is included to test the JT/T 808 protocol adapter:
+
+```bash
+# Test the JT/T 808 protocol with the correct port configuration
+./test_jt808_protocol.sh
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.11+ for the backend
+- Node.js 16+ and npm for the frontend
+- PostgreSQL database (or SQLite for development)
+- Mosquitto MQTT broker (for MQTT adapter)
+
+### Local Installation
+
+For detailed instructions on setting up a local development environment, follow these steps:
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository-url>
+   cd pet-tracking-system
+   ```
+
+2. **Create a Python virtual environment:**
+
+   ```bash
+   # Linux/macOS
+   python -m venv venv
+   source venv/bin/activate
+
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. **Install backend dependencies:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables:**
+
+   Create a `.env` file in the project root with the following variables:
+
+   ```
+   # Flask Configuration
+   FLASK_APP=main.py
+   FLASK_ENV=development
+   
+   # Database Configuration
+   DATABASE_URL=postgresql://user:password@localhost/pet_tracker
+   
+   # Google OAuth Configuration
+   GOOGLE_OAUTH_CLIENT_ID=your-client-id
+   GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+   
+   # Session Secret
+   SESSION_SECRET=your-session-secret
+   
+   # Protocol 808 Server
+   PROTOCOL_808_PORT=8080
+   ```
+
+5. **Initialize the database:**
+
+   ```bash
+   flask db init
+   flask db migrate
+   flask db upgrade
+   ```
+
+6. **Start the backend server:**
+
+   ```bash
+   flask run --host=0.0.0.0 --port=5000
+   ```
+
+7. **In a separate terminal, start the 808 protocol server:**
+
+   ```bash
+   python services/start_protocol_server.py
+   ```
+
+8. **If using the MQTT adapter, start it in another terminal:**
+
+   ```bash
+   python run_mqtt_adapter.py
+   ```
+
+### Replit Development
+
+1. **Start the backend server**:
+
+   ```bash
+   # Run the Flask server
+   python main.py
+   ```
+
+   Or use the configured workflow:
+
+   ```bash
+   # Use the Replit workflow
+   .replit
+   ```
+
+2. **Environment Variables**:
+
+   The following environment variables are required:
+   
+   - `DATABASE_URL`: PostgreSQL connection string
+   - `SESSION_SECRET`: Secret key for session management
+   - `GOOGLE_OAUTH_CLIENT_ID`: Google OAuth client ID
+   - `GOOGLE_OAUTH_CLIENT_SECRET`: Google OAuth client secret
+   - `PROTOCOL_808_PORT`: Port for the 808 protocol server (default: 8080)
+
+### Frontend Setup
+
+#### Running Locally (Outside of Replit)
+
+1. **Install frontend dependencies**:
+
+   ```bash
+   # Navigate to the frontend directory
+   cd frontend
+   
+   # Install dependencies
+   npm install
+   ```
+
+2. **Start the development server**:
+
+   ```bash
+   # Start the development server
+   npm run dev
+   ```
+
+3. **Access the frontend in your browser**:
+
+   Open http://localhost:3000 to view the frontend
+
+#### Building for Production
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies (if not already done):
+   ```bash
+   npm install
+   ```
+
+3. Build the frontend:
+   ```bash
+   npm run build
+   ```
+
+4. The built files will be in `frontend/dist` directory and can be served by the Flask backend
+
+Note: In Replit, direct execution of the frontend development server may be restricted. For development, consider using a local environment.
+
+## Accessing the Application
+
+- **Backend API**: http://localhost:5000
+- **Frontend**: http://localhost:3000 (when running the frontend dev server)
+
+## Device Simulators
+
+Multiple device simulators are included to test the pet tracking functionality:
+
+### Single Device Simulator
+
+```bash
+# For traditional 808 protocol
+python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5
+
+# For JT/T 808 protocol
+python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5 --protocol jt808
+
+# JT/T 808 specific simulator with more protocol features
+python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
+```
+
+### Multi-Device Simulator
+
+For testing with multiple devices simultaneously:
+
+```bash
+# Simulate 5 devices connecting to localhost:8081
+python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --interval 10
+
+# Simulate 3 devices with different movement patterns
+python tools/simulate_808_devices.py --mode circular --count 3
+```
+
+### Built-in Simulator Mode
+
+The protocol adapter can also run with a built-in simulator:
+
+```bash
+# Start the adapter with 3 simulated devices
+python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-interval 10
+
+# Or use the convenience script
+./start_mqtt_adapter_with_simulator.sh --count=5
+```
+
+See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) for more details on the MQTT adapter.
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -m 'Add feature'`
+4. Push to the branch: `git push origin feature-name`
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
