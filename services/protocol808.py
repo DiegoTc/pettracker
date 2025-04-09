@@ -1139,10 +1139,20 @@ class Protocol808Server:
                     terminal_id = decoded_body.get('terminal_id', '')
                     
                     with app.app_context():
-                        # Look for the device
+                        # Look for the device - first by device_id
                         device = Device.query.filter_by(device_id=device_id).first()
                         
-                        # If device not found, it's a new device registration
+                        # If device not found, try by IMEI
+                        if not device:
+                            device = Device.query.filter_by(imei=device_id).first()
+                            
+                            # If still not found, try by partial match
+                            if not device:
+                                device = Device.query.filter(Device.device_id.like(f"%{device_id}%")).first()
+                                if not device:
+                                    device = Device.query.filter(Device.imei.like(f"%{device_id}%")).first()
+                        
+                        # If device still not found, it's a new device registration
                         if not device:
                             # Auto-register the device if configured to do so
                             # For now we just log it; in production you may want 
@@ -1175,7 +1185,17 @@ class Protocol808Server:
                     # Authentication always succeeds in this implementation
                     # In production, validate the auth code
                     with app.app_context():
+                        # Try finding by device_id, then IMEI, then partial matches
                         device = Device.query.filter_by(device_id=device_id).first()
+                        
+                        if not device:
+                            device = Device.query.filter_by(imei=device_id).first()
+                            
+                            if not device:
+                                device = Device.query.filter(Device.device_id.like(f"%{device_id}%")).first()
+                                if not device:
+                                    device = Device.query.filter(Device.imei.like(f"%{device_id}%")).first()
+                            
                         if device:
                             device.last_ping = datetime.utcnow()
                             db.session.commit()
@@ -1187,14 +1207,34 @@ class Protocol808Server:
             
             # Normal processing for location updates and other messages
             with app.app_context():
+                # First try to find by device_id
                 device = Device.query.filter_by(device_id=device_id).first()
+                if device:
+                    logger.debug(f"Found device by exact device_id match: {device_id}")
                 
                 if not device:
                     # Try to find by IMEI
                     device = Device.query.filter_by(imei=device_id).first()
+                    if device:
+                        logger.debug(f"Found device by exact IMEI match: {device_id}")
+                    
+                    # If not found, try by partial device_id match (useful for testing)
+                    if not device:
+                        # This helps when using the device simulator which may only have part of the ID
+                        device = Device.query.filter(Device.device_id.like(f"%{device_id}%")).first()
+                        if device:
+                            logger.debug(f"Found device by partial device_id match: {device_id} → {device.device_id}")
+                        
+                        if not device:
+                            # Finally try by IMEI partial match
+                            device = Device.query.filter(Device.imei.like(f"%{device_id}%")).first()
+                            if device:
+                                logger.debug(f"Found device by partial IMEI match: {device_id} → {device.imei}")
                 
                 if not device:
-                    logger.warning(f"Device not found in database: {device_id}")
+                    logger.warning(f"Device not found in database: {device_id} - make sure it is registered and has a user_id")
+                    # Add this helpful log message to help troubleshoot
+                    logger.info(f"If using a simulator, check the --device-id and --imei parameters match entries in the database")
                     return
                 
                 # Update device last ping time

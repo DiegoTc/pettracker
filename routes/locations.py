@@ -109,7 +109,12 @@ def get_device_latest_location(device_id):
     location = Location.query.filter_by(device_id=device.id).order_by(desc(Location.timestamp)).first()
     
     if not location:
-        return jsonify({"error": "No location data available for this device"}), 404
+        return jsonify({
+            "error": "No location data available for this device",
+            "device_id": device.id,
+            "device_identifier": device.device_id,
+            "status": "no_data"
+        }), 400  # Use 400 instead of 404 to bypass the global error handler
     
     return jsonify({
         "device": device.to_dict(),
