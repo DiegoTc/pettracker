@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-JT/T 808 Device Simulator for Production Testing
+JT/T 808 Device Simulator for Testing
 
 This script simulates multiple JT/T 808 protocol devices connecting to 
-our production endpoint (pettrack.com:808) and sending location data.
+the protocol server and sending location data.
 
 Features:
 - Creates multiple virtual GPS tracking devices
@@ -13,7 +13,7 @@ Features:
 - Can simulate movement patterns
 
 Usage:
-    python tools/simulate_808_devices.py --host pettrack.com --port 808 --count 5 --interval 30
+    python tools/simulate_808_devices.py --host localhost --port 8081 --count 5 --interval 30
 """
 
 import argparse
@@ -43,8 +43,8 @@ class DeviceSimulationManager:
     """Manages multiple simulated JT/T 808 protocol devices"""
     
     def __init__(self, 
-                 server_host: str = 'pettrack.com', 
-                 server_port: int = 808,
+                 server_host: str = 'localhost', 
+                 server_port: int = 8081,
                  device_count: int = 1,
                  update_interval: int = 10,
                  simulation_mode: str = 'random'):
@@ -52,8 +52,8 @@ class DeviceSimulationManager:
         Initialize the simulation manager.
         
         Args:
-            server_host: Host to connect the devices to (default: pettrack.com)
-            server_port: Port to connect to (default: 808)
+            server_host: Host to connect the devices to (default: localhost)
+            server_port: Port to connect to (default: 8081)
             device_count: Number of devices to simulate (default: 1)
             update_interval: Seconds between location updates (default: 10)
             simulation_mode: Movement pattern to simulate ('random', 'circular', 'fixed')
@@ -204,19 +204,19 @@ class DeviceSimulationManager:
 
 def parse_arguments():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description='JT/T 808 Device Simulator for Production Testing')
+    parser = argparse.ArgumentParser(description='JT/T 808 Device Simulator for Testing')
     
     parser.add_argument(
         '--host',
-        default='pettrack.com',
-        help='Server host to connect to (default: pettrack.com)'
+        default='localhost',
+        help='Server host to connect to (default: localhost)'
     )
     
     parser.add_argument(
         '--port',
         type=int,
-        default=808,
-        help='Server port to connect to (default: 808)'
+        default=8081,
+        help='Server port to connect to (default: 8081)'
     )
     
     parser.add_argument(
