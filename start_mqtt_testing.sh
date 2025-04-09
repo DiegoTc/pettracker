@@ -14,7 +14,7 @@ sleep 2
 
 # Start the Protocol Adapter in the background
 echo "Starting JT/T 808 to MQTT Protocol Adapter..."
-python run_mqtt_adapter.py --debug &
+python run_mqtt_adapter.py --debug --protocol-port 8081 --protocol-port 8081 &
 ADAPTER_PID=$!
 
 # Wait for adapter to start

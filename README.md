@@ -1,6 +1,18 @@
 # Pet Tracking System
 
-A comprehensive pet tracking and management platform that enables owners to monitor, interact with, and care for their pets through advanced technological solutions.
+A comprehensive multiplatform pet tracking platform that supports Google authentication, device tracking via both traditional 808 and JT/T 808 protocols, and provides a robust backend API for cross-platform pet monitoring.
+
+## Features
+
+- **Google OAuth Authentication**: Secure user login and management
+- **Pet Management**: Create, update, view, and delete pets
+- **Device Management**: Register GPS trackers and assign them to pets
+- **Location Tracking**: Real-time tracking using both 808 and JT808 protocols
+- **Dual Protocol Support**: Compatible with both traditional 808 protocol and Chinese JT/T 808 protocol
+- **RESTful API**: Backend support for web, Android, and iOS clients
+- **Interactive Map**: Visualize pet locations in real-time
+- **Device Simulator**: Test without physical hardware (supports both protocols)
+- **MQTT Adapter**: Transform tracking protocol messages to MQTT for flexible integrations
 
 ## Key Technologies
 
@@ -158,12 +170,39 @@ Both protocols are automatically detected by the server:
 The system includes a modular MQTT adapter that translates JT/T 808 protocol messages to MQTT for more flexible integrations:
 
 ### Features
-- Listens for incoming JT/T 808 protocol messages on TCP port 8080
+- Listens for incoming JT/T 808 protocol messages on TCP port 8081 (configurable)
 - Parses messages according to the protocol specification, handling byte unescaping and checksum verification
 - Extracts and transforms device data into structured JSON
 - Publishes data to an MQTT broker on topics like `devices/{device_id}/location`
 - Supports all standard JT/T 808 message types plus pet-specific extensions
 - Manages device registration and authentication flows
+\n### Testing the MQTT Adapter
+
+The easiest way to test the adapter is with the all-in-one test script:
+
+```bash
+# Start all components (MQTT broker, adapter, and subscriber)
+python test_mqtt_system.py
+
+# To also start a simulator automatically
+python test_mqtt_system.py --with-simulator
+```
+
+For more details, see the comprehensive [MQTT Adapter Testing Guide](MQTT_ADAPTER_GUIDE.md).
+
+### Testing the MQTT Adapter
+
+The easiest way to test the adapter is with the all-in-one test script:
+
+```bash
+# Start all components (MQTT broker, adapter, and subscriber)
+python test_mqtt_system.py
+
+# To also start a simulator automatically
+python test_mqtt_system.py --with-simulator
+```
+
+For more details, see the comprehensive [MQTT Adapter Testing Guide](MQTT_ADAPTER_GUIDE.md).
 
 ### Running the MQTT Adapter
 

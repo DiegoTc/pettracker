@@ -141,6 +141,13 @@ def main():
             logger.error("No location messages received")
             return 1
         
+        # Print the first location message in a more readable format
+        first_location = location_messages[0]
+        logger.info("First location message received:")
+        logger.info(f"Topic: {first_location['topic']}")
+        logger.info("Payload:")
+        logger.info(json.dumps(first_location['payload'], indent=2))
+        
         logger.info("Test completed successfully")
         return 0
         
