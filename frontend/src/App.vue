@@ -90,46 +90,106 @@ import { authAPI } from './services/api';
 import { Modal } from 'bootstrap';
 
 export default {
-  name: 'App',
-  data() {
-    return {
-      isAuthenticated: false,
-      user: null,
-      loading: true,
-      navbarCollapse: null
-    };
-  },
-  async created() {
-    // Check authentication status using direct fetch instead of axios
-    try {
-      const authResponse = await fetch('http://localhost:5000/api/auth/check', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (!authResponse.ok) {
-        throw new Error(`Server responded with status: ${authResponse.status}`);
+        if (!authResponse.ok) {
+          throw new Error(`Server responded with status: ${authResponse.status}`);
+        }
+        
+        const data = await authResponse.json();
+        this.isAuthenticated = data.authenticated;
+        
+        if (this.isAuthenticated && data.user) {
+          this.user = data.user;
+          
+          // Store the access token if its included in the response
+          if (data.access_token) {
+            localStorage.setItem("access_token", data.access_token);
+            console.log("JWT token stored for API access");
+          }
+          
+          // Get full user data
+          const userResponse = await fetch("http://localhost:5000/api/auth/user", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Accept": "application/json",
+              "Authorization": `Bearer ${data.access_token || localStorage.getItem("access_token")}`
+            },
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            this.user = userData;
+          }
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          this.user = userData;
+          this.isAuthenticated = true;
+        } else {
+          // If token is invalid, remove it and redirect to login
+          localStorage.removeItem('access_token');
+          this.isAuthenticated = false;
+        }
+      } catch (error) {
+        console.error('Error getting user info with token:', error);
+        localStorage.removeItem('access_token');
+        this.isAuthenticated = false;
+      } finally {
+        this.loading = false;
       }
-      
-      const data = await authResponse.json();
-      this.isAuthenticated = data.authenticated;
-      
-      if (this.isAuthenticated && data.user) {
-        this.user = data.user;
+    } else {
+      // If no token, check cookie-based session
+      try {
+        const authResponse = await fetch('http://localhost:5000/api/auth/check', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        
+        if (!authResponse.ok) {
+          throw new Error(`Server responded with status: ${authResponse.status}`);
+        }
+        
+        const data = await authResponse.json();
+        this.isAuthenticated = data.authenticated;
+        
+        if (this.isAuthenticated && data.user) {
+          this.user = data.user;
+          
+          // Store the access token if it's included in the response
+          if (data.access_token) {
+            localStorage.setItem('access_token', data.access_token);
+            console.log('JWT token stored for API access');
+          }
+          
+          // Get full user data
+          const userResponse = await fetch('http://localhost:5000/api/auth/user', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${data.access_token || localStorage.getItem('access_token')}`
+            },
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            this.user = userData;
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        this.isAuthenticated = false;
+      } finally {
+        this.loading = false;
       }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      this.isAuthenticated = false;
-    } finally {
-      this.loading = false;
-      
-      // If not authenticated, redirect to login
-      if (!this.isAuthenticated && this.$route.path !== '/login') {
-        this.$router.push('/login');
-      }
+    }
+    
+    // Redirect to login if not authenticated
+    if (!this.isAuthenticated && this.$route.path !== '/login') {
+      this.$router.push('/login');
     }
   },
   mounted() {
@@ -140,7 +200,7 @@ export default {
   methods: {
     async logout() {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/logout', {
+        await fetch('http://localhost:5000/api/auth/logout', {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -148,6 +208,9 @@ export default {
             'Content-Type': 'application/json'
           },
         });
+        
+        // Remove stored token
+        localStorage.removeItem('access_token');
         
         this.isAuthenticated = false;
         this.user = null;

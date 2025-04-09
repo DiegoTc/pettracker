@@ -8,10 +8,14 @@ const apiClient = axios.create({
   withCredentials: true
 });
 
-// Add a request interceptor for common headers
+// Add a request interceptor to include JWT token in headers
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add common headers here if needed (e.g., authorization)
+    // Get the token from localStorage if it exists
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {

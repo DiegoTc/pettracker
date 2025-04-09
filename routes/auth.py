@@ -192,18 +192,41 @@ def callback():
         # Create JWT token - Convert user.id to string to prevent "Subject must be a string" error
         access_token = create_access_token(identity=str(user.id))
         
-        return jsonify({
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "profile_picture": user.profile_picture
-            },
-            "access_token": access_token
-        })
+        # Check if this is a browser flow or API call
+        request_accepts_json = request.headers.get('Accept', '').startswith('application/json')
+        redirect_param = request.args.get('redirect_to_frontend', 'true').lower() == 'true'
+        
+        if request_accepts_json and not redirect_param:
+            # Return JSON for API clients
+            return jsonify({
+                "message": "Login successful",
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "profile_picture": user.profile_picture
+                },
+                "access_token": access_token
+            })
+        else:
+            # Redirect to frontend with token as URL parameter for browser flow
+            is_local = "localhost" in request.host or "127.0.0.1" in request.host
+            
+            if is_local:
+                frontend_url = "http://localhost:3000"
+            else:
+                # For production environments, use the same domain with a different port
+                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                if replit_domain:
+                    frontend_url = f"https://{replit_domain}" 
+                else:
+                    frontend_url = request.url_root.replace("http://", "https://")
+            
+            redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
+            logger.info(f"Redirecting to frontend: {redirect_url}")
+            return redirect(redirect_url)
     
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
@@ -245,13 +268,17 @@ def get_user():
 def check_auth():
     """Check if user is authenticated"""
     if current_user.is_authenticated:
+        # Create a JWT token for API access
+        access_token = create_access_token(identity=str(current_user.id))
+        
         return jsonify({
             "authenticated": True,
             "user": {
                 "id": current_user.id,
                 "email": current_user.email,
                 "username": current_user.username
-            }
+            },
+            "access_token": access_token
         })
     else:
         return jsonify({"authenticated": False})
