@@ -30,11 +30,98 @@ A comprehensive multiplatform pet tracking platform that supports Google authent
 
 ### Prerequisites
 
-- Python 3.10+ for the backend
-- Node.js and npm for the frontend
-- PostgreSQL database
+- Python 3.11+ for the backend
+- Node.js 16+ and npm for the frontend
+- PostgreSQL database (or SQLite for development)
+- Mosquitto MQTT broker (for MQTT adapter)
 
-### Backend Setup
+### Local Installation
+
+For detailed instructions on setting up a local development environment, follow these steps:
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository-url>
+   cd pet-tracking-system
+   ```
+
+2. **Create a Python virtual environment:**
+
+   ```bash
+   # Linux/macOS
+   python -m venv venv
+   source venv/bin/activate
+
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. **Install Python dependencies:**
+
+   Install the following packages:
+
+   ```bash
+   pip install Flask Flask-Cors Flask-JWT-Extended Flask-Limiter Flask-Login Flask-SQLAlchemy
+   pip install gunicorn paho-mqtt psycopg2-binary python-dotenv requests oauthlib
+   pip install SQLAlchemy email-validator
+   ```
+
+   Required versions (based on our Replit environment):
+   ```
+   email-validator>=2.2.0
+   flask>=3.1.0
+   flask-cors>=5.0.1
+   flask-jwt-extended>=4.7.1
+   flask-limiter>=3.12
+   flask-login>=0.6.3
+   flask-sqlalchemy>=3.1.1
+   gunicorn>=23.0.0
+   oauthlib>=3.2.2
+   paho-mqtt>=2.1.0
+   psycopg2-binary>=2.9.10
+   python-dotenv>=1.0.0
+   requests>=2.32.3
+   sqlalchemy>=2.0.40
+   ```
+
+4. **Set up environment variables:**
+
+   Create a `.env` file in the project root:
+
+   ```
+   # Database
+   DATABASE_URL=postgresql://username:password@localhost/pet_tracker
+   # or for SQLite: DATABASE_URL=sqlite:///pet_tracker.db
+
+   # Session secret
+   SESSION_SECRET=your-secret-key-here
+
+   # Google OAuth
+   GOOGLE_OAUTH_CLIENT_ID=your-client-id
+   GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+
+   # Protocol server port
+   PROTOCOL_808_PORT=8080
+   ```
+
+5. **Set up the database:**
+
+   For PostgreSQL:
+   ```bash
+   createdb pet_tracker
+   ```
+
+   For SQLite, no setup is needed; it will be created automatically.
+
+6. **Run the application:**
+
+   ```bash
+   python main.py
+   ```
+
+### Backend Setup (Replit)
 
 1. **Start the Flask backend server**:
 
