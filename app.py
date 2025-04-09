@@ -28,8 +28,10 @@ def create_app(config_class='config.Config'):
     app.config.from_object(config_class)
     app.secret_key = os.environ.get("SESSION_SECRET")
     
-    # Enable CORS for all routes
-    CORS(app)
+    # Enable CORS for all routes with support for credentials
+    CORS(app, supports_credentials=True, origins=["http://localhost:3000", 
+                                                 f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
+                                                 "https://pettracker.diegotc.repl.co"])
     
     # Initialize extensions with app
     db.init_app(app)

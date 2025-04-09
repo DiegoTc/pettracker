@@ -17,15 +17,19 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
-      // When in development mode, proxy API requests to the Flask backend
+      host: '0.0.0.0',
+      cors: true, // Important for cross-origin requests 
+      // We'll use direct API calls rather than proxying for clarity
+      // But if you want to use proxying, you'd configure it like this:
+      /*
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:5000',
+          target: 'http://localhost:5000',
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path
         },
       },
+      */
     },
     build: {
       outDir: 'dist',

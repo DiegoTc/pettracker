@@ -87,19 +87,32 @@ export default {
       this.error = null;
       
       try {
-        // Get the login URL directly
-        const response = await authAPI.login();
+        // Make a direct request to the backend instead of using the API client
+        // This bypasses any proxy issues
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+
+        const data = await response.json();
         
-        if (response.data && response.data.redirect_url) {
+        if (data && data.redirect_url) {
           // Redirect to Google OAuth
-          window.location.href = response.data.redirect_url;
+          window.location.href = data.redirect_url;
         } else {
-          console.error('Invalid login response:', response.data);
-          this.error = 'Unable to initiate login. Check console for details.';
+          console.error('Invalid login response:', data);
+          this.error = 'Unable to initiate login. Please ensure Google OAuth is configured.';
         }
       } catch (error) {
         console.error('Login error:', error);
-        this.error = 'Failed to initiate login. Please try again.';
+        this.error = 'Failed to initiate login. Please check the server connection.';
         this.loading = false;
       }
     },

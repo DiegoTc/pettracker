@@ -1,13 +1,11 @@
 import axios from 'axios';
 
-// Determine if this is running in development mode (on localhost/127.0.0.1)
-const isDevelopment = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1';
-
-// Create an axios instance with the base URL from environment variable
-// In development mode, we don't need the base URL since the Vite proxy will handle it
+// Create an axios instance with the appropriate base URL
 const apiClient = axios.create({
-  baseURL: isDevelopment ? '' : (import.meta.env.VITE_API_BASE_URL || ''),
+  // Always use the absolute backend URL when not working through the proxy
+  baseURL: 'http://localhost:5000',
+  // Important: withCredentials is needed for cookies/session to work across domains
+  withCredentials: true
 });
 
 // Add a request interceptor for common headers

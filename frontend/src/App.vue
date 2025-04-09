@@ -100,21 +100,36 @@ export default {
     };
   },
   async created() {
-    // Check authentication status
+    // Check authentication status using direct fetch instead of axios
     try {
-      const authResponse = await authAPI.checkAuth();
-      this.isAuthenticated = authResponse.data.authenticated;
+      const authResponse = await fetch('http://localhost:5000/api/auth/check', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       
-      if (this.isAuthenticated) {
-        // Get user data
-        const userResponse = await authAPI.getUser();
-        this.user = userResponse.data;
+      if (!authResponse.ok) {
+        throw new Error(`Server responded with status: ${authResponse.status}`);
+      }
+      
+      const data = await authResponse.json();
+      this.isAuthenticated = data.authenticated;
+      
+      if (this.isAuthenticated && data.user) {
+        this.user = data.user;
       }
     } catch (error) {
       console.error('Auth check error:', error);
       this.isAuthenticated = false;
     } finally {
       this.loading = false;
+      
+      // If not authenticated, redirect to login
+      if (!this.isAuthenticated && this.$route.path !== '/login') {
+        this.$router.push('/login');
+      }
     }
   },
   mounted() {
@@ -125,7 +140,15 @@ export default {
   methods: {
     async logout() {
       try {
-        await authAPI.logout();
+        const response = await fetch('http://localhost:5000/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+        });
+        
         this.isAuthenticated = false;
         this.user = null;
         

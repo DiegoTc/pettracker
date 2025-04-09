@@ -1,0 +1,38 @@
+Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this errorAI
+App.vue:114 Auth check error: AxiosError
+created @ App.vue:114Understand this errorAI
+:3000/api/auth/check:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this errorAI
+index.js:93 Auth check failed: AxiosError
+(anonymous) @ index.js:93Understand this errorAI
+:3000/api/auth/check:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this errorAI
+api.js:41 
+            
+            
+           GET http://localhost:3000/api/auth/login 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=f8d9c02a:1648
+xhr @ axios.js?v=f8d9c02a:1528
+dispatchRequest @ axios.js?v=f8d9c02a:2003
+Promise.then
+_request @ axios.js?v=f8d9c02a:2206
+request @ axios.js?v=f8d9c02a:2115
+Axios.<computed> @ axios.js?v=f8d9c02a:2243
+wrap @ axios.js?v=f8d9c02a:8
+login @ api.js:41
+loginWithGoogle @ Login.vue:91
+_createElementVNode.onClick._cache.<computed>._cache.<computed> @ Login.vue:23
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+invoker @ chunk-VT7FWPCL.js?v=f8d9c02a:11273Understand this errorAI
+Login.vue:101 Login error: AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_RESPONSE"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}message: "Request failed with status code 500"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: false, upload: XMLHttpRequestUpload, …}response: {data: '', status: 500, statusText: 'Internal Server Error', headers: AxiosHeaders, config: {…}, …}status: 500stack: "AxiosError: Request failed with status code 500\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1229:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1561:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:2119:41)\n    at async Proxy.loginWithGoogle (http://localhost:3000/src/views/Login.vue:19:26)"[[Prototype]]: Error
+loginWithGoogle @ Login.vue:101
+await in loginWithGoogle
+_createElementVNode.onClick._cache.<computed>._cache.<computed> @ Login.vue:23
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+invoker @ chunk-VT7FWPCL.js?v=f8d9c02a:11273
