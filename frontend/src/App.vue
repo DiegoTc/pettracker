@@ -90,36 +90,29 @@ import { authAPI } from './services/api';
 import { Modal } from 'bootstrap';
 
 export default {
-        if (!authResponse.ok) {
-          throw new Error(`Server responded with status: ${authResponse.status}`);
-        }
-        
-        const data = await authResponse.json();
-        this.isAuthenticated = data.authenticated;
-        
-        if (this.isAuthenticated && data.user) {
-          this.user = data.user;
-          
-          // Store the access token if its included in the response
-          if (data.access_token) {
-            localStorage.setItem("access_token", data.access_token);
-            console.log("JWT token stored for API access");
+  name: 'App',
+  data() {
+    return {
+      isAuthenticated: false,
+      user: null,
+      loading: true,
+      navbarCollapse: null
+    };
+  },
+  async created() {
+    // First check for stored tokens
+    const token = localStorage.getItem('access_token');
+    
+    if (token) {
+      try {
+        // If we have a token, try to use it to get user info
+        const userResponse = await fetch('http://localhost:5000/api/auth/user', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
-          
-          // Get full user data
-          const userResponse = await fetch("http://localhost:5000/api/auth/user", {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              "Accept": "application/json",
-              "Authorization": `Bearer ${data.access_token || localStorage.getItem("access_token")}`
-            },
-          });
-          
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            this.user = userData;
-          }
+        });
         
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -160,17 +153,17 @@ export default {
           
           // Store the access token if it's included in the response
           if (data.access_token) {
-            localStorage.setItem('access_token', data.access_token);
-            console.log('JWT token stored for API access');
+            localStorage.setItem("access_token", data.access_token);
+            console.log("JWT token stored for API access");
           }
           
           // Get full user data
-          const userResponse = await fetch('http://localhost:5000/api/auth/user', {
-            method: 'GET',
-            credentials: 'include',
+          const userResponse = await fetch("http://localhost:5000/api/auth/user", {
+            method: "GET",
+            credentials: "include",
             headers: {
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${data.access_token || localStorage.getItem('access_token')}`
+              "Accept": "application/json",
+              "Authorization": `Bearer ${data.access_token || localStorage.getItem("access_token")}`
             },
           });
           
