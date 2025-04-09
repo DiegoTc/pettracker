@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+// Determine if this is running in development mode (on localhost/127.0.0.1)
+const isDevelopment = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1';
+
 // Create an axios instance with the base URL from environment variable
+// In development mode, we don't need the base URL since the Vite proxy will handle it
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  baseURL: isDevelopment ? '' : (import.meta.env.VITE_API_BASE_URL || ''),
 });
 
 // Add a request interceptor for common headers
@@ -32,7 +37,8 @@ export const authAPI = {
   checkAuth: () => apiClient.get('/api/auth/check'),
   logout: () => apiClient.post('/api/auth/logout'),
   getUser: () => apiClient.get('/api/auth/user'),
-  getLoginInfo: () => apiClient.get('/api/auth/login-info'),
+  getLoginInfo: () => apiClient.get('/api/auth/login_info'),
+  login: () => apiClient.get('/api/auth/login'),
 };
 
 // Pets API

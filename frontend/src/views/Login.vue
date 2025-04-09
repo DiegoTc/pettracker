@@ -87,11 +87,16 @@ export default {
       this.error = null;
       
       try {
-        // Get login info (URL to redirect to)
-        const response = await authAPI.getLoginInfo();
+        // Get the login URL directly
+        const response = await authAPI.login();
         
-        // Redirect to Google OAuth
-        window.location.href = response.data.auth_url;
+        if (response.data && response.data.redirect_url) {
+          // Redirect to Google OAuth
+          window.location.href = response.data.redirect_url;
+        } else {
+          console.error('Invalid login response:', response.data);
+          this.error = 'Unable to initiate login. Check console for details.';
+        }
       } catch (error) {
         console.error('Login error:', error);
         this.error = 'Failed to initiate login. Please try again.';

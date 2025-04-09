@@ -18,12 +18,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       // When in development mode, proxy API requests to the Flask backend
-      proxy: mode === 'development' ? {
+      proxy: {
         '/api': {
           target: env.VITE_API_BASE_URL || 'http://localhost:5000',
           changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path
         },
-      } : undefined,
+      },
     },
     build: {
       outDir: 'dist',
