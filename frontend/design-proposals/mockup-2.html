@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Proposal 2: Modern Card-Based Layout</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Quicksand:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --primary: #2196F3;
+      --primary-light: #64B5F6;
+      --primary-dark: #1976D2;
+      --secondary: #FF4081;
+      --success: #4CAF50;
+      --warning: #FFC107;
+      --danger: #F44336;
+      --background: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --border: #EEEEEE;
+      --text: #212121;
+      --text-light: #757575;
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 5px 20px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+      --radius: 12px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f7fb;
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    /* Layout */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    /* Top Bar */
+    .app-header {
+      background-color: var(--background);
+      box-shadow: var(--shadow-sm);
+      height: 70px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+    
+    .header-logo {
+      display: flex;
+      align-items: center;
+      color: var(--primary);
+      font-size: 22px;
+      font-weight: 700;
+      font-family: 'Montserrat', sans-serif;
+      margin-right: 40px;
+    }
+    
+    .header-logo i {
+      margin-right: 10px;
+      font-size: 24px;
+    }
+    
+    .header-nav {
+      display: flex;
+      margin-right: auto;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      height: 70px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    .nav-link:hover {
+      color: var(--primary);
+    }
+    
+    .nav-link.active {
+      color: var(--primary);
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 15px;
+      right: 15px;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+    
+    .action-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+      color: var(--text-light);
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      position: relative;
+    }
+    
+    .action-button:hover {
+      background-color: rgba(33, 150, 243, 0.1);
+      color: var(--primary);
+    }
+    
+    .badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background-color: var(--secondary);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .user-profile {
+      display: flex;
+      align-items: center;
+      margin-left: 15px;
+      cursor: pointer;
+    }
+    
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #E3F2FD;
+      color: var(--primary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Montserrat', sans-serif;
+    }
+    
+    /* Main Content */
+    .main-content {
+      margin-top: 70px;
+      padding: 30px;
+      flex: 1;
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: var(--text);
+    }
+    
+    /* Card Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    /* Stat Cards */
+    .stat-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 24px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    
+    .stat-card:nth-child(1)::before {
+      background-color: var(--primary);
+    }
+    
+    .stat-card:nth-child(2)::before {
+      background-color: var(--warning);
+    }
+    
+    .stat-card:nth-child(3)::before {
+      background-color: var(--success);
+    }
+    
+    .stat-card:nth-child(4)::before {
+      background-color: var(--secondary);
+    }
+    
+    .stat-icon {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .stat-icon i {
+      font-size: 26px;
+    }
+    
+    .stat-card:nth-child(1) .stat-icon {
+      color: var(--primary);
+    }
+    
+    .stat-card:nth-child(2) .stat-icon {
+      color: var(--warning);
+    }
+    
+    .stat-card:nth-child(3) .stat-icon {
+      color: var(--success);
+    }
+    
+    .stat-card:nth-child(4) .stat-icon {
+      color: var(--secondary);
+    }
+    
+    .stat-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+    
+    .stat-value {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .stat-change {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .stat-change.positive {
+      color: var(--success);
+    }
+    
+    .stat-change.negative {
+      color: var(--danger);
+    }
+    
+    .stat-change.neutral {
+      color: var(--text-light);
+    }
+    
+    .stat-change i {
+      margin-right: 5px;
+    }
+    
+    /* Main Cards */
+    .main-cards {
+      display: grid;
+      grid-template-columns: 5fr 3fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+    }
+    
+    .card-title i {
+      margin-right: 10px;
+      font-size: 20px;
+      color: var(--primary);
+    }
+    
+    .card-body {
+      padding: 24px;
+    }
+    
+    .map-card .card-body {
+      padding: 0;
+    }
+    
+    .map-container {
+      height: 400px;
+      background-color: #E3F2FD;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+    }
+    
+    .card-actions {
+      display: flex;
+      align-items: center;
+    }
+    
+    .card-button {
+      background-color: transparent;
+      border: none;
+      color: var(--text-light);
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .card-button:hover {
+      background-color: rgba(33, 150, 243, 0.1);
+      color: var(--primary);
+    }
+    
+    .dropdown {
+      position: relative;
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 8px 0;
+      min-width: 180px;
+      z-index: 10;
+      display: none;
+    }
+    
+    .dropdown-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      color: var(--text);
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+      background-color: #F5F7FB;
+    }
+    
+    .dropdown-item i {
+      margin-right: 10px;
+      font-size: 16px;
+      color: var(--text-light);
+    }
+    
+    /* Activity List */
+    .activity-list {
+      list-style: none;
+    }
+    
+    .activity-item {
+      display: flex;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    
+    .activity-icon {
+      width: 42px;
+      height: 42px;
+      background-color: #E3F2FD;
+      border-radius: var(--radius);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    
+    .activity-icon i {
+      font-size: 20px;
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-text {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    
+    .activity-text strong {
+      font-weight: 600;
+    }
+    
+    .activity-info {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .activity-info span {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      color: var(--text-light);
+      margin-right: 16px;
+      margin-bottom: 4px;
+    }
+    
+    .activity-info i {
+      margin-right: 6px;
+      font-size: 14px;
+    }
+    
+    .location {
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    /* Quick Access Cards */
+    .quick-access {
+      margin-top: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    
+    .quick-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    
+    .quick-card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 30px 24px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .quick-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .quick-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    
+    .quick-card:nth-child(1) .quick-icon {
+      background-color: rgba(33, 150, 243, 0.1);
+      color: var(--primary);
+    }
+    
+    .quick-card:nth-child(2) .quick-icon {
+      background-color: rgba(255, 64, 129, 0.1);
+      color: var(--secondary);
+    }
+    
+    .quick-card:nth-child(3) .quick-icon {
+      background-color: rgba(76, 175, 80, 0.1);
+      color: var(--success);
+    }
+    
+    .quick-card:nth-child(4) .quick-icon {
+      background-color: rgba(255, 193, 7, 0.1);
+      color: var(--warning);
+    }
+    
+    .quick-icon i {
+      font-size: 28px;
+    }
+    
+    .quick-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .quick-text {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      padding: 0 20px;
+      border-radius: 21px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e91e63;
+      box-shadow: 0 4px 10px rgba(255, 64, 129, 0.3);
+    }
+    
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background-color: #388e3c;
+      box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-warning {
+      background-color: var(--warning);
+      color: white;
+    }
+    
+    .btn-warning:hover {
+      background-color: #ffa000;
+      box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn i {
+      margin-right: 8px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 1200px) {
+      .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .main-cards {
+        grid-template-columns: 1fr;
+      }
+      
+      .quick-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .app-header {
+        padding: 0 16px;
+      }
+      
+      .header-nav {
+        display: none;
+      }
+      
+      .main-content {
+        padding: 20px;
+      }
+      
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .quick-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Bar -->
+    <header class="app-header">
+      <div class="header-logo">
+        <i class="bi bi-heart-fill"></i>
+        <span>PetTracker</span>
+      </div>
+      
+      <nav class="header-nav">
+        <a href="#" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link">My Pets</a>
+        <a href="#" class="nav-link">Devices</a>
+        <a href="#" class="nav-link">Map</a>
+        <a href="#" class="nav-link">Reports</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button class="action-button">
+          <i class="bi bi-search"></i>
+        </button>
+        <button class="action-button">
+          <i class="bi bi-bell"></i>
+          <span class="badge">3</span>
+        </button>
+        <div class="user-profile">
+          <div class="avatar">JD</div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <h1 class="page-title">Dashboard</h1>
+      
+      <!-- Stat Cards -->
+      <div class="card-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-heart-fill"></i>
+          </div>
+          <div class="stat-content">
+            <h3>Total Pets</h3>
+            <p class="stat-value">8</p>
+            <p class="stat-change positive">
+              <i class="bi bi-arrow-up-right"></i> +2 since last month
+            </p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <div class="stat-content">
+            <h3>Active Devices</h3>
+            <p class="stat-value">5</p>
+            <p class="stat-change neutral">No change</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+          </div>
+          <div class="stat-content">
+            <h3>Tracked Locations</h3>
+            <p class="stat-value">1,234</p>
+            <p class="stat-change positive">
+              <i class="bi bi-arrow-up-right"></i> +287 since yesterday
+            </p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="bi bi-activity"></i>
+          </div>
+          <div class="stat-content">
+            <h3>Activity Score</h3>
+            <p class="stat-value">87</p>
+            <p class="stat-change positive">
+              <i class="bi bi-arrow-up-right"></i> +5% since last week
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Content Cards -->
+      <div class="main-cards">
+        <div class="card map-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="bi bi-geo-alt"></i>
+              Pet Locations
+            </h2>
+            <div class="card-actions">
+              <button class="card-button">
+                <i class="bi bi-arrows-fullscreen"></i>
+              </button>
+              <button class="card-button">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="map-container">
+              Interactive Map Component
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="bi bi-clock-history"></i>
+              Recent Activity
+            </h2>
+            <div class="card-actions">
+              <div class="dropdown">
+                <button class="card-button">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="bi bi-geo-alt"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text"><strong>Buddy</strong> was located at <span class="location">Central Park</span></p>
+                  <div class="activity-info">
+                    <span><i class="bi bi-clock"></i> 5 min ago</span>
+                    <span><i class="bi bi-battery-half"></i> 85%</span>
+                    <span><i class="bi bi-speedometer"></i> 3.2 km/h</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="bi bi-geo-alt"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text"><strong>Max</strong> was located at <span class="location">Downtown</span></p>
+                  <div class="activity-info">
+                    <span><i class="bi bi-clock"></i> 15 min ago</span>
+                    <span><i class="bi bi-battery-half"></i> 72%</span>
+                    <span><i class="bi bi-speedometer"></i> 1.5 km/h</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="bi bi-geo-alt"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text"><strong>Charlie</strong> was located at <span class="location">River Park</span></p>
+                  <div class="activity-info">
+                    <span><i class="bi bi-clock"></i> 32 min ago</span>
+                    <span><i class="bi bi-battery-half"></i> 91%</span>
+                    <span><i class="bi bi-speedometer"></i> 4.7 km/h</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="bi bi-geo-alt"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text"><strong>Luna</strong> was located at <span class="location">Dog Park</span></p>
+                  <div class="activity-info">
+                    <span><i class="bi bi-clock"></i> 1 hour ago</span>
+                    <span><i class="bi bi-battery-half"></i> 64%</span>
+                    <span><i class="bi bi-speedometer"></i> 0.8 km/h</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quick Access Section -->
+      <div class="quick-access">
+        <h2 class="section-title">Quick Actions</h2>
+        
+        <div class="quick-cards">
+          <div class="quick-card">
+            <div class="quick-icon">
+              <i class="bi bi-plus-lg"></i>
+            </div>
+            <h3 class="quick-title">Add Pet</h3>
+            <p class="quick-text">Register a new pet in the system</p>
+            <button class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i> Add Pet
+            </button>
+          </div>
+          
+          <div class="quick-card">
+            <div class="quick-icon">
+              <i class="bi bi-cpu"></i>
+            </div>
+            <h3 class="quick-title">Register Device</h3>
+            <p class="quick-text">Connect a new tracking device</p>
+            <button class="btn btn-secondary">
+              <i class="bi bi-plus-circle"></i> Add Device
+            </button>
+          </div>
+          
+          <div class="quick-card">
+            <div class="quick-icon">
+              <i class="bi bi-geo-alt"></i>
+            </div>
+            <h3 class="quick-title">View Map</h3>
+            <p class="quick-text">See where your pets are located</p>
+            <button class="btn btn-success">
+              <i class="bi bi-map"></i> Open Map
+            </button>
+          </div>
+          
+          <div class="quick-card">
+            <div class="quick-icon">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <h3 class="quick-title">Reports</h3>
+            <p class="quick-text">View activity and health reports</p>
+            <button class="btn btn-warning">
+              <i class="bi bi-bar-chart"></i> View Reports
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

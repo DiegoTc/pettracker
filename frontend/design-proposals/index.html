@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Tracker Design Proposals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <style>
+    :root {
+      --primary: #3f51b5;
+      --primary-light: #757de8;
+      --primary-dark: #002984;
+      --secondary: #ff4081;
+      --background: #f5f5f5;
+      --surface: #ffffff;
+      --text: #212121;
+      --text-light: #757575;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 40px 0;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    
+    .title {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-light);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .proposals {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 30px;
+      margin-bottom: 48px;
+    }
+    
+    .proposal-card {
+      background-color: var(--surface);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .proposal-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+    
+    .card-img {
+      height: 200px;
+      background-color: #e9e9e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--text-light);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    
+    .proposal-card:hover .card-img img {
+      transform: scale(1.05);
+    }
+    
+    .card-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(63, 81, 181, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .proposal-card:hover .card-overlay {
+      opacity: 1;
+    }
+    
+    .view-btn {
+      background-color: white;
+      color: var(--primary);
+      font-weight: 600;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .view-btn i {
+      margin-right: 6px;
+    }
+    
+    .view-btn:hover {
+      background-color: var(--primary-dark);
+      color: white;
+    }
+    
+    .card-content {
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--primary-dark);
+    }
+    
+    .card-description {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 16px;
+      flex: 1;
+    }
+    
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .tag {
+      background-color: rgba(63, 81, 181, 0.1);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 16px;
+    }
+    
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    
+    .action-btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .action-btn i {
+      margin-right: 6px;
+    }
+    
+    .action-btn:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .secondary-btn {
+      background-color: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    
+    .secondary-btn:hover {
+      background-color: rgba(63, 81, 181, 0.1);
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 64px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    
+    @media (max-width: 768px) {
+      .header {
+        margin-bottom: 32px;
+      }
+      
+      .title {
+        font-size: 28px;
+      }
+      
+      .subtitle {
+        font-size: 16px;
+      }
+      
+      .proposals {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">Pet Tracker Design Proposals</h1>
+      <p class="subtitle">Explore our design proposals for the Pet Tracker platform. Each proposal offers a different approach to the user interface while maintaining the same functionality.</p>
+    </header>
+    
+    <div class="proposals">
+      <div class="proposal-card">
+        <div class="card-img">
+          <img src="https://via.placeholder.com/400x200/e3f2fd/2196f3?text=Design+1" alt="Design 1 Preview">
+          <div class="card-overlay">
+            <a href="mockup-1.html" class="view-btn" target="_blank"><i class="bi bi-eye"></i> Preview Design</a>
+          </div>
+        </div>
+        <div class="card-content">
+          <h2 class="card-title">Sleek Professional Dashboard</h2>
+          <div class="card-tags">
+            <span class="tag">Dark Sidebar</span>
+            <span class="tag">Light Content</span>
+            <span class="tag">Modern</span>
+          </div>
+          <p class="card-description">A sleek, professional dashboard with a dark sidebar and light content area. It's designed for optimal readability with strong visual hierarchy, using modern card design with drop shadows and rounded corners.</p>
+          <div class="card-actions">
+            <a href="mockup-1.html" class="action-btn" target="_blank"><i class="bi bi-eye"></i> View Demo</a>
+            <a href="proposal-1.md" class="action-btn secondary-btn" target="_blank"><i class="bi bi-file-text"></i> Details</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="proposal-card">
+        <div class="card-img">
+          <img src="https://via.placeholder.com/400x200/e8f5e9/4caf50?text=Design+2" alt="Design 2 Preview">
+          <div class="card-overlay">
+            <a href="mockup-2.html" class="view-btn" target="_blank"><i class="bi bi-eye"></i> Preview Design</a>
+          </div>
+        </div>
+        <div class="card-content">
+          <h2 class="card-title">Modern Card-Based Layout</h2>
+          <div class="card-tags">
+            <span class="tag">Card-Based</span>
+            <span class="tag">Flat Design</span>
+            <span class="tag">Colorful</span>
+          </div>
+          <p class="card-description">This design features a card-based layout with a flat design aesthetic. It focuses on simplicity, clarity, and effective use of white space with vibrant accent colors and floating action buttons.</p>
+          <div class="card-actions">
+            <a href="mockup-2.html" class="action-btn" target="_blank"><i class="bi bi-eye"></i> View Demo</a>
+            <a href="proposal-2.md" class="action-btn secondary-btn" target="_blank"><i class="bi bi-file-text"></i> Details</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="proposal-card">
+        <div class="card-img">
+          <img src="https://via.placeholder.com/400x200/121212/90caf9?text=Design+3" alt="Design 3 Preview">
+          <div class="card-overlay">
+            <a href="mockup-3.html" class="view-btn" target="_blank"><i class="bi bi-eye"></i> Preview Design</a>
+          </div>
+        </div>
+        <div class="card-content">
+          <h2 class="card-title">Premium Dashboard Experience</h2>
+          <div class="card-tags">
+            <span class="tag">Dark Mode</span>
+            <span class="tag">Premium</span>
+            <span class="tag">Sophisticated</span>
+          </div>
+          <p class="card-description">This premium design creates a high-end dashboard experience with depth, texture, and professional polish. It's inspired by the Apricot template's sophisticated aesthetic with dark mode support.</p>
+          <div class="card-actions">
+            <a href="mockup-3.html" class="action-btn" target="_blank"><i class="bi bi-eye"></i> View Demo</a>
+            <a href="proposal-3.md" class="action-btn secondary-btn" target="_blank"><i class="bi bi-file-text"></i> Details</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <footer class="footer">
+      <p>© 2025 Pet Tracker. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>
