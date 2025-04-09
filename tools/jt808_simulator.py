@@ -807,6 +807,14 @@ def parse_arguments():
         help='Protocol server port (default: 8080)'
     )
     
+    # Also accept --server-port for compatibility
+    parser.add_argument(
+        '--server-port',
+        type=int,
+        dest='port',
+        help='Protocol server port (alias for --port)'
+    )
+    
     parser.add_argument(
         '--device-id',
         default=None,
