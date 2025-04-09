@@ -1,0 +1,63 @@
+Our current pet tracking system receives JT/T 808 (and JT808) messages via a dedicated TCP socket server (running on port 8080). We want to refactor the data transmission flow by building a protocol adapter that listens for incoming JT/T 808 messages, parses and validates them (including handling byte unescaping, checksum verification, and field extraction per the JT/T 808 specification), and then translates these messages into MQTT messages. The MQTT messages will be published to a local MQTT broker (e.g., Mosquitto running on localhost).
+
+Objectives:
+
+Implement a lightweight, Python-based TCP server that listens for incoming connections from GPS tracking devices on port 8080.
+
+Parse the incoming binary messages according to the JT/T 808 protocol—handle message framing, byte unescaping (for example, 0x7e and 0x7d translation rules), and checksum verification.
+
+Identify and extract key data elements from messages. For instance, when a location (0x0200) message is received, extract fields such as:
+
+Latitude (DWORD, expressed in degrees multiplied by 10^6)
+
+Longitude (DWORD, expressed similarly)
+
+Altitude, speed, and heading
+
+Timestamp (BCD[6], typically in YY-MM-DD-hh-mm-ss format)
+
+Any additional pet-specific or device-specific fields (e.g., battery level, activity flags) if available
+
+Transform the extracted data into a structured JSON format designed for MQTT message payloads. Use a topic naming convention like devices/{device_id}/location where {device_id} is derived from the device’s identifying field (e.g., the IMEI or terminal mobile phone number from the JT/T 808 header).
+
+Publish these JSON messages to your local MQTT broker running on (for example) localhost on port 1883.
+
+Maintain robust error handling and detailed logging—especially for protocol parsing errors or invalid messages.
+
+Include unit tests to verify correct parsing of JT/T 808 messages (pay close attention to the transformations like unescaping and checksum computation) and ensure reliable MQTT publishing.
+
+Technical Requirements:
+
+TCP Server: Use a reliable asynchronous or multithreaded approach (e.g., with asyncio or using threaded sockets) to handle multiple simultaneous device connections.
+
+Protocol Parsing:
+
+Implement message framing based on the starting/ending flag (0x7e) and perform required byte unescaping as specified (e.g., 0x7e is escaped to 0x7d followed by 0x02, etc.).
+
+Extract fields from the JT/T 808 header (such as message ID, message properties, terminal phone number, serial number) to determine the type of message and its payload length.
+
+Use the provided JT/T 808 documentation as reference for structuring both the header and the body of messages.
+
+Data Transformation: Convert binary numbers into human-readable formats (e.g., converting BCD to string for timestamp, DWORD values for coordinates to floating point degrees).
+
+MQTT Integration:
+
+Leverage a Python MQTT client library (such as paho-mqtt) to connect to and publish messages to your local MQTT broker.
+
+Ensure that the MQTT message payloads are JSON-formatted and include all necessary fields (e.g., device ID, latitude, longitude, speed, heading, and timestamp).
+
+Testing & Documentation:
+
+Write unit tests that simulate incoming JT/T 808 message streams (you may include examples of common messages such as Heartbeat (0x0002), Registration (0x0100), and GPS Location (0x0200)).
+
+Document each module of the adapter, especially detailing how the translation from JT/T 808 binary format to JSON is done.
+
+Success Criteria:
+
+The adapter correctly receives, unescapes, and verifies incoming JT/T 808 messages.
+
+It reliably extracts location and status data, then publishes the corresponding JSON messages to the MQTT broker under the appropriate topics.
+
+Comprehensive unit tests cover edge cases including malformed messages and checksum failures.
+
+Logging provides sufficient detail for troubleshooting in production.
