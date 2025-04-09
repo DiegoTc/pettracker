@@ -1,154 +1,279 @@
 <template>
-  <div class="pets-page">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>My Pets</h2>
-      <router-link to="/pets/new" class="btn btn-primary">
+  <app-layout>
+    <div class="page-header">
+      <h1 class="page-title">My Pets</h1>
+      <button class="btn btn-primary" @click="navigateTo('/pets/new')">
         <i class="bi bi-plus-lg"></i> Add New Pet
-      </router-link>
+      </button>
     </div>
-
+    
     <div v-if="loading" class="text-center my-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
       <p class="mt-2">Loading your pets...</p>
     </div>
-
-    <div v-else-if="error" class="alert alert-danger">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      Error loading pets: {{ error }}
+    
+    <div v-else-if="pets.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-heart"></i>
+      </div>
+      <h3>No Pets Found</h3>
+      <p>You haven't added any pets yet. Add your first pet to start tracking.</p>
+      <button class="btn btn-primary" @click="navigateTo('/pets/new')">
+        <i class="bi bi-plus-lg"></i> Add First Pet
+      </button>
     </div>
-
-    <div v-else-if="pets.length === 0" class="text-center my-5">
-      <i class="bi bi-emoji-smile display-4 text-muted"></i>
-      <h4 class="mt-3">No pets yet</h4>
-      <p class="text-muted">Get started by adding your first pet</p>
-      <router-link to="/pets/new" class="btn btn-primary mt-2">
-        Add New Pet
-      </router-link>
-    </div>
-
-    <div v-else class="row">
-      <div v-for="pet in pets" :key="pet.id" class="col-md-4 mb-4">
-        <div class="card h-100">
-          <div class="card-img-top bg-light text-center py-3" style="height: 200px;">
-            <img v-if="pet.image_url" :src="pet.image_url" alt="Pet Image" class="img-fluid h-100">
-            <div v-else class="d-flex align-items-center justify-content-center h-100">
-              <i class="bi bi-image text-muted" style="font-size: 4rem;"></i>
-            </div>
+    
+    <div v-else class="pet-grid">
+      <div v-for="pet in pets" :key="pet.id" class="pet-card" @click="navigateTo(`/pets/${pet.id}`)">
+        <div class="pet-image">
+          <img v-if="pet.image_url" :src="pet.image_url" :alt="pet.name">
+          <div v-else class="pet-placeholder">
+            <i class="bi" :class="getPetIcon(pet.pet_type)"></i>
           </div>
-          <div class="card-body">
-            <h5 class="card-title">{{ pet.name }}</h5>
-            <p class="card-text">
-              <span class="badge bg-info me-2">{{ pet.pet_type }}</span>
-              <span v-if="pet.breed" class="badge bg-secondary">{{ pet.breed }}</span>
-            </p>
-            <p class="card-text" v-if="pet.description">{{ pet.description }}</p>
+        </div>
+        <div class="pet-info">
+          <h3 class="pet-name">{{ pet.name }}</h3>
+          <p class="pet-details">{{ pet.breed || pet.pet_type }}</p>
+          <div class="pet-stats">
+            <span v-if="pet.age" class="pet-age">
+              <i class="bi bi-calendar3"></i> {{ pet.age }}
+            </span>
+            <span v-if="pet.weight" class="pet-weight">
+              <i class="bi bi-speedometer"></i> {{ pet.weight }} kg
+            </span>
           </div>
-          <div class="card-footer bg-white">
-            <div class="d-flex justify-content-between">
-              <router-link :to="'/pets/' + pet.id + '/edit'" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-pencil-square"></i> Edit
-              </router-link>
-              <button class="btn btn-outline-danger btn-sm" @click="confirmDelete(pet)">
-                <i class="bi bi-trash"></i> Delete
-              </button>
-            </div>
-          </div>
+        </div>
+        <div class="pet-actions">
+          <button class="btn btn-sm btn-primary" @click.stop="navigateTo(`/pets/${pet.id}/edit`)">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger ms-2" @click.stop="confirmDelete(pet)">
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
       </div>
     </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" ref="deleteModal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">Confirm Delete</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" v-if="petToDelete">
-            <p>Are you sure you want to delete <strong>{{ petToDelete.name }}</strong>?</p>
-            <p class="text-danger">This action cannot be undone.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="deletePet">Delete</button>
-          </div>
-        </div>
-      </div>
+    
+    <!-- Delete Confirmation Modal (placeholder) -->
+    <div v-if="showDeleteModal" class="delete-modal">
+      <!-- Modal content will go here -->
     </div>
-  </div>
+  </app-layout>
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
-import { petsAPI } from '../services/api';
+import AppLayout from '../components/layout/AppLayout.vue';
 
 export default {
   name: 'Pets',
+  components: {
+    AppLayout,
+  },
   data() {
     return {
       pets: [],
       loading: true,
-      error: null,
-      petToDelete: null,
-      deleteModal: null
-    };
-  },
-  async created() {
-    await this.fetchPets();
+      showDeleteModal: false,
+      petToDelete: null
+    }
   },
   mounted() {
-    // Initialize the delete modal
-    this.deleteModal = new Modal(this.$refs.deleteModal);
+    this.fetchPets();
   },
   methods: {
-    async fetchPets() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await petsAPI.getAll();
-        this.pets = response.data;
-      } catch (error) {
-        console.error('Error fetching pets:', error);
-        this.error = error.response?.data?.message || 'Failed to load pets';
-      } finally {
+    fetchPets() {
+      // Simulate API call for now - will replace with actual API call
+      setTimeout(() => {
+        this.pets = [
+          {
+            id: 1,
+            name: 'Buddy',
+            pet_type: 'Dog',
+            breed: 'Golden Retriever',
+            weight: 28.5,
+            age: '3 years',
+            image_url: null
+          },
+          {
+            id: 2,
+            name: 'Luna',
+            pet_type: 'Cat',
+            breed: 'Maine Coon',
+            weight: 5.2,
+            age: '2 years',
+            image_url: null
+          },
+          {
+            id: 3,
+            name: 'Max',
+            pet_type: 'Dog',
+            breed: 'Labrador',
+            weight: 32.1,
+            age: '5 years',
+            image_url: null
+          }
+        ];
         this.loading = false;
+      }, 1000);
+      
+      // Real API call will look like this:
+      /*
+      fetch('/api/pets')
+        .then(response => response.json())
+        .then(data => {
+          this.pets = data;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.error('Error fetching pets:', error);
+          this.loading = false;
+        });
+      */
+    },
+    navigateTo(route) {
+      this.$router.push(route);
+    },
+    getPetIcon(petType) {
+      switch(petType.toLowerCase()) {
+        case 'dog':
+          return 'bi-emoji-smile';
+        case 'cat':
+          return 'bi-emoji-smile-upside-down';
+        case 'bird':
+          return 'bi-emoji-laughing';
+        default:
+          return 'bi-emoji-smile';
       }
     },
     confirmDelete(pet) {
       this.petToDelete = pet;
-      this.deleteModal.show();
-    },
-    async deletePet() {
-      if (!this.petToDelete) return;
-      
-      try {
-        await petsAPI.delete(this.petToDelete.id);
-        // Remove the pet from the list
-        this.pets = this.pets.filter(p => p.id !== this.petToDelete.id);
-        this.deleteModal.hide();
-        // Show success message
-        this.showAlert('Pet deleted successfully', 'success');
-      } catch (error) {
-        console.error('Error deleting pet:', error);
-        this.showAlert(error.response?.data?.message || 'Failed to delete pet', 'danger');
-      } finally {
-        this.petToDelete = null;
-      }
-    },
-    showAlert(message, type) {
-      // This is a placeholder for an alert system
-      // You might want to implement a toast notification system
-      alert(message);
+      this.showDeleteModal = true;
+      // In a real implementation, show a modal confirmation dialog
+      // For now, we'll just log a message
+      console.log(`Request to delete pet: ${pet.name}`);
     }
   }
-};
+}
 </script>
 
 <style scoped>
-.pets-page {
-  margin-bottom: 50px;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin: 40px auto;
+  max-width: 500px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.pet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.pet-card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.pet-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.pet-image {
+  height: 180px;
+  background-color: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pet-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pet-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: var(--primary-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-dark);
+  font-size: 40px;
+}
+
+.pet-info {
+  padding: 20px;
+}
+
+.pet-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.pet-details {
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+.pet-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.pet-stats span {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.pet-stats i {
+  margin-right: 5px;
+}
+
+.pet-actions {
+  padding: 0 20px 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
