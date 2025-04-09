@@ -1,35 +1,64 @@
 <template>
-  <div class="not-found-page text-center py-5">
-    <div class="mb-4">
-      <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+  <div class="not-found">
+    <div class="error-icon">
+      <i class="bi bi-exclamation-triangle"></i>
     </div>
-    <h1 class="mb-3">Page Not Found</h1>
-    <p class="lead mb-4">Sorry, we couldn't find the page you're looking for.</p>
-    <div class="d-flex justify-content-center">
-      <router-link to="/" class="btn btn-primary me-3">
-        <i class="bi bi-house-door me-1"></i> Go Home
-      </router-link>
-      <button class="btn btn-outline-secondary" @click="goBack">
-        <i class="bi bi-arrow-left me-1"></i> Go Back
-      </button>
-    </div>
+    <h1>404</h1>
+    <h2>Page Not Found</h2>
+    <p>The page you are looking for does not exist or has been moved.</p>
+    <router-link to="/" class="btn btn-primary">
+      <i class="bi bi-house-door"></i> Go to Home
+    </router-link>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'NotFound',
-  methods: {
-    goBack() {
-      this.$router.go(-1);
-    }
-  }
-};
+  name: 'NotFound'
+}
 </script>
 
 <style scoped>
-.not-found-page {
-  margin: 3rem auto;
-  max-width: 600px;
+.not-found {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  background-color: var(--background);
+}
+
+.error-icon {
+  font-size: 80px;
+  color: var(--warning);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 80px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+h2 {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+p {
+  font-size: 18px;
+  color: var(--text-light);
+  max-width: 500px;
+  margin-bottom: 30px;
+}
+
+.btn {
+  font-size: 16px;
+  padding: 12px 24px;
 }
 </style>

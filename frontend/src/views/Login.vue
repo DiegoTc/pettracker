@@ -1,152 +1,123 @@
 <template>
-  <div class="login-page">
-    <div class="row justify-content-center">
-      <div class="col-md-6 col-lg-5">
-        <div class="card">
-          <div class="card-header text-center py-4">
-            <h2 class="mb-0">Pet Tracker</h2>
-          </div>
-          <div class="card-body p-4">
-            <div class="text-center mb-4">
-              <h3>Sign In</h3>
-              <p class="text-muted">Use your Google account to sign in</p>
-            </div>
-            
-            <div v-if="error" class="alert alert-danger">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              {{ error }}
-            </div>
-            
-            <div class="text-center">
-              <button 
-                class="btn btn-primary btn-lg w-100" 
-                @click="loginWithGoogle"
-                :disabled="loading"
-              >
-                <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <i v-else class="bi bi-google me-2"></i>
-                Sign in with Google
-              </button>
-            </div>
-            
-            <div class="text-center mt-4">
-              <p class="text-muted">
-                By signing in, you agree to our Terms of Service and Privacy Policy.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="card mt-4">
-          <div class="card-body">
-            <h5>About Pet Tracker</h5>
-            <p>
-              Pet Tracker is a comprehensive platform that enables you to monitor, interact with, 
-              and care for your pets using advanced tracking technology. Keep track of your pets' 
-              location, activity, and health status in real-time.
-            </p>
-            <div class="features mt-3">
-              <div class="feature">
-                <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                <span>Real-time GPS tracking</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-activity text-primary me-2"></i>
-                <span>Activity monitoring</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-heart-fill text-primary me-2"></i>
-                <span>Health status updates</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-clock-history text-primary me-2"></i>
-                <span>Location history</span>
-              </div>
-            </div>
-          </div>
-        </div>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        <i class="bi bi-shield-check"></i>
+        <h1>PetTracker</h1>
+      </div>
+      
+      <div class="login-subtitle">
+        <h2>Welcome Back</h2>
+        <p>Sign in to continue to your account</p>
+      </div>
+      
+      <div class="login-options">
+        <button class="btn btn-google" @click="googleLogin">
+          <i class="bi bi-google"></i>
+          Sign in with Google
+        </button>
+      </div>
+      
+      <div class="login-footer">
+        <p>&copy; {{ new Date().getFullYear() }} PetTracker. All rights reserved.</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { authAPI } from '../services/api';
-
 export default {
   name: 'Login',
-  data() {
-    return {
-      loading: false,
-      error: null
-    };
-  },
   methods: {
-    async loginWithGoogle() {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        // Make a direct request to the backend instead of using the API client
-        // This bypasses any proxy issues
-        const response = await fetch('http://localhost:5000/api/auth/login//', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data && data.redirect_url) {
-          // Redirect to Google OAuth
-          window.location.href = data.redirect_url;
-        } else {
-          console.error('Invalid login response:', data);
-          this.error = 'Unable to initiate login. Please ensure Google OAuth is configured.';
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        this.error = 'Failed to initiate login. Please check the server connection.';
-        this.loading = false;
-      }
-    },
-  },
-  created() {
-    // Check for error message in URL parameters (e.g., after failed OAuth)
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorMsg = urlParams.get('error');
-    if (errorMsg) {
-      this.error = decodeURIComponent(errorMsg);
-    }
-    
-    // Check for redirect parameter to save for post-login redirect
-    const redirect = urlParams.get('redirect');
-    if (redirect) {
-      localStorage.setItem('login_redirect', redirect);
+    googleLogin() {
+      window.location.href = '/api/auth/google';
     }
   }
-};
+}
 </script>
 
 <style scoped>
-.login-page {
-  padding: 60px 0;
-}
-
-.features {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.feature {
+.login-container {
+  height: 100vh;
   display: flex;
   align-items: center;
+  justify-content: center;
+  background-color: var(--background);
+  padding: 20px;
+}
+
+.login-card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  text-align: center;
+}
+
+.login-logo {
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-logo i {
+  font-size: 60px;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+.login-logo h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.login-subtitle {
+  margin-bottom: 32px;
+}
+
+.login-subtitle h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.login-subtitle p {
+  color: var(--text-light);
+  font-size: 16px;
+}
+
+.login-options {
+  margin-bottom: 32px;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #4285F4;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-google:hover {
+  background-color: #3367D6;
+  transform: translateY(-2px);
+}
+
+.btn-google i {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.login-footer {
+  font-size: 14px;
+  color: var(--text-lighter);
 }
 </style>
