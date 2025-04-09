@@ -1252,11 +1252,65 @@ class Protocol808Server:
                         device.battery_level = location_data["battery_level"]
                         logger.info(f"Updated battery level for device {device_id}: {device.battery_level}%")
                     
-                    # If location has additional data, log it
+                    # If location has additional data, log it and publish to MQTT if available
                     if "additional_data" in location_data:
-                        logger.debug(f"Additional data for device {device_id}: {location_data['additional_data']}")
+                        additional_data = location_data["additional_data"]
+                        logger.debug(f"Additional data for device {device_id}: {additional_data}")
+                        
+                        # For JT808 protocol messages with pet-specific data,
+                        # publish to MQTT for real-time display instead of storing in database
+                        if is_jt808 and (
+                            "activity_level" in additional_data or 
+                            "health_flags" in additional_data or 
+                            "temperature" in additional_data
+                        ):
+                            try:
+                                # Import the MQTT client only when needed
+                                from services.mqtt_adapter.mqtt_client import MQTTClient
+                                
+                                # Create or get MQTT client
+                                mqtt_client = MQTTClient(broker_host="127.0.0.1", broker_port=1883)
+                                mqtt_client.connect()
+                                
+                                # Create a payload with location and additional data
+                                mqtt_payload = {
+                                    "device_id": device.device_id,
+                                    "latitude": location_data["latitude"],
+                                    "longitude": location_data["longitude"],
+                                    "timestamp": datetime.utcnow().isoformat(),
+                                    "battery_level": device.battery_level,
+                                }
+                                
+                                # Add pet-specific data from JT808 extensions
+                                if "activity_level" in additional_data:
+                                    mqtt_payload["activity_level"] = additional_data["activity_level"]
+                                
+                                if "health_flags" in additional_data:
+                                    health_flags = additional_data["health_flags"]
+                                    mqtt_payload["health_flags"] = {
+                                        "temperature_warning": bool(health_flags & 0x01),
+                                        "inactivity_warning": bool(health_flags & 0x02),
+                                        "abnormal_movement": bool(health_flags & 0x04),
+                                        "potential_distress": bool(health_flags & 0x08)
+                                    }
+                                
+                                if "temperature" in additional_data:
+                                    mqtt_payload["temperature"] = additional_data["temperature"]
+                                
+                                # Publish to device-specific topic
+                                topic = f"devices/{device.device_id}/pet_data"
+                                success = mqtt_client.publish(topic, mqtt_payload)
+                                
+                                if success:
+                                    logger.info(f"Published pet-specific data to MQTT topic: {topic}")
+                                else:
+                                    logger.warning(f"Failed to publish pet-specific data to MQTT")
+                            
+                            except Exception as mqtt_error:
+                                logger.error(f"Error publishing to MQTT: {str(mqtt_error)}")
+                                # Non-critical error, continue with normal database storage
                     
-                    # Create new location record
+                    # Create new location record (without pet-specific fields)
                     location = Location(
                         device_id=device.id,
                         latitude=location_data["latitude"],

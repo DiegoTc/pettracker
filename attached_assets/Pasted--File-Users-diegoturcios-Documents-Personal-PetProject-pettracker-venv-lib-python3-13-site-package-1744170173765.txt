@@ -1,0 +1,344 @@
+ File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+[SQL: INSERT INTO location (latitude, longitude, altitude, speed, heading, timestamp, accuracy, battery_level, created_at, activity_level, health_flags, temperature, device_id) VALUES (%(latitude)s, %(longitude)s, %(altitude)s, %(speed)s, %(heading)s, %(timestamp)s, %(accuracy)s, %(battery_level)s, %(created_at)s, %(activity_level)s, %(health_flags)s, %(temperature)s, %(device_id)s) RETURNING location.id]
+[parameters: {'latitude': 37.7749, 'longitude': -122.4194, 'altitude': 9, 'speed': 0.0, 'heading': 321, 'timestamp': datetime.datetime(2025, 4, 8, 21, 42, 37), 'accuracy': None, 'battery_level': 99, 'created_at': datetime.datetime(2025, 4, 9, 3, 42, 37, 70187), 'activity_level': None, 'health_flags': None, 'temperature': None, 'device_id': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-04-08 21:42:37,084 - services.protocol808 - DEBUG - Sent location report response to device 42039f
+2025-04-08 21:42:42,106 - services.protocol808 - DEBUG - Found device by partial device_id match: 42039f → 42039f1e-77cb-4a48-bbcd-4acbf7ae374d
+2025-04-08 21:42:42,106 - services.protocol808 - INFO - Updated battery level for device 42039f: 99%
+2025-04-08 21:42:42,106 - services.protocol808 - DEBUG - Additional data for device 42039f: {'alarm': 0, 'status': 2, 'battery_level': 99}
+2025-04-08 21:42:42,107 - services.protocol808 - INFO - Recorded location for device 42039f (JT808): (37.7749, -122.4194)
+2025-04-08 21:42:42,112 - services.protocol808 - ERROR - Error processing message: (psycopg2.errors.UndefinedColumn) column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+[SQL: INSERT INTO location (latitude, longitude, altitude, speed, heading, timestamp, accuracy, battery_level, created_at, activity_level, health_flags, temperature, device_id) VALUES (%(latitude)s, %(longitude)s, %(altitude)s, %(speed)s, %(heading)s, %(timestamp)s, %(accuracy)s, %(battery_level)s, %(created_at)s, %(activity_level)s, %(health_flags)s, %(temperature)s, %(device_id)s) RETURNING location.id]
+[parameters: {'latitude': 37.7749, 'longitude': -122.4194, 'altitude': 9, 'speed': 0.0, 'heading': 321, 'timestamp': datetime.datetime(2025, 4, 8, 21, 42, 42), 'accuracy': None, 'battery_level': 99, 'created_at': datetime.datetime(2025, 4, 9, 3, 42, 42, 109584), 'activity_level': None, 'health_flags': None, 'temperature': None, 'device_id': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/services/protocol808.py", line 1280, in process_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+[SQL: INSERT INTO location (latitude, longitude, altitude, speed, heading, timestamp, accuracy, battery_level, created_at, activity_level, health_flags, temperature, device_id) VALUES (%(latitude)s, %(longitude)s, %(altitude)s, %(speed)s, %(heading)s, %(timestamp)s, %(accuracy)s, %(battery_level)s, %(created_at)s, %(activity_level)s, %(health_flags)s, %(temperature)s, %(device_id)s) RETURNING location.id]
+[parameters: {'latitude': 37.7749, 'longitude': -122.4194, 'altitude': 9, 'speed': 0.0, 'heading': 321, 'timestamp': datetime.datetime(2025, 4, 8, 21, 42, 42), 'accuracy': None, 'battery_level': 99, 'created_at': datetime.datetime(2025, 4, 9, 3, 42, 42, 109584), 'activity_level': None, 'health_flags': None, 'temperature': None, 'device_id': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-04-08 21:42:42,119 - services.protocol808 - DEBUG - Sent location report response to device 42039f
+2025-04-08 21:42:47,137 - services.protocol808 - DEBUG - Found device by partial device_id match: 42039f → 42039f1e-77cb-4a48-bbcd-4acbf7ae374d
+2025-04-08 21:42:47,137 - services.protocol808 - INFO - Updated battery level for device 42039f: 99%
+2025-04-08 21:42:47,137 - services.protocol808 - DEBUG - Additional data for device 42039f: {'alarm': 0, 'status': 2, 'battery_level': 99}
+2025-04-08 21:42:47,137 - services.protocol808 - INFO - Recorded location for device 42039f (JT808): (37.7749, -122.4194)
+2025-04-08 21:42:47,142 - services.protocol808 - ERROR - Error processing message: (psycopg2.errors.UndefinedColumn) column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+[SQL: INSERT INTO location (latitude, longitude, altitude, speed, heading, timestamp, accuracy, battery_level, created_at, activity_level, health_flags, temperature, device_id) VALUES (%(latitude)s, %(longitude)s, %(altitude)s, %(speed)s, %(heading)s, %(timestamp)s, %(accuracy)s, %(battery_level)s, %(created_at)s, %(activity_level)s, %(health_flags)s, %(temperature)s, %(device_id)s) RETURNING location.id]
+[parameters: {'latitude': 37.7749, 'longitude': -122.4194, 'altitude': 9, 'speed': 0.0, 'heading': 321, 'timestamp': datetime.datetime(2025, 4, 8, 21, 42, 47), 'accuracy': None, 'battery_level': 99, 'created_at': datetime.datetime(2025, 4, 9, 3, 42, 47, 139796), 'activity_level': None, 'health_flags': None, 'temperature': None, 'device_id': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/services/protocol808.py", line 1280, in process_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column "activity_level" of relation "location" does not exist
+LINE 1: ..., timestamp, accuracy, battery_level, created_at, activity_l...
+                                                             ^
+
+[SQL: INSERT INTO location (latitude, longitude, altitude, speed, heading, timestamp, accuracy, battery_level, created_at, activity_level, health_flags, temperature, device_id) VALUES (%(latitude)s, %(longitude)s, %(altitude)s, %(speed)s, %(heading)s, %(timestamp)s, %(accuracy)s, %(battery_level)s, %(created_at)s, %(activity_level)s, %(health_flags)s, %(temperature)s, %(device_id)s) RETURNING location.id]
+[parameters: {'latitude': 37.7749, 'longitude': -122.4194, 'altitude': 9, 'speed': 0.0, 'heading': 321, 'timestamp': datetime.datetime(2025, 4, 8, 21, 42, 47), 'accuracy': None, 'battery_level': 99, 'created_at': datetime.datetime(2025, 4, 9, 3, 42, 47, 139796), 'activity_level': None, 'health_flags': None, 'temperature': None, 'device_id': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-04-08 21:42:47,154 - services.protocol808 - DEBUG - Sent location report response to device 42039f
+
