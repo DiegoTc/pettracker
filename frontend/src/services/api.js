@@ -26,9 +26,18 @@ apiClient.interceptors.request.use(
 // Add a response interceptor for common error handling
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('API Response success:', response.config.method, response.config.url, response.status);
     return response;
   },
   (error) => {
+    // Log detailed API error information
+    console.error('API Response error:', 
+      error.config?.method, 
+      error.config?.url, 
+      error.response?.status,
+      error.response?.data || error.message
+    );
+    
     // You can add global error handling here
     return Promise.reject(error);
   }

@@ -203,7 +203,10 @@ export default {
       if (!this.deviceToDelete) return;
       
       try {
+        console.log(`Attempting to delete device with ID: ${this.deviceToDelete.id}`);
         await devicesAPI.delete(this.deviceToDelete.id);
+        
+        console.log('Device deleted successfully, updating UI');
         // Remove the device from the list
         this.devices = this.devices.filter(d => d.id !== this.deviceToDelete.id);
         this.deleteModal.hide();
@@ -211,7 +214,23 @@ export default {
         this.showAlert('Device deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting device:', error);
-        this.showAlert(error.response?.data?.message || 'Failed to delete device', 'danger');
+        // More detailed error logging
+        console.error('Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          id: this.deviceToDelete?.id
+        });
+        
+        let errorMessage = 'Failed to delete device';
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        this.showAlert(errorMessage, 'danger');
       } finally {
         this.deviceToDelete = null;
       }
