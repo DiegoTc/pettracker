@@ -48,4 +48,6 @@ replit.nix
 uv.lock
 
 # Logs
-*.log
+*.log*.bak
+mqtt_adapter_logs.txt
+/tmp/mosquitto/
