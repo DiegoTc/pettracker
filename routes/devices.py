@@ -166,21 +166,37 @@ def delete_device(device_id):
     """Delete a device"""
     user_id = int(get_jwt_identity())
     
+    logger.info(f"Delete request for device ID: {device_id} by user: {user_id}")
+    
     # Find the device
     device = Device.query.filter_by(id=device_id, user_id=user_id).first()
     if not device:
+        logger.warning(f"Device not found: {device_id} for user {user_id}")
         return jsonify({"error": "Device not found"}), 404
+    
+    # Check for locations and log them before deletion
+    location_count = device.locations.count()
+    logger.info(f"Device {device_id} has {location_count} location records that will be deleted")
     
     # Delete the device
     try:
+        # First, explicitly delete locations associated with the device
+        if location_count > 0:
+            from sqlalchemy import text
+            # Direct SQL to avoid potential ORM issues
+            db.session.execute(text(f"DELETE FROM location WHERE device_id = {device.id}"))
+            db.session.commit()
+            logger.info(f"Deleted {location_count} location records for device {device_id}")
+        
+        # Now delete the device
         db.session.delete(device)
         db.session.commit()
-        logger.info(f"Deleted device {device_id}")
+        logger.info(f"Successfully deleted device {device_id}")
         return jsonify({"message": "Device deleted successfully"})
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting device: {str(e)}")
-        return jsonify({"error": "Failed to delete device"}), 500
+        return jsonify({"error": f"Failed to delete device: {str(e)}"}), 500
 
 @devices_bp.route('/<string:device_identifier>/ping', methods=['POST'])
 def device_ping(device_identifier):

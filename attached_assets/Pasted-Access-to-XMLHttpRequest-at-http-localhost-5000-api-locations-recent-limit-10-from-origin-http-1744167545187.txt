@@ -1,0 +1,129 @@
+Access to XMLHttpRequest at 'http://localhost:5000/api/locations/recent/?limit=10' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this errorAI
+api.js:34 API Response error: get /api/locations/recent/?limit=10 undefined Network Error
+(anonymous) @ api.js:34
+Promise.then
+_request @ axios.js?v=f8d9c02a:2206
+request @ axios.js?v=f8d9c02a:2115
+Axios.<computed> @ axios.js?v=f8d9c02a:2243
+wrap @ axios.js?v=f8d9c02a:8
+getRecent @ api.js:83
+created @ Home.vue:175
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+callHook @ chunk-VT7FWPCL.js?v=f8d9c02a:5758
+applyOptions @ chunk-VT7FWPCL.js?v=f8d9c02a:5674
+finishComponentSetup @ chunk-VT7FWPCL.js?v=f8d9c02a:10162
+setupStatefulComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10085
+setupComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10010
+mountComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7358
+processComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7324
+patch @ chunk-VT7FWPCL.js?v=f8d9c02a:6839
+componentUpdateFn @ chunk-VT7FWPCL.js?v=f8d9c02a:7549
+run @ chunk-VT7FWPCL.js?v=f8d9c02a:487
+runIfDirty @ chunk-VT7FWPCL.js?v=f8d9c02a:525
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2491
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:13Understand this errorAI
+Home.vue:186 Error loading dashboard data: AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+created @ Home.vue:186
+await in created
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+callHook @ chunk-VT7FWPCL.js?v=f8d9c02a:5758
+applyOptions @ chunk-VT7FWPCL.js?v=f8d9c02a:5674
+finishComponentSetup @ chunk-VT7FWPCL.js?v=f8d9c02a:10162
+setupStatefulComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10085
+setupComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10010
+mountComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7358
+processComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7324
+patch @ chunk-VT7FWPCL.js?v=f8d9c02a:6839
+componentUpdateFn @ chunk-VT7FWPCL.js?v=f8d9c02a:7549
+run @ chunk-VT7FWPCL.js?v=f8d9c02a:487
+runIfDirty @ chunk-VT7FWPCL.js?v=f8d9c02a:525
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2491
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:13Understand this errorAI
+api.js:83 
+            
+            
+           GET http://localhost:5000/api/locations/recent/?limit=10 net::ERR_FAILED 500 (INTERNAL SERVER ERROR)
+dispatchXhrRequest @ axios.js?v=f8d9c02a:1648
+xhr @ axios.js?v=f8d9c02a:1528
+dispatchRequest @ axios.js?v=f8d9c02a:2003
+Promise.then
+_request @ axios.js?v=f8d9c02a:2206
+request @ axios.js?v=f8d9c02a:2115
+Axios.<computed> @ axios.js?v=f8d9c02a:2243
+wrap @ axios.js?v=f8d9c02a:8
+getRecent @ api.js:83
+created @ Home.vue:175
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+callHook @ chunk-VT7FWPCL.js?v=f8d9c02a:5758
+applyOptions @ chunk-VT7FWPCL.js?v=f8d9c02a:5674
+finishComponentSetup @ chunk-VT7FWPCL.js?v=f8d9c02a:10162
+setupStatefulComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10085
+setupComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:10010
+mountComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7358
+processComponent @ chunk-VT7FWPCL.js?v=f8d9c02a:7324
+patch @ chunk-VT7FWPCL.js?v=f8d9c02a:6839
+componentUpdateFn @ chunk-VT7FWPCL.js?v=f8d9c02a:7549
+run @ chunk-VT7FWPCL.js?v=f8d9c02a:487
+runIfDirty @ chunk-VT7FWPCL.js?v=f8d9c02a:525
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2491
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:13Understand this errorAI

@@ -1,0 +1,100 @@
+api.js:34 API Response error: delete /api/devices/1/ 500 
+{error: 'Failed to delete device'}
+error
+: 
+"Failed to delete device"
+[[Prototype]]
+: 
+Object
+constructor
+: 
+ƒ Object()
+hasOwnProperty
+: 
+ƒ hasOwnProperty()
+isPrototypeOf
+: 
+ƒ isPrototypeOf()
+propertyIsEnumerable
+: 
+ƒ propertyIsEnumerable()
+toLocaleString
+: 
+ƒ toLocaleString()
+toString
+: 
+ƒ toString()
+valueOf
+: 
+ƒ valueOf()
+__defineGetter__
+: 
+ƒ __defineGetter__()
+__defineSetter__
+: 
+ƒ __defineSetter__()
+__lookupGetter__
+: 
+ƒ __lookupGetter__()
+__lookupSetter__
+: 
+ƒ __lookupSetter__()
+__proto__
+: 
+(...)
+get __proto__
+: 
+ƒ __proto__()
+set __proto__
+: 
+ƒ __proto__()
+
+Devices.vue:216 Error deleting device: 
+AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
+code
+: 
+"ERR_BAD_RESPONSE"
+config
+: 
+{transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}
+message
+: 
+"Request failed with status code 500"
+name
+: 
+"AxiosError"
+request
+: 
+XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: true, upload: XMLHttpRequestUpload, …}
+response
+: 
+{data: {…}, status: 500, statusText: 'INTERNAL SERVER ERROR', headers: AxiosHeaders, config: {…}, …}
+status
+: 
+500
+stack
+: 
+"AxiosError: Request failed with status code 500\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1229:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1561:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:2119:41)\n    at async Proxy.deleteDevice (http://localhost:3000/src/views/Devices.vue:78:9)"
+[[Prototype]]
+: 
+Error
+Devices.vue:218 Error details: 
+{message: 'Request failed with status code 500', status: 500, statusText: 'INTERNAL SERVER ERROR', data: {…}, id: 1}
+data
+: 
+{error: 'Failed to delete device'}
+id
+: 
+1
+message
+: 
+"Request failed with status code 500"
+status
+: 
+500
+statusText
+: 
+"INTERNAL SERVER ERROR"
+[[Prototype]]
+: 
+Object
