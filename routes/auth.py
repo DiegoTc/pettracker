@@ -8,6 +8,7 @@ import requests
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from utils.auth_helpers import jwt_required_except_options
 import os
 # Needed for local development only - allows OAuth over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -22,7 +23,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 def get_google_client():
     return WebApplicationClient(current_app.config['GOOGLE_CLIENT_ID'])
 
-@auth_bp.route('/login_info', methods=['GET'])
+@auth_bp.route('/login_info', methods=['GET', 'OPTIONS'])
 def login_info():
     """Return information about Google login configuration"""
     DEV_REDIRECT_URL = f'https://{os.environ.get("REPLIT_DEV_DOMAIN", "localhost:5000")}/api/auth/callback'
@@ -39,8 +40,8 @@ def login_info():
     
     return jsonify(setup_info)
 
-@auth_bp.route('/login', methods=['GET'])
-@limiter.limit("10/minute")
+@auth_bp.route('/login', methods=['GET', 'OPTIONS'])
+@limiter.limit("10/minute", methods=['GET'])
 def login():
     """Initiate the Google OAuth flow"""
     # Check if Google OAuth is configured
@@ -88,7 +89,7 @@ def login():
         logger.error(f"Error initiating Google OAuth flow: {str(e)}")
         return jsonify({"error": "Failed to initiate login process"}), 500
 
-@auth_bp.route('/callback', methods=['GET'])
+@auth_bp.route('/callback', methods=['GET', 'OPTIONS'])
 def callback():
     """Handle the Google OAuth callback"""
     # Check if Google OAuth is configured
@@ -232,15 +233,15 @@ def callback():
         logger.error(f"Error in Google OAuth callback: {str(e)}")
         return jsonify({"error": "Authentication failed"}), 500
 
-@auth_bp.route('/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
 def logout():
     """Logout the current user"""
     logout_user()
     return jsonify({"message": "Logout successful"})
 
-@auth_bp.route('/user', methods=['GET'])
-@jwt_required()
+@auth_bp.route('/user', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_user():
     """Get current user information"""
     user_id = get_jwt_identity()
@@ -264,7 +265,7 @@ def get_user():
         "devices_count": user.devices.count()
     })
 
-@auth_bp.route('/check', methods=['GET'])
+@auth_bp.route('/check', methods=['GET', 'OPTIONS'])
 def check_auth():
     """Check if user is authenticated"""
     if current_user.is_authenticated:
@@ -284,7 +285,7 @@ def check_auth():
         return jsonify({"authenticated": False})
 
 # Development/testing only endpoint - should be removed in production
-@auth_bp.route('/dev-token', methods=['GET'])
+@auth_bp.route('/dev-token', methods=['GET', 'OPTIONS'])
 def get_dev_token():
     """Get a development token for testing - NOT FOR PRODUCTION USE"""
     # Creating a token for testing purposes in any environment

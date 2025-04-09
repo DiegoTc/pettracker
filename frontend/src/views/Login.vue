@@ -89,7 +89,7 @@ export default {
       try {
         // Make a direct request to the backend instead of using the API client
         // This bypasses any proxy issues
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const response = await fetch('http://localhost:5000/api/auth/login//', {
           method: 'GET',
           credentials: 'include',
           headers: {

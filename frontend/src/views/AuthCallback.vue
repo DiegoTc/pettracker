@@ -33,7 +33,7 @@ export default {
       
       if (code) {
         // Call backend to complete OAuth flow
-        fetch(`http://localhost:5000/api/auth/callback?code=${code}`, {
+        fetch(`http://localhost:5000/api/auth/callback/?code=${code}`, {
           method: 'GET',
           credentials: 'include',
           headers: {

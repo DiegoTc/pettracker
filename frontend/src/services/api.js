@@ -36,44 +36,44 @@ apiClient.interceptors.response.use(
 
 // Authentication API
 export const authAPI = {
-  checkAuth: () => apiClient.get('/api/auth/check'),
-  logout: () => apiClient.post('/api/auth/logout'),
-  getUser: () => apiClient.get('/api/auth/user'),
-  getLoginInfo: () => apiClient.get('/api/auth/login_info'),
-  login: () => apiClient.get('/api/auth/login'),
+  checkAuth: () => apiClient.get('/api/auth/check/'),
+  logout: () => apiClient.post('/api/auth/logout/'),
+  getUser: () => apiClient.get('/api/auth/user/'),
+  getLoginInfo: () => apiClient.get('/api/auth/login_info/'),
+  login: () => apiClient.get('/api/auth/login/'),
 };
 
 // Pets API
 export const petsAPI = {
-  getAll: () => apiClient.get('/api/pets'),
-  getById: (id) => apiClient.get(`/api/pets/${id}`),
-  create: (petData) => apiClient.post('/api/pets', petData),
-  update: (id, petData) => apiClient.put(`/api/pets/${id}`, petData),
-  delete: (id) => apiClient.delete(`/api/pets/${id}`),
+  getAll: () => apiClient.get('/api/pets/'),
+  getById: (id) => apiClient.get(`/api/pets/${id}/`),
+  create: (petData) => apiClient.post('/api/pets/', petData),
+  update: (id, petData) => apiClient.put(`/api/pets/${id}/`, petData),
+  delete: (id) => apiClient.delete(`/api/pets/${id}/`),
 };
 
 // Devices API
 export const devicesAPI = {
-  getAll: () => apiClient.get('/api/devices'),
-  getById: (id) => apiClient.get(`/api/devices/${id}`),
-  create: (deviceData) => apiClient.post('/api/devices', deviceData),
-  update: (id, deviceData) => apiClient.put(`/api/devices/${id}`, deviceData),
-  delete: (id) => apiClient.delete(`/api/devices/${id}`),
-  assignToPet: (deviceId, petId) => apiClient.post(`/api/devices/${deviceId}/assign/${petId}`),
-  unassignFromPet: (deviceId) => apiClient.post(`/api/devices/${deviceId}/unassign`),
-  ping: (deviceId) => apiClient.post(`/api/devices/${deviceId}/ping`),
+  getAll: () => apiClient.get('/api/devices/'),
+  getById: (id) => apiClient.get(`/api/devices/${id}/`),
+  create: (deviceData) => apiClient.post('/api/devices/', deviceData),
+  update: (id, deviceData) => apiClient.put(`/api/devices/${id}/`, deviceData),
+  delete: (id) => apiClient.delete(`/api/devices/${id}/`),
+  assignToPet: (deviceId, petId) => apiClient.post(`/api/devices/${deviceId}/assign/${petId}/`),
+  unassignFromPet: (deviceId) => apiClient.post(`/api/devices/${deviceId}/unassign/`),
+  ping: (deviceId) => apiClient.post(`/api/devices/${deviceId}/ping/`),
 };
 
 // Locations API
 export const locationsAPI = {
-  getPetLocations: (petId) => apiClient.get(`/api/locations/pet/${petId}`),
-  getDeviceLocations: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}`),
-  getPetLatestLocation: (petId) => apiClient.get(`/api/locations/latest/pet/${petId}`),
-  getDeviceLatestLocation: (deviceId) => apiClient.get(`/api/locations/latest/device/${deviceId}`),
-  getAllPetsLatestLocations: () => apiClient.get('/api/locations/all-pets-latest'),
-  getRecent: (limit = 10) => apiClient.get(`/api/locations/recent?limit=${limit}`),
-  recordLocation: (locationData) => apiClient.post('/api/locations/record', locationData),
-  simulateLocation: (locationData) => apiClient.post('/api/locations/simulate', locationData),
+  getPetLocations: (petId) => apiClient.get(`/api/locations/pet/${petId}/`),
+  getDeviceLocations: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}/`),
+  getPetLatestLocation: (petId) => apiClient.get(`/api/locations/latest/pet/${petId}/`),
+  getDeviceLatestLocation: (deviceId) => apiClient.get(`/api/locations/latest/device/${deviceId}/`),
+  getAllPetsLatestLocations: () => apiClient.get('/api/locations/all-pets-latest/'),
+  getRecent: (limit = 10) => apiClient.get(`/api/locations/recent/?limit=${limit}`),
+  recordLocation: (locationData) => apiClient.post('/api/locations/record/', locationData),
+  simulateLocation: (locationData) => apiClient.post('/api/locations/simulate/', locationData),
 };
 
 export default apiClient;
