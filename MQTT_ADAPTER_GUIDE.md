@@ -122,6 +122,36 @@ devices/{device_id}/{message_type}
 For example:
 - `devices/123456789/location` - Contains location data for device 123456789
 - `devices/123456789/status` - Contains status information for device 123456789
+- `devices/123456789/pet_data` - Contains pet-specific data from JT808 protocol extensions
+
+### Pet-Specific Data Topics
+
+For JT/T 808 protocol messages that include pet-specific extension data, the system publishes to dedicated pet data topics:
+
+```
+devices/{device_id}/pet_data
+```
+
+The payload contains a JSON object with the following fields:
+```json
+{
+  "device_id": "123456789",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "timestamp": "2025-04-09T03:45:35.123456",
+  "battery_level": 85.5,
+  "activity_level": 72,
+  "health_flags": {
+    "temperature_warning": false,
+    "inactivity_warning": false,
+    "abnormal_movement": false,
+    "potential_distress": false
+  },
+  "temperature": 38.1
+}
+```
+
+See `JT808_PROTOCOL_EXTENSION.md` for more details about the pet-specific protocol extensions.
 
 ## Simulation Options
 

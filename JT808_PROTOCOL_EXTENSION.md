@@ -8,7 +8,7 @@ This document describes the customized JT/T 808 protocol extensions for pet trac
 
 The JT/T 808 protocol data flows through our system as follows:
 
-1. GPS tracking devices connect to our TCP server (port 808 or 8080 in development)
+1. Physical GPS tracking devices connect to our TCP server (port 808 in production, 8080 in development)
 2. The protocol server parses incoming binary messages according to JT/T 808 specification
 3. Basic location data (coordinates, altitude, speed, etc.) is stored in the database
 4. **Pet-specific extension data** is published to MQTT topics for real-time use by clients
@@ -71,8 +71,8 @@ The system includes a simulator for testing the pet-specific protocol extensions
 
 ```bash
 # Start the simulator with the JT/T 808 protocol
-python tools/jt808_simulator.py --device-id "PETTRACKER123" --include-pet-data
+python tools/test_pet_protocol.py --device-id "REGISTERED_DEVICE_ID" --count 5
 
-# Subscribe to MQTT topics to see pet-specific data
+# Subscribe to MQTT topics to see pet-specific data (with local MQTT broker running)
 python tools/mqtt_subscriber.py --topic "devices/+"
 ```
