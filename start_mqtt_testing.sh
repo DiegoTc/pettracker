@@ -1,55 +1,38 @@
 #!/bin/bash
-# Start the MQTT testing environment
+# Start the MQTT system with all required components
 
-# Create persistence directory for Mosquitto
-mkdir -p /tmp/mosquitto
-
-# Start Mosquitto MQTT broker in the background
 echo "Starting MQTT broker..."
-mosquitto -c mosquitto.conf &
-MOSQUITTO_PID=$!
+pkill mosquitto 2>/dev/null
+sleep 1
+mosquitto -c mosquitto.conf -d
+if [ $? -ne 0 ]; then
+  echo "Failed to start MQTT broker"
+  exit 1
+fi
+echo "MQTT broker started successfully"
 
-# Wait for broker to start
-sleep 2
+echo "Starting MQTT adapter..."
+pkill -f run_mqtt_adapter.py 2>/dev/null
+sleep 1
+python3 run_mqtt_adapter.py --protocol-port 8081 --mqtt-host 127.0.0.1 --debug &
+if [ $? -ne 0 ]; then
+  echo "Failed to start MQTT adapter"
+  exit 1
+fi
+echo "MQTT adapter started successfully"
 
-# Start the Protocol Adapter in the background
-echo "Starting JT/T 808 to MQTT Protocol Adapter..."
-python run_mqtt_adapter.py --debug --protocol-port 8081 --protocol-port 8081 &
-ADAPTER_PID=$!
-
-# Wait for adapter to start
-sleep 2
-
-# Start the MQTT Subscriber to monitor messages
-echo "Starting MQTT Subscriber..."
-python tools/mqtt_subscriber.py --debug &
-SUBSCRIBER_PID=$!
-
-# Wait for subscriber to start
-sleep 2
-
-echo "All components started. Press Ctrl+C to stop."
-echo "Mosquitto PID: $MOSQUITTO_PID"
-echo "Adapter PID: $ADAPTER_PID"
-echo "Subscriber PID: $SUBSCRIBER_PID"
+echo "MQTT system is now running:"
+echo "- MQTT broker: 127.0.0.1:1883"
+echo "- MQTT adapter: 0.0.0.0:8081"
 echo ""
-echo "You can now run the JT808 simulator with:"
-echo "python tools/jt808_simulator.py"
+echo "You can now run the simulator with:"
+echo "python3 tools/jt808_simulator.py --host 127.0.0.1 --port 8081"
 echo ""
+echo "Or run the full system test with:"
+echo "python3 test_mqtt_system.py --with-simulator"
+echo ""
+echo "Press Ctrl+C to stop all components"
 
-# Handle termination
-function cleanup {
-    echo "Stopping all components..."
-    kill $SUBSCRIBER_PID 2>/dev/null
-    kill $ADAPTER_PID 2>/dev/null
-    kill $MOSQUITTO_PID 2>/dev/null
-    echo "Done."
-    exit 0
-}
-
-trap cleanup SIGINT SIGTERM
-
-# Keep script running
-while true; do
-    sleep 1
-done
+# Wait for user to press Ctrl+C
+trap "pkill mosquitto; pkill -f run_mqtt_adapter.py; echo 'MQTT system stopped'" INT
+wait

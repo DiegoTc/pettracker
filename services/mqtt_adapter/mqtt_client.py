@@ -22,7 +22,7 @@ class MQTTClient:
     """
     
     def __init__(self, 
-                broker_host: str = "localhost", 
+                broker_host: str = "127.0.0.1", 
                 broker_port: int = 1883,
                 client_id: str = "pet_tracker_adapter"):
         """

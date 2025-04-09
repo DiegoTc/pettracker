@@ -37,14 +37,14 @@ def parse_arguments():
     parser.add_argument(
         '--protocol-port',
         type=int,
-        default=int(os.environ.get('PROTOCOL_PORT', 8080)),
-        help='Port to listen on for protocol messages (default: 8080)'
+        default=int(os.environ.get('PROTOCOL_PORT', 8081)),
+        help='Port to listen on for protocol messages (default: 8081)'
     )
     
     parser.add_argument(
         '--mqtt-host',
-        default=os.environ.get('MQTT_HOST', 'localhost'),
-        help='MQTT broker host (default: localhost)'
+        default=os.environ.get('MQTT_HOST', '127.0.0.1'),
+        help='MQTT broker host (default: 127.0.0.1)'
     )
     
     parser.add_argument(
