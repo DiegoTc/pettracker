@@ -2,15 +2,16 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db, limiter
 from models import Device, Pet
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
+from utils.auth_helpers import jwt_required_except_options
 import logging
 from datetime import datetime
 
 devices_bp = Blueprint('devices', __name__)
 logger = logging.getLogger(__name__)
 
-@devices_bp.route('/', methods=['GET'])
-@jwt_required()
+@devices_bp.route('/', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("60/minute")
 def get_devices():
     """Get all devices belonging to the current user"""
@@ -34,8 +35,8 @@ def get_devices():
     devices = query.all()
     return jsonify([device.to_dict() for device in devices])
 
-@devices_bp.route('/<int:device_id>', methods=['GET'])
-@jwt_required()
+@devices_bp.route('/<int:device_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_device(device_id):
     """Get a specific device by id"""
     user_id = int(get_jwt_identity())
@@ -46,8 +47,8 @@ def get_device(device_id):
     
     return jsonify(device.to_dict())
 
-@devices_bp.route('/', methods=['POST'])
-@jwt_required()
+@devices_bp.route('/', methods=['POST', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("10/minute")
 def create_device():
     """Register a new device"""
@@ -102,8 +103,8 @@ def create_device():
         logger.error(f"Error creating device: {str(e)}")
         return jsonify({"error": "Failed to create device"}), 500
 
-@devices_bp.route('/<int:device_id>', methods=['PUT'])
-@jwt_required()
+@devices_bp.route('/<int:device_id>', methods=['PUT', 'OPTIONS'])
+@jwt_required_except_options
 def update_device(device_id):
     """Update an existing device"""
     user_id = int(get_jwt_identity())
@@ -159,8 +160,8 @@ def update_device(device_id):
         logger.error(f"Error updating device: {str(e)}")
         return jsonify({"error": "Failed to update device"}), 500
 
-@devices_bp.route('/<int:device_id>', methods=['DELETE'])
-@jwt_required()
+@devices_bp.route('/<int:device_id>', methods=['DELETE', 'OPTIONS'])
+@jwt_required_except_options
 def delete_device(device_id):
     """Delete a device"""
     user_id = int(get_jwt_identity())
@@ -212,8 +213,8 @@ def device_ping(device_identifier):
         logger.error(f"Error recording ping: {str(e)}")
         return jsonify({"error": "Failed to record ping"}), 500
 
-@devices_bp.route('/<int:device_id>/assign/<int:pet_id>', methods=['POST'])
-@jwt_required()
+@devices_bp.route('/<int:device_id>/assign/<int:pet_id>', methods=['POST', 'OPTIONS'])
+@jwt_required_except_options
 def assign_to_pet(device_id, pet_id):
     """Assign a device to a pet"""
     user_id = int(get_jwt_identity())
@@ -243,8 +244,8 @@ def assign_to_pet(device_id, pet_id):
         logger.error(f"Error assigning device to pet: {str(e)}")
         return jsonify({"error": "Failed to assign device to pet"}), 500
 
-@devices_bp.route('/<int:device_id>/unassign', methods=['POST'])
-@jwt_required()
+@devices_bp.route('/<int:device_id>/unassign', methods=['POST', 'OPTIONS'])
+@jwt_required_except_options
 def unassign_from_pet(device_id):
     """Unassign a device from a pet"""
     user_id = int(get_jwt_identity())

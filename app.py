@@ -1,13 +1,14 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
 from dotenv import load_dotenv
+from functools import wraps
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,13 +30,32 @@ def create_app(config_class='config.Config'):
     app.secret_key = os.environ.get("SESSION_SECRET")
     
     # Enable CORS for all routes with support for credentials
-    CORS(app, supports_credentials=True, origins=["http://localhost:3000", 
-                                                 f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
-                                                 "https://pettracker.diegotc.repl.co"])
+    CORS(app, 
+         # Allow all routes, not just /api/*
+         resources={r"/*": {"origins": ["http://localhost:3000", 
+                                        f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
+                                        "https://pettracker.diegotc.repl.co"]}},
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization", "Accept", "Origin"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         expose_headers=["Content-Type", "Authorization"],
+         max_age=600)
     
     # Initialize extensions with app
     db.init_app(app)
+    
+    # Configure JWT
+    app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 86400  # 24 hours
+    app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # Disable CSRF protection for cookies
+    app.config['JWT_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+    
+    # Initialize JWT with app
     jwt.init_app(app)
+    
+    # We'll use utils/auth_helpers.py for our custom JWT decorator
+    # This keeps our routes cleaner and more maintainable
+    
     limiter.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"

@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db, limiter
 from models import Location, Device, Pet
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
+from utils.auth_helpers import jwt_required_except_options
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy import desc
@@ -10,8 +11,8 @@ from sqlalchemy import desc
 locations_bp = Blueprint('locations', __name__)
 logger = logging.getLogger(__name__)
 
-@locations_bp.route('/device/<int:device_id>', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/device/<int:device_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("120/minute")
 def get_device_locations(device_id):
     """Get location history for a specific device"""
@@ -47,8 +48,8 @@ def get_device_locations(device_id):
     
     return jsonify([location.to_dict() for location in locations])
 
-@locations_bp.route('/pet/<int:pet_id>', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/pet/<int:pet_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("120/minute")
 def get_pet_locations(pet_id):
     """Get location history for a specific pet"""
@@ -93,8 +94,8 @@ def get_pet_locations(pet_id):
         "locations": [location.to_dict() for location in locations]
     })
 
-@locations_bp.route('/latest/device/<int:device_id>', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/latest/device/<int:device_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_device_latest_location(device_id):
     """Get the latest location for a specific device"""
     user_id = int(get_jwt_identity())
@@ -115,8 +116,8 @@ def get_device_latest_location(device_id):
         "location": location.to_dict()
     })
 
-@locations_bp.route('/latest/pet/<int:pet_id>', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/latest/pet/<int:pet_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_pet_latest_location(pet_id):
     """Get the latest location for a specific pet"""
     user_id = int(get_jwt_identity())
@@ -204,8 +205,8 @@ def record_location():
         logger.error(f"Error recording location: {str(e)}")
         return jsonify({"error": "Failed to record location"}), 500
 
-@locations_bp.route('/all-pets-latest', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/all-pets-latest', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_all_pets_latest_locations():
     """Get the latest location for all pets belonging to the user"""
     user_id = int(get_jwt_identity())
@@ -231,8 +232,8 @@ def get_all_pets_latest_locations():
     
     return jsonify(result)
 
-@locations_bp.route('/recent', methods=['GET'])
-@jwt_required()
+@locations_bp.route('/recent', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_recent_locations():
     """Get recent location updates across all devices belonging to the user"""
     user_id = int(get_jwt_identity())

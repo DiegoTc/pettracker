@@ -2,15 +2,16 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db, limiter
 from models import Pet
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
+from utils.auth_helpers import jwt_required_except_options
 import logging
 from datetime import datetime
 
 pets_bp = Blueprint('pets', __name__)
 logger = logging.getLogger(__name__)
 
-@pets_bp.route('/', methods=['GET'])
-@jwt_required()
+@pets_bp.route('/', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("60/minute")
 def get_pets():
     """Get all pets belonging to the current user"""
@@ -33,8 +34,8 @@ def get_pets():
     pets = query.all()
     return jsonify([pet.to_dict() for pet in pets])
 
-@pets_bp.route('/<int:pet_id>', methods=['GET'])
-@jwt_required()
+@pets_bp.route('/<int:pet_id>', methods=['GET', 'OPTIONS'])
+@jwt_required_except_options
 def get_pet(pet_id):
     """Get a specific pet by id"""
     user_id = int(get_jwt_identity())
@@ -45,8 +46,8 @@ def get_pet(pet_id):
     
     return jsonify(pet.to_dict())
 
-@pets_bp.route('/', methods=['POST'])
-@jwt_required()
+@pets_bp.route('/', methods=['POST', 'OPTIONS'])
+@jwt_required_except_options
 @limiter.limit("20/minute")
 def create_pet():
     """Create a new pet"""
@@ -93,8 +94,8 @@ def create_pet():
         logger.error(f"Error creating pet: {str(e)}")
         return jsonify({"error": "Failed to create pet"}), 500
 
-@pets_bp.route('/<int:pet_id>', methods=['PUT'])
-@jwt_required()
+@pets_bp.route('/<int:pet_id>', methods=['PUT', 'OPTIONS'])
+@jwt_required_except_options
 def update_pet(pet_id):
     """Update an existing pet"""
     user_id = int(get_jwt_identity())
@@ -146,8 +147,8 @@ def update_pet(pet_id):
         logger.error(f"Error updating pet: {str(e)}")
         return jsonify({"error": "Failed to update pet"}), 500
 
-@pets_bp.route('/<int:pet_id>', methods=['DELETE'])
-@jwt_required()
+@pets_bp.route('/<int:pet_id>', methods=['DELETE', 'OPTIONS'])
+@jwt_required_except_options
 def delete_pet(pet_id):
     """Delete a pet"""
     user_id = int(get_jwt_identity())
