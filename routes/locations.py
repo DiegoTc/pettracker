@@ -144,7 +144,7 @@ def get_pet_latest_location(pet_id):
         "location": location.to_dict()
     })
 
-@locations_bp.route('/record', methods=['POST'])
+@locations_bp.route('/record/', methods=['POST', 'OPTIONS'])
 def record_location():
     """Record a new location from a device (can be called by the device itself)"""
     # This endpoint is open to allow devices to send location data without authentication
@@ -232,7 +232,7 @@ def get_all_pets_latest_locations():
     
     return jsonify(result)
 
-@locations_bp.route('/recent', methods=['GET', 'OPTIONS'])
+@locations_bp.route('/recent/', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_recent_locations():
     """Get recent location updates across all devices belonging to the user"""
@@ -276,7 +276,8 @@ def get_recent_locations():
         "total_count": total_count
     })
 
-@locations_bp.route('/simulate', methods=['POST'])
+@locations_bp.route('/simulate/', methods=['POST', 'OPTIONS'])
+@jwt_required_except_options
 def simulate_device_location():
     """
     Simulate a location update from a device
