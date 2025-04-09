@@ -30,7 +30,37 @@ This will:
 - Start the JT/T 808 to MQTT Protocol Adapter on port 8081
 - Provide instructions for running the simulator
 
-### 2. Manual startup
+### 2. Using the adapter with built-in simulator
+
+For quick testing, you can start the adapter with its built-in simulator:
+
+```bash
+./start_mqtt_adapter_with_simulator.sh
+```
+
+This script accepts the following parameters:
+- `--port=PORT` - Port for the protocol adapter (default: 8081)
+- `--count=COUNT` - Number of simulated devices (default: 3)
+- `--interval=SECONDS` - Interval between updates (default: 10)
+- `--debug` - Enable debug logging
+
+### 3. Using the standalone simulator
+
+For more complex simulation scenarios, use the standalone simulator:
+
+```bash
+./start_standalone_simulator.sh
+```
+
+This script accepts the following parameters:
+- `--host=HOST` - Host to connect to (default: 127.0.0.1)
+- `--port=PORT` - Port to connect to (default: 8081)
+- `--count=COUNT` - Number of simulated devices (default: 3)
+- `--interval=SECONDS` - Interval between updates (default: 30)
+- `--mode=MODE` - Movement pattern (random, circular, fixed) (default: random)
+- `--debug` - Enable debug logging
+
+### 4. Manual startup
 
 If you need more control, you can start each component individually:
 
@@ -43,10 +73,20 @@ If you need more control, you can start each component individually:
    ```bash
    python3 run_mqtt_adapter.py --protocol-port 8081 --mqtt-host 127.0.0.1
    ```
+   
+   To enable the built-in simulator:
+   ```bash
+   python3 run_mqtt_adapter.py --protocol-port 8081 --mqtt-host 127.0.0.1 --simulator --simulator-device-count 3
+   ```
 
 3. **Run the simulator** (optional, for testing):
    ```bash
    python3 tools/jt808_simulator.py --host 127.0.0.1 --port 8081
+   ```
+   
+   Or use the multi-device simulator:
+   ```bash
+   python3 tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5
    ```
 
 4. **Monitor MQTT messages** (optional, for debugging):
@@ -82,6 +122,41 @@ devices/{device_id}/{message_type}
 For example:
 - `devices/123456789/location` - Contains location data for device 123456789
 - `devices/123456789/status` - Contains status information for device 123456789
+
+## Simulation Options
+
+The system provides multiple options for simulating device traffic:
+
+### Built-in Simulator
+
+The protocol adapter has a built-in simulator that can generate virtual devices directly within the adapter process:
+
+```bash
+python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-interval 10
+```
+
+This is the simplest method and requires no additional processes.
+
+### Standalone Multi-Device Simulator
+
+For more advanced simulation scenarios, use the dedicated multi-device simulator:
+
+```bash
+python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --mode random
+```
+
+Movement modes:
+- `random` - Devices move randomly from their starting positions
+- `circular` - Devices move in circular patterns
+- `fixed` - Devices stay at fixed positions
+
+### Single Device Simulator
+
+For debugging specific protocol messages, use the single device simulator:
+
+```bash
+python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
+```
 
 ## Testing the System
 
@@ -133,3 +208,4 @@ The system can be configured using command-line arguments or environment variabl
 - **MQTT broker host**: `--mqtt-host` or `MQTT_HOST` (default: 127.0.0.1)
 - **MQTT broker port**: `--mqtt-port` or `MQTT_PORT` (default: 1883)
 - **MQTT credentials**: `--mqtt-username`, `--mqtt-password` or `MQTT_USERNAME`, `MQTT_PASSWORD`
+- **Simulator options**: `--simulator`, `--simulator-device-count`, `--simulator-interval`

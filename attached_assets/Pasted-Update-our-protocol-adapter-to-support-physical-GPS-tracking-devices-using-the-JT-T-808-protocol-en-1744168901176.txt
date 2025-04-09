@@ -1,0 +1,63 @@
+Update our protocol adapter to support physical GPS tracking devices using the JT/T 808 protocol, ensuring that the adapter listens on port 808 (pettrack.com:808) and publishes the parsed data as JSON via MQTT. Additionally, implement a simulator mode to generate sample JT/T 808 messages (both registration and location updates) to test the system.
+
+Requirements:
+
+Port Configuration:
+
+The protocol adapter must listen for incoming TCP connections on port 808, which is our production endpoint (pettrack.com:808).
+
+Include configuration comments explaining that this port is designated for production traffic.
+
+Protocol Parsing:
+
+Implement message parsing for JT/T 808 messages. Handle the message framing using 0x7e as the start/end flag and perform byte unescaping (e.g., reversing the translation of 0x7d 0x02 back to 0x7e).
+
+Verify checksums and extract the necessary header and payload fields, using the JT/T 808 specification (version 1.41) as a reference.
+
+Ensure proper handling of registration messages (e.g., message ID 0x0100) as well as location update messages (e.g., message ID 0x0200).
+
+Data Transformation:
+
+For location updates, extract key fields: latitude, longitude, altitude, speed, direction, and timestamp (BCD[6]).
+
+Convert binary fields into human-readable formats (for example, convert DWORD values for coordinates into floating-point degrees and transform BCD timestamps into standard date/time formats).
+
+Structure the extracted data into a JSON object.
+
+MQTT Integration:
+
+Connect to a local MQTT broker (e.g., Mosquitto on localhost:1883).
+
+Publish the JSON messages to a topic structure like devices/{device_id}/location, where {device_id} is determined from the device’s JT/T 808 header (using the IMEI or terminal phone number).
+
+Logging and Testing:
+
+Log key events including device registration and the receipt of location updates.
+
+Include robust error handling for malformed messages and connection issues.
+
+Provide unit tests that simulate the reception of JT/T 808 messages, verifying both the parsing logic and the MQTT publishing functionality.
+
+Documentation:
+
+Document the code with comments explaining the choice of port (808) for production (pettrack.com:808).
+
+Include instructions for configuring physical devices to point to pettrack.com:808.
+
+Simulator Mode:
+
+Develop a simulator (e.g., a separate script like simulate_device.py) that generates sample JT/T 808 messages to mimic the behavior of physical devices.
+
+The simulator should be able to send both registration and location update messages to the adapter on port 808.
+
+This mode will enable testing of the entire data flow—from message reception through parsing to MQTT publishing—even while physical devices are not yet available.
+
+Deliverables:
+
+Updated protocol adapter source code that listens on port 808, processes JT/T 808 messages into JSON, and publishes messages to the MQTT broker.
+
+A simulator script to generate and send sample JT/T 808 messages for testing.
+
+Unit tests covering key functionalities (message parsing, transformation, MQTT publishing, and simulator-based testing).
+
+Code comments and documentation describing the overall data flow, port configuration, and instructions for both physical device configuration and simulator usage.

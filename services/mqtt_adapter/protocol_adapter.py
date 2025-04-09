@@ -65,6 +65,7 @@ class ProtocolAdapter:
         self.port = port
         self.server_socket = None
         self.is_running = False
+        self.running = False  # Added for compatibility with run_mqtt_adapter.py
         self.client_threads = []
         
         # Use provided MQTT client or create a new one
@@ -91,6 +92,7 @@ class ProtocolAdapter:
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(5)
             self.is_running = True
+            self.running = True  # Update both flags
             
             logger.info(f"Protocol adapter server started on {self.host}:{self.port}")
             
@@ -125,6 +127,7 @@ class ProtocolAdapter:
     def stop(self) -> None:
         """Stop the protocol adapter server."""
         self.is_running = False
+        self.running = False  # Update both flags
         
         # Close server socket
         if self.server_socket:

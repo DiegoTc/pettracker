@@ -197,9 +197,11 @@ Note: In Replit, direct execution of the frontend development server may be rest
 - **Backend API**: http://localhost:5000
 - **Frontend**: http://localhost:3000 (when running the frontend dev server)
 
-## Device Simulator
+## Device Simulators
 
-A GPS device simulator is included to test the pet tracking functionality:
+Multiple device simulators are included to test the pet tracking functionality:
+
+### Single Device Simulator
 
 ```bash
 # For traditional 808 protocol
@@ -207,7 +209,68 @@ python tools/device_simulator.py --device-id your-device-id --imei 1234567890123
 
 # For JT/T 808 protocol
 python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5 --protocol jt808
+
+# JT/T 808 specific simulator with more protocol features
+python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
 ```
+
+### Multi-Device Simulator
+
+For testing with multiple devices simultaneously:
+
+```bash
+# Simulate 5 devices connecting to localhost:8081
+python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --interval 10
+
+# Simulate 3 devices with different movement patterns
+python tools/simulate_808_devices.py --mode circular --count 3
+```
+
+### Built-in Simulator Mode
+
+The protocol adapter can also run with a built-in simulator:
+
+```bash
+# Start the adapter with 3 simulated devices
+python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-interval 10
+
+# Or use the convenience script
+./start_mqtt_adapter_with_simulator.sh --count=5
+```
+
+See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) and [Tools README](tools/README.md) for more details.
+
+python tools/device_simulator.py --device-id your-device-id --imei 123456789012345 --interval 5 --protocol jt808
+
+# JT/T 808 specific simulator with more protocol features
+python tools/jt808_simulator.py --host 127.0.0.1 --port 8081
+```
+
+### Multi-Device Simulator
+
+For testing with multiple devices simultaneously:
+
+```bash
+# Simulate 5 devices connecting to localhost:8081
+python tools/simulate_808_devices.py --host 127.0.0.1 --port 8081 --count 5 --interval 10
+
+# Simulate 3 devices with different movement patterns
+python tools/simulate_808_devices.py --mode circular --count 3
+```
+
+### Built-in Simulator Mode
+
+The protocol adapter can also run with a built-in simulator:
+
+```bash
+# Start the adapter with 3 simulated devices
+python run_mqtt_adapter.py --simulator --simulator-device-count 3 --simulator-interval 10
+
+# Or use the convenience script
+./start_mqtt_adapter_with_simulator.sh --count=5
+```
+
+See the [MQTT Adapter Guide](MQTT_ADAPTER_GUIDE.md) and [Tools README](tools/README.md) for more details.
 
 ## Components
 
@@ -275,23 +338,6 @@ python test_mqtt_system.py
 python test_mqtt_system.py --with-simulator
 ```
 
-For more details, see the comprehensive [MQTT Adapter Testing Guide](MQTT_ADAPTER_GUIDE.md).
-
-### Testing the MQTT Adapter
-
-The easiest way to test the adapter is with the all-in-one test script:
-
-```bash
-# Start all components (MQTT broker, adapter, and subscriber)
-python test_mqtt_system.py
-
-# To also start a simulator automatically
-python test_mqtt_system.py --with-simulator
-```
-
-For more details, see the comprehensive [MQTT Adapter Testing Guide](MQTT_ADAPTER_GUIDE.md).
-
-### Running the MQTT Adapter
 
 1. **Start the MQTT broker**:
    ```bash
