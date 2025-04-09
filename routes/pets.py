@@ -14,8 +14,16 @@ logger = logging.getLogger(__name__)
 @jwt_required_except_options
 @limiter.limit("60/minute")
 def get_pets():
-    """Get all pets belonging to the current user"""
+    """Get pets based on user role"""
     user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    
+    # Admin can see all pets
+    if user.is_admin:
+        pets = Pet.query.all()
+    else:
+        # Regular users see only their pets
+        pets = Pet.query.filter_by(user_id=user_id).all()
     
     # Convert user_id to int since JWT identity is stored as string
     user_id = int(user_id)

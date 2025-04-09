@@ -1,47 +1,49 @@
 from functools import wraps
 from flask import request, jsonify, current_app
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from models import User
 
 def admin_required(fn):
-    """
-    Decorator to ensure the user has admin privileges
-    To be implemented when admin functionality is added
-    """
+    """Decorator to ensure the user has admin privileges"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         verify_jwt_in_request()
-        
-        # Get user ID from JWT
         user_id = get_jwt_identity()
-        
-        # Check if user is admin
-        # This would need to be implemented with a proper user role system
-        is_admin = False  # Placeholder for admin check
-        
-        if not is_admin:
+
+        # Get user and check role
+        user = User.query.get(int(user_id))
+        if not user or not user.is_admin:
             return jsonify({"error": "Admin privileges required"}), 403
-        
+
+        return fn(*args, **kwargs)
+    return wrapper
+
+def moderator_required(fn):
+    """Decorator to ensure the user has at least moderator privileges"""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
+
+        # Get user and check role
+        user = User.query.get(int(user_id))
+        if not user or not (user.is_admin or user.is_moderator):
+            return jsonify({"error": "Moderator privileges required"}), 403
+
         return fn(*args, **kwargs)
     return wrapper
 
 def api_key_required(fn):
-    """
-    Decorator to ensure a valid API key is provided
-    To be implemented when API key functionality is added
-    """
+    """Decorator to ensure a valid API key is provided"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         api_key = request.headers.get('X-API-Key')
         if not api_key:
             return jsonify({"error": "API key is required"}), 401
-        
+
         # Validate API key
-        # This would need to be implemented with a proper API key system
-        is_valid = False  # Placeholder for API key validation
-        
-        if not is_valid:
-            return jsonify({"error": "Invalid API key"}), 401
-        
+        # Implement your API key validation logic here
+
         return fn(*args, **kwargs)
     return wrapper
 

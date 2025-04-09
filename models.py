@@ -12,8 +12,17 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
     profile_picture = db.Column(db.String(256))
+    role = db.Column(db.String(20), default='user', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
     
     # Relationships
     pets = db.relationship('Pet', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
