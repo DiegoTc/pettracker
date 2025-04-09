@@ -160,7 +160,7 @@ def update_device(device_id):
         logger.error(f"Error updating device: {str(e)}")
         return jsonify({"error": "Failed to update device"}), 500
 
-@devices_bp.route('/<int:device_id>', methods=['DELETE', 'OPTIONS'])
+@devices_bp.route('/<int:device_id>/', methods=['DELETE', 'OPTIONS'])
 @jwt_required_except_options
 def delete_device(device_id):
     """Delete a device"""

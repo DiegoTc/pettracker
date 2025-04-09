@@ -36,10 +36,11 @@ def create_app(config_class='config.Config'):
                                         f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
                                         "https://pettracker.diegotc.repl.co"]}},
          supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization", "Accept", "Origin"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
          expose_headers=["Content-Type", "Authorization"],
-         max_age=600)
+         max_age=600,
+         automatic_options=True)
     
     # Initialize extensions with app
     db.init_app(app)
