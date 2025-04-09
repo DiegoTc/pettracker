@@ -94,7 +94,7 @@ def get_pet_locations(pet_id):
         "locations": [location.to_dict() for location in locations]
     })
 
-@locations_bp.route('/latest/device/<int:device_id>', methods=['GET', 'OPTIONS'])
+@locations_bp.route('/device/<int:device_id>/latest/', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_device_latest_location(device_id):
     """Get the latest location for a specific device"""
@@ -121,7 +121,7 @@ def get_device_latest_location(device_id):
         "location": location.to_dict()
     })
 
-@locations_bp.route('/latest/pet/<int:pet_id>', methods=['GET', 'OPTIONS'])
+@locations_bp.route('/pet/<int:pet_id>/latest/', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_pet_latest_location(pet_id):
     """Get the latest location for a specific pet"""
@@ -210,7 +210,7 @@ def record_location():
         logger.error(f"Error recording location: {str(e)}")
         return jsonify({"error": "Failed to record location"}), 500
 
-@locations_bp.route('/all-pets-latest', methods=['GET', 'OPTIONS'])
+@locations_bp.route('/all-pets-latest/', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_all_pets_latest_locations():
     """Get the latest location for all pets belonging to the user"""

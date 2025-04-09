@@ -77,8 +77,8 @@ export const devicesAPI = {
 export const locationsAPI = {
   getPetLocations: (petId) => apiClient.get(`/api/locations/pet/${petId}/`),
   getDeviceLocations: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}/`),
-  getPetLatestLocation: (petId) => apiClient.get(`/api/locations/latest/pet/${petId}/`),
-  getDeviceLatestLocation: (deviceId) => apiClient.get(`/api/locations/latest/device/${deviceId}/`),
+  getPetLatestLocation: (petId) => apiClient.get(`/api/locations/pet/${petId}/latest/`),
+  getDeviceLatestLocation: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}/latest/`),
   getAllPetsLatestLocations: () => apiClient.get('/api/locations/all-pets-latest/'),
   getRecent: (limit = 10) => apiClient.get(`/api/locations/recent/?limit=${limit}`),
   recordLocation: (locationData) => apiClient.post('/api/locations/record/', locationData),

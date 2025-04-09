@@ -1,0 +1,39 @@
+python3 test_mqtt_system.py --with-simulator
+2025-04-08 21:00:30,587 - __main__ - INFO - Starting MQTT Broker...
+2025-04-08 21:00:30,592 - __main__ - INFO - MQTT Broker: /bin/sh: mosquitto: command not found
+2025-04-08 21:00:32,594 - __main__ - INFO - Starting Protocol Adapter...
+2025-04-08 21:00:32,671 - __main__ - INFO - Protocol Adapter: Traceback (most recent call last):
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:   File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/run_mqtt_adapter.py", line 13, in <module>
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:     from services.mqtt_adapter import MQTTClient, ProtocolAdapter
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:   File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/services/mqtt_adapter/__init__.py", line 5, in <module>
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:     from services.mqtt_adapter.mqtt_client import MQTTClient
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:   File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/services/mqtt_adapter/mqtt_client.py", line 10, in <module>
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter:     import paho.mqtt.client as mqtt
+2025-04-08 21:00:32,672 - __main__ - INFO - Protocol Adapter: ModuleNotFoundError: No module named 'paho'
+2025-04-08 21:00:34,601 - __main__ - INFO - Starting MQTT Subscriber...
+2025-04-08 21:00:34,661 - __main__ - INFO - MQTT Subscriber: Traceback (most recent call last):
+2025-04-08 21:00:34,663 - __main__ - INFO - MQTT Subscriber:   File "/Users/diegoturcios/Documents/Personal/PetProject/pettracker/tools/mqtt_subscriber.py", line 17, in <module>
+2025-04-08 21:00:34,663 - __main__ - INFO - MQTT Subscriber:     import paho.mqtt.client as mqtt
+2025-04-08 21:00:34,663 - __main__ - INFO - MQTT Subscriber: ModuleNotFoundError: No module named 'paho'
+
+
+================================================================================
+                            MQTT Test System Running                            
+================================================================================
+
+Components:
+  * MQTT Broker (Mosquitto) - running on port 1883
+  * JT/T 808 Protocol Adapter - listening on port 8081
+  * MQTT Subscriber - monitoring all device topics
+
+You can now run the JT808 simulator to test the system:
+  python tools/jt808_simulator.py --port 8081 --interval 5
+
+Press Ctrl+C to stop all components
+================================================================================
+2025-04-08 21:00:36,607 - __main__ - INFO - Starting JT808 Simulator...
+2025-04-08 21:00:36,667 - __main__ - INFO - JT808 Simulator: 2025-04-08 21:00:36,667 - __main__ - INFO - Starting JT808 Device Simulator (ID: 653223027248)
+2025-04-08 21:00:36,667 - __main__ - INFO - JT808 Simulator: 2025-04-08 21:00:36,667 - __main__ - INFO - Connecting to server at localhost:8081
+2025-04-08 21:00:36,668 - __main__ - INFO - JT808 Simulator: 2025-04-08 21:00:36,668 - __main__ - ERROR - Connection failed: [Errno 61] Connection refused
+2025-04-08 21:00:36,668 - __main__ - INFO - JT808 Simulator: 2025-04-08 21:00:36,668 - __main__ - ERROR - Failed to connect to server
+
