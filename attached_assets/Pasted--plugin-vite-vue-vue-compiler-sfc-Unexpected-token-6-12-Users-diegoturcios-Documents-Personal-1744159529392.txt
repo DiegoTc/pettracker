@@ -1,0 +1,27 @@
+[plugin:vite:vue] [vue/compiler-sfc] Unexpected token (6:12)
+
+/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/src/App.vue
+91 |  
+92 |  export default {
+93 |          if (!authResponse.ok) {
+94 |            throw new Error(`Server responded with status: ${authResponse.status}`);
+95 |          }
+/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/src/App.vue:6:12
+2  |    <div id="app">
+3  |      <!-- Navigation bar for authenticated users -->
+4  |      <nav v-if="isAuthenticated" class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+   |                              ^
+5  |        <div class="container">
+6  |          <router-link class="navbar-brand" to="/">
+    at constructor (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:360:19)
+    at Parser.raise (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:3338:19)
+    at Parser.unexpected (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:3358:16)
+    at Parser.parseIdentifierName (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:11908:12)
+    at Parser.parseIdentifier (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:11891:23)
+    at Parser.parseBindingAtom (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:7302:17)
+    at Parser.parseMaybeDefault (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:7384:39)
+    at Parser.parseBindingElement (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:7369:23)
+    at Parser.parseBindingList (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:7338:24)
+    at Parser.parseFunctionParams (/Users/diegoturcios/Documents/Personal/PetProject/pettracker/frontend/node_modules/@babel/parser/lib/index.js:13121:24
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.
