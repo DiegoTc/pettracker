@@ -70,18 +70,7 @@ export default {
       this.error = null;
       
       try {
-        // First, we'll check if Google OAuth is properly configured
-        const response = await fetch('/api/auth/login_info');
-        const loginInfo = await response.json();
-        
-        if (!loginInfo.googleConfigured) {
-          this.error = 'Google authentication is not properly configured. Please contact the administrator.';
-          this.loading = false;
-          return;
-        }
-        
-        // Redirect directly to the API endpoint using relative URL
-        // This will properly leverage Vite's proxy configuration
+        // Skip the check and directly redirect to login
         window.location.href = '/api/auth/login';
       } catch (error) {
         console.error('Login error:', error);
