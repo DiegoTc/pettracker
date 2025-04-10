@@ -48,6 +48,11 @@ def create_app(config_class='config.Config'):
     db.init_app(app)
     migrate.init_app(app, db)
     
+    # Ensure database tables match models by reflecting metadata
+    with app.app_context():
+        # Reflect current database schema
+        Base.metadata.reflect(db.engine)
+    
     # Configure JWT
     app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 86400  # 24 hours

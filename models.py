@@ -6,6 +6,7 @@ import uuid
 
 class User(UserMixin, db.Model):
     """User model for authentication and profile information"""
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
@@ -39,6 +40,7 @@ class User(UserMixin, db.Model):
 
 class Pet(db.Model):
     """Pet model containing pet information"""
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
     pet_type = db.Column(db.String(32), nullable=False)
@@ -79,6 +81,7 @@ class Pet(db.Model):
 
 class Device(db.Model):
     """Device model for tracking devices"""
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(64), unique=True, nullable=False, index=True)
     name = db.Column(db.String(64))
@@ -128,6 +131,7 @@ class Device(db.Model):
 
 class Location(db.Model):
     """Location model for device location history"""
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
