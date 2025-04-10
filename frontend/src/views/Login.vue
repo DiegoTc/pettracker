@@ -93,7 +93,7 @@ export default {
       
       try {
         // Use the authAPI client which has the correct API URL configuration
-        const response = await authAPI.get('/login');
+        const response = await authAPI.login();
         
         if (response.data && response.data.redirect_url) {
           // Redirect to Google OAuth
