@@ -1,283 +1,322 @@
 <template>
-  <div class="device-form-page">
-    <div class="d-flex align-items-center mb-4">
-      <router-link to="/devices" class="btn btn-outline-secondary me-3">
-        <i class="bi bi-arrow-left"></i> Back
-      </router-link>
-      <h2 class="mb-0">{{ isEditMode ? 'Edit Device' : 'Register New Device' }}</h2>
-    </div>
-
-    <div v-if="loading" class="text-center my-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+  <app-layout>
+    <div class="page-header">
+      <div class="d-flex align-items-center">
+        <button class="btn btn-outline-secondary me-3" @click="$router.go(-1)">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <h1 class="page-title mb-0">{{ isEditMode ? 'Edit Device' : 'Add New Device' }}</h1>
       </div>
-      <p class="mt-2">{{ isEditMode ? 'Loading device...' : 'Preparing form...' }}</p>
     </div>
 
-    <div v-else-if="error" class="alert alert-danger">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      {{ error }}
-    </div>
+    <div class="form-container">
+      <card-component :title="isEditMode ? 'Edit Device Information' : 'Device Information'" icon="bi bi-pencil-square">
+        <form @submit.prevent="saveDevice">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="deviceId" class="form-label">Device ID</label>
+              <input 
+                type="text" 
+                id="deviceId" 
+                v-model="device.device_id" 
+                class="form-control" 
+                required 
+                :disabled="isEditMode"
+                placeholder="Enter device ID"
+              >
+              <small class="text-muted" v-if="!isEditMode">
+                Enter the unique ID provided with your GPS tracker
+              </small>
+            </div>
 
-    <form v-else @submit.prevent="submitForm" class="device-form">
-      <div class="card">
-        <div class="card-body">
-          <div class="row g-3">
-            <!-- Device Name -->
-            <div class="col-md-6">
+            <div class="form-group">
               <label for="deviceName" class="form-label">Device Name</label>
               <input 
                 type="text" 
-                class="form-control" 
                 id="deviceName" 
-                v-model="form.name"
-                placeholder="My Pet Tracker"
-                required
-              >
-              <div class="form-text">Give your device a recognizable name</div>
-            </div>
-
-            <!-- Device Type -->
-            <div class="col-md-6">
-              <label for="deviceType" class="form-label">Device Type</label>
-              <input 
-                type="text" 
+                v-model="device.name" 
                 class="form-control" 
-                id="deviceType" 
-                v-model="form.device_type"
-                placeholder="GPS Collar, Smart Tag, etc."
+                placeholder="Enter a name for this device"
               >
             </div>
-
-            <!-- Serial Number -->
-            <div class="col-md-6">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="deviceType" class="form-label">Device Type</label>
+              <select id="deviceType" v-model="device.device_type" class="form-select">
+                <option value="" disabled selected>Select a device type</option>
+                <option value="GPS Collar">GPS Collar</option>
+                <option value="Smart Tag">Smart Tag</option>
+                <option value="Tracker">Tracker</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
               <label for="serialNumber" class="form-label">Serial Number</label>
               <input 
                 type="text" 
-                class="form-control" 
                 id="serialNumber" 
-                v-model="form.serial_number"
-                placeholder="S/N from the device"
+                v-model="device.serial_number" 
+                class="form-control"
+                placeholder="Enter serial number (if available)"
               >
-              <div class="form-text">Usually found on the device or packaging</div>
             </div>
-
-            <!-- IMEI Number -->
-            <div class="col-md-6">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
               <label for="imei" class="form-label">IMEI Number</label>
               <input 
                 type="text" 
-                class="form-control" 
                 id="imei" 
-                v-model="form.imei"
-                placeholder="15-digit IMEI number"
-                pattern="[0-9]{15}"
+                v-model="device.imei" 
+                class="form-control"
+                placeholder="Enter IMEI number (if available)"
               >
-              <div class="form-text">15-digit number unique to cellular devices</div>
             </div>
-
-            <!-- Assign to Pet -->
-            <div class="col-12">
-              <label for="petId" class="form-label">Assign to Pet</label>
-              <select 
-                class="form-select" 
-                id="petId" 
-                v-model="form.pet_id"
+            
+            <div class="form-group">
+              <label for="firmwareVersion" class="form-label">Firmware Version</label>
+              <input 
+                type="text" 
+                id="firmwareVersion" 
+                v-model="device.firmware_version" 
+                class="form-control"
+                placeholder="Enter firmware version (if known)"
               >
-                <option value="">-- Not Assigned --</option>
-                <option v-for="pet in pets" :key="pet.id" :value="pet.id">
-                  {{ pet.name }} ({{ pet.pet_type }})
-                </option>
-              </select>
-              <div class="form-text">Connect this device to one of your pets</div>
-            </div>
-
-            <!-- Device Status -->
-            <div class="col-12">
-              <div class="form-check form-switch">
-                <input 
-                  class="form-check-input" 
-                  type="checkbox" 
-                  id="isActive" 
-                  v-model="form.is_active"
-                >
-                <label class="form-check-label" for="isActive">
-                  Device is active and tracking
-                </label>
-              </div>
             </div>
           </div>
-        </div>
+          
+          <div class="form-group">
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="isActive"
+                v-model="device.is_active"
+              >
+              <label class="form-check-label" for="isActive">Device is active</label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="petId" class="form-label">Assign to Pet</label>
+            <select id="petId" v-model="device.pet_id" class="form-select">
+              <option value="">Not assigned</option>
+              <option v-for="pet in pets" :key="pet.id" :value="pet.id">
+                {{ pet.name }}
+              </option>
+            </select>
+          </div>
 
-        <div class="card-footer bg-white">
-          <div class="d-flex justify-content-between">
-            <router-link to="/devices" class="btn btn-outline-secondary">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="$router.go(-1)">
               Cancel
-            </router-link>
-            <button type="submit" class="btn btn-primary" :disabled="submitting">
-              <span v-if="submitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ isEditMode ? 'Update Device' : 'Register Device' }}
+            </button>
+            <button type="submit" class="btn btn-primary">
+              {{ isEditMode ? 'Update Device' : 'Add Device' }}
             </button>
           </div>
-        </div>
-      </div>
-    </form>
-
-    <!-- Device ID Information Card (when editing) -->
-    <div v-if="isEditMode && device" class="card mt-4">
-      <div class="card-header">
-        <h5 class="mb-0">Device Information</h5>
-      </div>
-      <div class="card-body">
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <small class="text-muted">Device ID:</small>
-            <div class="font-monospace">{{ device.device_id }}</div>
-          </div>
-          <div class="col-md-4" v-if="device.created_at">
-            <small class="text-muted">Registered:</small>
-            <div>{{ formatDate(device.created_at) }}</div>
-          </div>
-          <div class="col-md-4" v-if="device.last_ping">
-            <small class="text-muted">Last Connection:</small>
-            <div>{{ formatDate(device.last_ping) }}</div>
-          </div>
-        </div>
-
-        <div v-if="device.battery_level" class="mb-3">
-          <small class="text-muted">Battery Level:</small>
-          <div class="progress">
-            <div 
-              class="progress-bar" 
-              :class="getBatteryClass(device.battery_level)" 
-              :style="{ width: `${device.battery_level}%` }" 
-              role="progressbar"
-              :aria-valuenow="device.battery_level" 
-              aria-valuemin="0" 
-              aria-valuemax="100"
-            >
-              {{ device.battery_level }}%
-            </div>
-          </div>
-        </div>
-
-        <div class="alert alert-info" v-if="device.firmware_version">
-          <i class="bi bi-info-circle-fill me-2"></i>
-          Current firmware version: <strong>{{ device.firmware_version }}</strong>
-        </div>
-      </div>
+        </form>
+      </card-component>
     </div>
-  </div>
+  </app-layout>
 </template>
 
 <script>
-import { devicesAPI, petsAPI } from '../services/api';
+import AppLayout from '../components/layout/AppLayout.vue';
+import CardComponent from '../components/common/CardComponent.vue';
 
 export default {
   name: 'DeviceForm',
-  props: {
-    id: {
-      type: [String, Number],
-      required: false
-    }
+  components: {
+    AppLayout,
+    CardComponent
   },
   data() {
     return {
-      isEditMode: false,
-      loading: true,
-      submitting: false,
-      error: null,
-      device: null,
-      pets: [],
-      form: {
+      device: {
+        device_id: '',
         name: '',
         device_type: '',
         serial_number: '',
         imei: '',
-        pet_id: '',
-        is_active: true
-      }
-    };
+        firmware_version: '',
+        is_active: true,
+        pet_id: ''
+      },
+      pets: [],
+      isLoading: false
+    }
   },
-  async created() {
-    this.isEditMode = !!this.id;
-    
-    // Fetch pets to populate the dropdown
-    try {
-      const response = await petsAPI.getAll();
-      this.pets = response.data;
-    } catch (error) {
-      console.error('Error fetching pets:', error);
+  computed: {
+    isEditMode() {
+      return this.$route.path.includes('/edit');
+    },
+    deviceId() {
+      return this.$route.params.id;
     }
-    
-    // If editing, fetch the device data
+  },
+  mounted() {
+    this.fetchPets();
     if (this.isEditMode) {
-      try {
-        const response = await devicesAPI.getById(this.id);
-        this.device = response.data;
-        
-        // Populate form with device data
-        this.form = {
-          name: this.device.name,
-          device_type: this.device.device_type,
-          serial_number: this.device.serial_number,
-          imei: this.device.imei,
-          pet_id: this.device.pet_id || '',
-          is_active: this.device.is_active
-        };
-      } catch (error) {
-        console.error('Error fetching device:', error);
-        this.error = error.response?.data?.message || 'Failed to load device';
-      }
+      this.fetchDeviceDetails();
     }
-    
-    this.loading = false;
   },
   methods: {
-    async submitForm() {
-      this.submitting = true;
-      this.error = null;
+    fetchPets() {
+      // Simulate API call
+      setTimeout(() => {
+        this.pets = [
+          { id: 1, name: 'Buddy' },
+          { id: 2, name: 'Max' },
+          { id: 3, name: 'Luna' }
+        ];
+      }, 500);
       
-      try {
-        if (this.isEditMode) {
-          // Update existing device
-          await devicesAPI.update(this.id, this.form);
-          this.$router.push('/devices');
-        } else {
-          // Create new device
-          await devicesAPI.create(this.form);
-          this.$router.push('/devices');
-        }
-      } catch (error) {
-        console.error('Error saving device:', error);
-        this.error = error.response?.data?.message || 'Failed to save device';
-        window.scrollTo(0, 0); // Scroll to the top to show the error
-      } finally {
-        this.submitting = false;
-      }
+      // Real API call will look like:
+      /*
+      fetch('/api/pets')
+        .then(response => response.json())
+        .then(data => {
+          this.pets = data;
+        })
+        .catch(error => {
+          console.error('Error fetching pets:', error);
+        });
+      */
     },
-    formatDate(dateString) {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('default', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
+    fetchDeviceDetails() {
+      // Simulate API call
+      setTimeout(() => {
+        this.device = {
+          id: this.deviceId,
+          device_id: 'ABC123',
+          name: 'Buddy\'s Collar',
+          device_type: 'GPS Collar',
+          serial_number: 'SN123456789',
+          imei: '123456789012345',
+          firmware_version: '1.2.3',
+          is_active: true,
+          pet_id: 1
+        };
+      }, 500);
+      
+      // Real API call will look like:
+      /*
+      fetch(`/api/devices/${this.deviceId}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Device not found');
+          return response.json();
+        })
+        .then(data => {
+          this.device = data;
+        })
+        .catch(error => {
+          console.error('Error fetching device details:', error);
+          this.$router.push('/devices');
+        });
+      */
     },
-    getBatteryClass(level) {
-      if (level <= 20) return 'bg-danger';
-      if (level <= 40) return 'bg-warning';
-      return 'bg-success';
+    saveDevice() {
+      this.isLoading = true;
+      
+      console.log('Saving device:', this.device);
+      
+      // Simulate API save
+      setTimeout(() => {
+        this.isLoading = false;
+        this.$router.push('/devices');
+      }, 1000);
+      
+      // Real API call will look like:
+      /*
+      const url = this.isEditMode ? `/api/devices/${this.deviceId}` : '/api/devices';
+      const method = this.isEditMode ? 'PUT' : 'POST';
+      
+      fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.device)
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to save device');
+          return response.json();
+        })
+        .then(data => {
+          this.$router.push('/devices');
+        })
+        .catch(error => {
+          console.error('Error saving device:', error);
+          this.isLoading = false;
+        });
+      */
     }
   }
-};
+}
 </script>
 
 <style scoped>
-.device-form-page {
-  margin-bottom: 50px;
+.form-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.form-check-input {
+  width: 48px;
+  height: 24px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.text-muted {
+  color: var(--text-lighter);
+  font-size: 13px;
+  margin-top: 4px;
+  display: block;
+}
+
+.btn-secondary {
+  background-color: var(--background);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border);
 }
 </style>

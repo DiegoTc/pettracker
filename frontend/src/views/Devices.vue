@@ -1,251 +1,283 @@
 <template>
-  <div class="devices-page">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>My Devices</h2>
-      <router-link to="/devices/new" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Register New Device
-      </router-link>
+  <app-layout>
+    <div class="page-header">
+      <h1 class="page-title">My Devices</h1>
+      <button class="btn btn-primary" @click="navigateTo('/devices/new')">
+        <i class="bi bi-plus-lg"></i> Add New Device
+      </button>
     </div>
-
+    
     <div v-if="loading" class="text-center my-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
       <p class="mt-2">Loading your devices...</p>
     </div>
-
-    <div v-else-if="error" class="alert alert-danger">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      Error loading devices: {{ error }}
+    
+    <div v-else-if="devices.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-cpu"></i>
+      </div>
+      <h3>No Devices Found</h3>
+      <p>You haven't added any tracking devices yet. Add your first device to start tracking your pets.</p>
+      <button class="btn btn-primary" @click="navigateTo('/devices/new')">
+        <i class="bi bi-plus-lg"></i> Add First Device
+      </button>
     </div>
-
-    <div v-else-if="devices.length === 0" class="text-center my-5">
-      <i class="bi bi-cpu display-4 text-muted"></i>
-      <h4 class="mt-3">No tracking devices registered</h4>
-      <p class="text-muted">Register a new device to start tracking your pets</p>
-      <router-link to="/devices/new" class="btn btn-primary mt-2">
-        Register New Device
-      </router-link>
-    </div>
-
-    <div v-else class="row">
-      <div v-for="device in devices" :key="device.id" class="col-md-4 mb-4">
-        <div class="card h-100">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ device.name || 'Unnamed Device' }}</h5>
-            <span v-if="device.is_active" class="badge bg-success">Active</span>
-            <span v-else class="badge bg-secondary">Inactive</span>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <small class="text-muted">Device ID:</small>
-              <div class="font-monospace">{{ device.device_id }}</div>
-            </div>
-            
-            <div class="mb-3" v-if="device.device_type">
-              <small class="text-muted">Type:</small>
-              <div>{{ device.device_type }}</div>
-            </div>
-            
-            <div class="mb-3" v-if="device.serial_number">
-              <small class="text-muted">Serial Number:</small>
-              <div class="font-monospace">{{ device.serial_number }}</div>
-            </div>
-            
-            <div class="mb-3" v-if="device.imei">
-              <small class="text-muted">IMEI:</small>
-              <div class="font-monospace">{{ device.imei }}</div>
-            </div>
-            
-            <div class="mb-3">
-              <small class="text-muted">Last Connection:</small>
-              <div>{{ formatDate(device.last_ping) || 'Never' }}</div>
-            </div>
-            
-            <div class="battery-indicator mb-3" v-if="device.battery_level">
-              <small class="text-muted">Battery Level:</small>
-              <div class="progress">
-                <div 
-                  class="progress-bar" 
-                  :class="getBatteryClass(device.battery_level)"
-                  :style="{ width: `${device.battery_level}%` }"
-                  role="progressbar" 
-                  :aria-valuenow="device.battery_level" 
-                  aria-valuemin="0" 
-                  aria-valuemax="100">
-                  {{ device.battery_level }}%
+    
+    <div v-else>
+      <div class="devices-grid">
+        <card-component
+          v-for="device in devices"
+          :key="device.id"
+          :title="device.name || device.device_id"
+          icon="bi bi-cpu"
+        >
+          <div class="device-card-content">
+            <div class="device-info">
+              <div class="info-item">
+                <div class="info-label">Device ID</div>
+                <div class="info-value">{{ device.device_id }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Type</div>
+                <div class="info-value">{{ device.device_type || 'Not specified' }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value status" :class="device.is_active ? 'active' : 'inactive'">
+                  <i class="bi" :class="device.is_active ? 'bi-check-circle' : 'bi-x-circle'"></i>
+                  {{ device.is_active ? 'Active' : 'Inactive' }}
                 </div>
               </div>
+              
+              <div class="info-item">
+                <div class="info-label">Battery</div>
+                <div class="info-value">{{ device.battery_level }}%</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Last Ping</div>
+                <div class="info-value">{{ formatDate(device.last_ping) || 'Never' }}</div>
+              </div>
+              
+              <div class="info-item">
+                <div class="info-label">Assigned To</div>
+                <div class="info-value">{{ device.pet ? device.pet.name : 'Not assigned' }}</div>
+              </div>
             </div>
             
-            <div v-if="device.pet_id">
-              <small class="text-muted">Assigned to:</small>
-              <div>
-                <span class="badge bg-info">{{ getPetName(device.pet_id) }}</span>
-              </div>
-            </div>
-            <div v-else>
-              <small class="text-muted">Status:</small>
-              <div>
-                <span class="badge bg-warning text-dark">Not assigned to any pet</span>
-              </div>
-            </div>
-          </div>
-          <div class="card-footer bg-white">
-            <div class="d-flex justify-content-between">
-              <router-link :to="`/devices/${device.id}/edit`" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-pencil-square"></i> Edit
-              </router-link>
-              <button class="btn btn-outline-danger btn-sm" @click="confirmDelete(device)">
+            <div class="device-actions">
+              <button class="btn btn-sm btn-outline-primary me-2" @click="editDevice(device)">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(device)">
                 <i class="bi bi-trash"></i> Delete
               </button>
             </div>
           </div>
-        </div>
+        </card-component>
       </div>
     </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" ref="deleteModal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">Confirm Delete</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" v-if="deviceToDelete">
-            <p>Are you sure you want to delete device <strong>{{ deviceToDelete.name || deviceToDelete.device_id }}</strong>?</p>
-            <p class="text-danger">This action cannot be undone and will remove all location history for this device.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="deleteDevice">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </app-layout>
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
-import { devicesAPI, petsAPI } from '../services/api';
+import AppLayout from '../components/layout/AppLayout.vue';
+import CardComponent from '../components/common/CardComponent.vue';
 
 export default {
   name: 'Devices',
+  components: {
+    AppLayout,
+    CardComponent
+  },
   data() {
     return {
       devices: [],
-      pets: [],
-      loading: true,
-      error: null,
-      deviceToDelete: null,
-      deleteModal: null
-    };
-  },
-  async created() {
-    await Promise.all([
-      this.fetchDevices(),
-      this.fetchPets()
-    ]);
+      loading: true
+    }
   },
   mounted() {
-    // Initialize the delete modal
-    this.deleteModal = new Modal(this.$refs.deleteModal);
+    this.fetchDevices();
   },
   methods: {
-    async fetchDevices() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await devicesAPI.getAll();
-        this.devices = response.data;
-      } catch (error) {
-        console.error('Error fetching devices:', error);
-        this.error = error.response?.data?.message || 'Failed to load devices';
-      } finally {
+    fetchDevices() {
+      // Simulate API call
+      setTimeout(() => {
+        this.devices = [
+          {
+            id: 1,
+            device_id: 'ABC123',
+            name: 'Buddy\'s Collar',
+            device_type: 'GPS Collar',
+            is_active: true,
+            battery_level: 87,
+            last_ping: new Date().toISOString(),
+            pet: {
+              id: 1,
+              name: 'Buddy'
+            }
+          },
+          {
+            id: 2,
+            device_id: 'XYZ789',
+            name: 'Home Tracker',
+            device_type: 'Smart Tag',
+            is_active: false,
+            battery_level: 32,
+            last_ping: '2023-04-01T15:30:00.000Z',
+            pet: null
+          }
+        ];
         this.loading = false;
-      }
+      }, 1000);
+      
+      // Real API call will look like:
+      /*
+      fetch('/api/devices')
+        .then(response => response.json())
+        .then(data => {
+          this.devices = data;
+          this.loading = false;
+        })
+        .catch(error => {
+          console.error('Error fetching devices:', error);
+          this.loading = false;
+        });
+      */
     },
-    async fetchPets() {
-      try {
-        const response = await petsAPI.getAll();
-        this.pets = response.data;
-      } catch (error) {
-        console.error('Error fetching pets:', error);
-      }
+    navigateTo(route) {
+      this.$router.push(route);
     },
-    getPetName(petId) {
-      const pet = this.pets.find(p => p.id === petId);
-      return pet ? pet.name : 'Unknown Pet';
+    editDevice(device) {
+      this.$router.push(`/devices/${device.id}/edit`);
+    },
+    confirmDelete(device) {
+      if (confirm(`Are you sure you want to delete device ${device.name || device.device_id}?`)) {
+        console.log('Delete device:', device.id);
+        // Will implement actual delete API call
+        this.devices = this.devices.filter(d => d.id !== device.id);
+      }
     },
     formatDate(dateString) {
       if (!dateString) return null;
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('default', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
-    },
-    getBatteryClass(level) {
-      if (level <= 20) return 'bg-danger';
-      if (level <= 40) return 'bg-warning';
-      return 'bg-success';
-    },
-    confirmDelete(device) {
-      this.deviceToDelete = device;
-      this.deleteModal.show();
-    },
-    async deleteDevice() {
-      if (!this.deviceToDelete) return;
       
-      try {
-        console.log(`Attempting to delete device with ID: ${this.deviceToDelete.id}`);
-        await devicesAPI.delete(this.deviceToDelete.id);
-        
-        console.log('Device deleted successfully, updating UI');
-        // Remove the device from the list
-        this.devices = this.devices.filter(d => d.id !== this.deviceToDelete.id);
-        this.deleteModal.hide();
-        // Show success message
-        this.showAlert('Device deleted successfully', 'success');
-      } catch (error) {
-        console.error('Error deleting device:', error);
-        // More detailed error logging
-        console.error('Error details:', {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          id: this.deviceToDelete?.id
-        });
-        
-        let errorMessage = 'Failed to delete device';
-        if (error.response?.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-        
-        this.showAlert(errorMessage, 'danger');
-      } finally {
-        this.deviceToDelete = null;
-      }
-    },
-    showAlert(message, type) {
-      // This is a placeholder for an alert system
-      // You might want to implement a toast notification system
-      alert(message);
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+      
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+      
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric'
+      });
     }
   }
-};
+}
 </script>
 
 <style scoped>
-.devices-page {
-  margin-bottom: 50px;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin: 40px auto;
+  max-width: 500px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.devices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 576px) {
+  .devices-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.device-card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.device-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  margin-bottom: 8px;
+}
+
+.info-label {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status.active {
+  color: var(--success);
+}
+
+.status.inactive {
+  color: var(--danger);
+}
+
+.device-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
