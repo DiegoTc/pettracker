@@ -69,14 +69,13 @@ export default {
       this.loading = true;
       this.error = null;
       
-      try {
-        // Skip the check and directly redirect to login
-        window.location.href = '/api/auth/login';
-      } catch (error) {
-        console.error('Login error:', error);
-        this.error = 'Failed to initiate login. Please check the server connection.';
-        this.loading = false;
-      }
+      // Create absolute URL to ensure we're hitting the backend directly
+      const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:5000' 
+        : window.location.origin;
+      
+      // Directly redirect to backend (no try-catch needed for window.location)
+      window.location.href = `${apiBaseUrl}/api/auth/login`;
     }
   },
   created() {
