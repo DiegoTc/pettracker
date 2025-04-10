@@ -52,7 +52,21 @@ apiClient.interceptors.response.use(
       error.response?.data || error.message
     );
     
-    // You can add global error handling here
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      console.warn('Authentication error detected, clearing tokens');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('is_authenticated');
+      
+      // If not already on the login page, redirect to login
+      if (!window.location.pathname.includes('/login')) {
+        // Store the current path for redirect after login
+        localStorage.setItem('login_redirect', window.location.pathname);
+        // Redirect to login
+        window.location.href = '/login';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

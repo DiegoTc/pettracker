@@ -56,16 +56,48 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
       isDevEnvironment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
       loading: false,
-      error: null
+      error: null,
+      googleConfigured: true
     };
+  },
+  async created() {
+    // Check for error parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get('error');
+    if (errorMsg) {
+      this.error = decodeURIComponent(errorMsg);
+    }
+    
+    // Check if Google OAuth is configured by calling login_info
+    try {
+      const response = await axios.get('/api/auth/login_info');
+      this.googleConfigured = response.data.googleConfigured;
+      
+      if (!this.googleConfigured) {
+        this.error = 'Google authentication is not configured. Please contact the administrator.';
+      } else {
+        console.log('Google OAuth is properly configured');
+      }
+    } catch (err) {
+      console.error('Failed to check Google OAuth configuration:', err);
+      // Just assume it's configured if we can't check
+      this.googleConfigured = true;
+    }
   },
   methods: {
     async loginWithGoogle() {
+      if (!this.googleConfigured) {
+        this.error = 'Google authentication is not configured. Please contact the administrator.';
+        return;
+      }
+      
       this.loading = true;
       this.error = null;
       
@@ -74,16 +106,8 @@ export default {
         ? 'http://localhost:5000' 
         : window.location.origin;
       
-      // Directly redirect to backend (no try-catch needed for window.location)
+      // Directly redirect to Google login
       window.location.href = `${apiBaseUrl}/api/auth/login`;
-    }
-  },
-  created() {
-    // Check for error parameter in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorMsg = urlParams.get('error');
-    if (errorMsg) {
-      this.error = decodeURIComponent(errorMsg);
     }
   }
 };

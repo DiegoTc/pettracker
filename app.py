@@ -35,10 +35,13 @@ def create_app(config_class='config.Config'):
     CORS(app, 
          # Allow all routes, not just /api/*
          resources={r"/*": {"origins": ["http://localhost:3000", 
-                                        f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
-                                        "https://pettracker.diegotc.repl.co"]}},
+                                       f"https://{os.environ.get('REPLIT_DEV_DOMAIN', '')}", 
+                                       "https://pettracker.diegotc.repl.co",
+                                       "*"]}},  # Adding wildcard for testing
          supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", 
+                       "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials",
+                       "Accept", "Origin"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
          expose_headers=["Content-Type", "Authorization"],
          max_age=600,
