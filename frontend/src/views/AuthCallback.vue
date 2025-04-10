@@ -41,9 +41,15 @@ export default {
       } else if (code) {
         console.log('Received OAuth code, redirecting to backend for processing');
         
-        // Redirect to backend with the code
+        // Get all existing parameters from the URL
+        const existingParams = Array.from(urlParams.entries())
+          .filter(([key]) => key !== 'redirect_to_frontend') // Remove this parameter if it exists
+          .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+          .join('&');
+        
+        // Redirect to backend with the original Google parameters
         // The backend will process the code and redirect back to frontend with token
-        window.location.href = `/api/auth/callback?code=${code}&redirect_to_frontend=true`;
+        window.location.href = `/api/auth/callback?${existingParams}`;
       } else {
         // No code or token parameter
         this.error = 'No authentication code or token received';

@@ -210,8 +210,13 @@ def callback():
         userinfo = userinfo_response.json()
         logger.info(f"Received user info: {userinfo}")
         
-        # Verify user info
-        if not userinfo.get("email_verified"):
+        # Verify user info - email is required
+        if not userinfo.get("email"):
+            logger.error("Email missing from Google response")
+            return jsonify({"error": "Email information not provided by Google"}), 400
+            
+        # Check if email is verified (if this field exists in response)
+        if "email_verified" in userinfo and not userinfo.get("email_verified"):
             logger.error("User email not verified by Google")
             return jsonify({"error": "User email not verified by Google"}), 400
         
@@ -220,33 +225,47 @@ def callback():
         username = email.split("@")[0]  # Use email prefix as username
         picture = userinfo.get("picture")
         
-        # Find or create user
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            # Try to extract first name and last name
-            first_name = userinfo.get("given_name", "")
-            last_name = userinfo.get("family_name", "")
+        try:
+            # Find or create user
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                # Try to extract first name and last name
+                first_name = userinfo.get("given_name", "")
+                last_name = userinfo.get("family_name", "")
+                
+                # Find a unique username if needed
+                base_username = username
+                counter = 1
+                while User.query.filter_by(username=username).first() is not None:
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
+                # Create new user
+                user = User(
+                    email=email,
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    profile_picture=picture,
+                    role="user"  # Ensure role is set
+                )
+                
+                logger.info(f"Creating new user: {email} with username: {username}")
+                db.session.add(user)
+                db.session.commit()
             
-            # Create new user
-            user = User(
-                email=email,
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                profile_picture=picture,
-                role="user"  # Ensure role is set
-            )
-            
-            logger.info(f"Creating new user: {email}")
-            db.session.add(user)
+            # Update last login time
+            user.last_login = db.func.now()
             db.session.commit()
-        
-        # Update last login time
-        user.last_login = db.func.now()
-        db.session.commit()
-        
-        # Login the user
-        login_user(user)
+            
+            # Login the user
+            login_user(user)
+            
+        except Exception as db_error:
+            logger.error(f"Database error while creating/updating user: {str(db_error)}")
+            # Roll back transaction and return error
+            db.session.rollback()
+            return jsonify({"error": "Error saving user information"}), 500
         
         # Create JWT token
         access_token = create_access_token(identity=str(user.id))
