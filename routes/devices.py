@@ -15,25 +15,34 @@ logger = logging.getLogger(__name__)
 @limiter.limit("60/minute")
 def get_devices():
     """Get all devices belonging to the current user"""
-    user_id = int(get_jwt_identity())
-    
-    # Get optional query parameters for filtering
-    pet_id = request.args.get('pet_id', type=int)
-    is_active = request.args.get('is_active')
-    
-    # Create base query
-    query = Device.query.filter_by(user_id=user_id)
-    
-    # Apply filters if provided
-    if pet_id:
-        query = query.filter_by(pet_id=pet_id)
-    if is_active is not None:
-        is_active_bool = is_active.lower() == 'true'
-        query = query.filter_by(is_active=is_active_bool)
-    
-    # Execute query and return results
-    devices = query.all()
-    return jsonify([device.to_dict() for device in devices])
+    try:
+        logger.info("get_devices() called")
+        user_id = int(get_jwt_identity())
+        logger.info(f"User ID from JWT: {user_id}")
+        
+        # Get optional query parameters for filtering
+        pet_id = request.args.get('pet_id', type=int)
+        is_active = request.args.get('is_active')
+        
+        # Create base query
+        query = Device.query.filter_by(user_id=user_id)
+        
+        # Apply filters if provided
+        if pet_id:
+            query = query.filter_by(pet_id=pet_id)
+        if is_active is not None:
+            is_active_bool = is_active.lower() == 'true'
+            query = query.filter_by(is_active=is_active_bool)
+        
+        # Execute query and return results
+        devices = query.all()
+        logger.info(f"Found {len(devices)} devices for user {user_id}")
+        return jsonify([device.to_dict() for device in devices])
+    except Exception as e:
+        logger.error(f"Error in get_devices(): {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "Internal server error"}), 500
 
 @devices_bp.route('/<int:device_id>', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options

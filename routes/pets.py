@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app import db, limiter
-from models import Pet
+from models import Pet, User
 from flask_jwt_extended import get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
 import logging
 from datetime import datetime
+import traceback
 
 pets_bp = Blueprint('pets', __name__)
 logger = logging.getLogger(__name__)
@@ -15,32 +16,39 @@ logger = logging.getLogger(__name__)
 @limiter.limit("60/minute")
 def get_pets():
     """Get pets based on user role"""
-    user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
-    
-    # Admin can see all pets
-    if user.is_admin:
-        pets = Pet.query.all()
-    else:
-        # Regular users see only their pets
-        pets = Pet.query.filter_by(user_id=user_id).all()
-    
-    # Convert user_id to int since JWT identity is stored as string
-    user_id = int(user_id)
-    
-    # Get optional query parameters for filtering
-    pet_type = request.args.get('type')
-    
-    # Create base query
-    query = Pet.query.filter_by(user_id=user_id)
-    
-    # Apply filters if provided
-    if pet_type:
-        query = query.filter_by(pet_type=pet_type)
-    
-    # Execute query and return results
-    pets = query.all()
-    return jsonify([pet.to_dict() for pet in pets])
+    try:
+        logger.info("get_pets() called")
+        
+        user_id = get_jwt_identity()
+        logger.info(f"User ID from JWT: {user_id}")
+        
+        # Convert user_id to int since JWT identity is stored as string
+        user_id = int(user_id)
+        
+        # Get user
+        user = User.query.get(user_id)
+        if not user:
+            logger.error(f"User not found: {user_id}")
+            return jsonify({"error": "User not found"}), 404
+            
+        # Create base query
+        query = Pet.query.filter_by(user_id=user_id)
+        
+        # Get optional query parameters for filtering
+        pet_type = request.args.get('type')
+        
+        # Apply filters if provided
+        if pet_type:
+            query = query.filter_by(pet_type=pet_type)
+        
+        # Execute query and return results
+        pets = query.all()
+        logger.info(f"Found {len(pets)} pets for user {user_id}")
+        return jsonify([pet.to_dict() for pet in pets])
+    except Exception as e:
+        logger.error(f"Error in get_pets(): {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "Internal server error"}), 500
 
 @pets_bp.route('/<int:pet_id>', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options

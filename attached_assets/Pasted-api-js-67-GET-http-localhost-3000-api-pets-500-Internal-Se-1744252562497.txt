@@ -1,0 +1,105 @@
+api.js:67 
+            
+            
+           GET http://localhost:3000/api/pets/ 500 (Internal Server Error)
+dispatchXhrRequest @ axios.js?v=f8d9c02a:1648
+xhr @ axios.js?v=f8d9c02a:1528
+dispatchRequest @ axios.js?v=f8d9c02a:2003
+Promise.then
+_request @ axios.js?v=f8d9c02a:2206
+request @ axios.js?v=f8d9c02a:2115
+Axios.<computed> @ axios.js?v=f8d9c02a:2243
+wrap @ axios.js?v=f8d9c02a:8
+getAll @ api.js:67
+fetchPets @ Pets.vue:90
+mounted @ Pets.vue:84
+(anonymous) @ chunk-VT7FWPCL.js?v=f8d9c02a:4941
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+hook.__weh.hook.__weh @ chunk-VT7FWPCL.js?v=f8d9c02a:4921
+flushPostFlushCbs @ chunk-VT7FWPCL.js?v=f8d9c02a:2468
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2510
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:9Understand this errorAI
+api.js:44 API Response error: get /api/pets/ 500 Request failed with status code 500
+(anonymous) @ api.js:44
+Promise.then
+_request @ axios.js?v=f8d9c02a:2206
+request @ axios.js?v=f8d9c02a:2115
+Axios.<computed> @ axios.js?v=f8d9c02a:2243
+wrap @ axios.js?v=f8d9c02a:8
+getAll @ api.js:67
+fetchPets @ Pets.vue:90
+mounted @ Pets.vue:84
+(anonymous) @ chunk-VT7FWPCL.js?v=f8d9c02a:4941
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+hook.__weh.hook.__weh @ chunk-VT7FWPCL.js?v=f8d9c02a:4921
+flushPostFlushCbs @ chunk-VT7FWPCL.js?v=f8d9c02a:2468
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2510
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:9Understand this errorAI
+Pets.vue:96 Error fetching pets: AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}code: "ERR_BAD_RESPONSE"config: {transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}message: "Request failed with status code 500"name: "AxiosError"request: XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: true, upload: XMLHttpRequestUpload, …}response: {data: '', status: 500, statusText: 'Internal Server Error', headers: AxiosHeaders, config: {…}, …}status: 500stack: "AxiosError: Request failed with status code 500\n    at settle (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1229:12)\n    at XMLHttpRequest.onloadend (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:1561:7)\n    at Axios.request (http://localhost:3000/node_modules/.vite/deps/axios.js?v=f8d9c02a:2119:41)"[[Prototype]]: Error
+(anonymous) @ Pets.vue:96
+Promise.catch
+fetchPets @ Pets.vue:95
+mounted @ Pets.vue:84
+(anonymous) @ chunk-VT7FWPCL.js?v=f8d9c02a:4941
+callWithErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2282
+callWithAsyncErrorHandling @ chunk-VT7FWPCL.js?v=f8d9c02a:2289
+hook.__weh.hook.__weh @ chunk-VT7FWPCL.js?v=f8d9c02a:4921
+flushPostFlushCbs @ chunk-VT7FWPCL.js?v=f8d9c02a:2468
+flushJobs @ chunk-VT7FWPCL.js?v=f8d9c02a:2510
+Promise.then
+queueFlush @ chunk-VT7FWPCL.js?v=f8d9c02a:2404
+queuePostFlushCb @ chunk-VT7FWPCL.js?v=f8d9c02a:2418
+queueEffectWithSuspense @ chunk-VT7FWPCL.js?v=f8d9c02a:9461
+baseWatchOptions.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:8340
+effect2.scheduler @ chunk-VT7FWPCL.js?v=f8d9c02a:2025
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:515
+endBatch @ chunk-VT7FWPCL.js?v=f8d9c02a:573
+notify @ chunk-VT7FWPCL.js?v=f8d9c02a:836
+trigger @ chunk-VT7FWPCL.js?v=f8d9c02a:810
+set value @ chunk-VT7FWPCL.js?v=f8d9c02a:1686
+finalizeNavigation @ vue-router.js?v=f8d9c02a:2672
+(anonymous) @ vue-router.js?v=f8d9c02a:2582
+Promise.then
+pushWithRedirect @ vue-router.js?v=f8d9c02a:2550
+push @ vue-router.js?v=f8d9c02a:2476
+install @ vue-router.js?v=f8d9c02a:2831
+use @ chunk-VT7FWPCL.js?v=f8d9c02a:5993
+(anonymous) @ main.js:9Understand this errorAI
