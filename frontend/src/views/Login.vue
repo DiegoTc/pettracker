@@ -92,27 +92,14 @@ export default {
       this.error = null;
       
       try {
-        // Make a direct request to the backend instead of using the API client
-        // This bypasses any proxy issues
-        const response = await fetch('/api/auth/login/', {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        // Use the authAPI client which has the correct API URL configuration
+        const response = await authAPI.get('/login');
         
-        if (data && data.redirect_url) {
+        if (response.data && response.data.redirect_url) {
           // Redirect to Google OAuth
-          window.location.href = data.redirect_url;
+          window.location.href = response.data.redirect_url;
         } else {
-          console.error('Invalid login response:', data);
+          console.error('Invalid login response:', response.data);
           this.error = 'Unable to initiate login. Please ensure Google OAuth is configured.';
         }
       } catch (error) {
