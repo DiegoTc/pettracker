@@ -56,8 +56,6 @@
 </template>
 
 <script>
-import { authAPI } from '@/services/api';
-
 export default {
   data() {
     return {
@@ -72,17 +70,8 @@ export default {
       this.error = null;
       
       try {
-        // Use the authAPI client which has the correct API URL configuration
-        const response = await authAPI.login();
-        
-        if (response.data && response.data.redirect_url) {
-          // Redirect to Google OAuth
-          window.location.href = response.data.redirect_url;
-        } else {
-          console.error('Invalid login response:', response.data);
-          this.error = 'Unable to initiate login. Please ensure Google OAuth is configured.';
-          this.loading = false;
-        }
+        // Directly redirect to the backend's Google OAuth login endpoint
+        window.location.href = '/api/auth/login';
       } catch (error) {
         console.error('Login error:', error);
         this.error = 'Failed to initiate login. Please check the server connection.';

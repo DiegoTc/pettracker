@@ -6,6 +6,7 @@ import os
 import json
 import requests
 import traceback
+import urllib.parse
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -98,10 +99,16 @@ def login():
             scope=["openid", "email", "profile"],
         )
         
-        return jsonify({"redirect_url": request_uri})
+        # Direct redirect to Google OAuth instead of returning a JSON response
+        return redirect(request_uri)
     except Exception as e:
         logger.error(f"Error initiating Google OAuth flow: {str(e)}")
-        return jsonify({"error": "Failed to initiate login process"}), 500
+        logger.error(f"Error details: {traceback.format_exc()}")
+        # If this is an API call expecting JSON, return JSON error
+        if 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({"error": "Failed to initiate login process"}), 500
+        # Otherwise redirect to frontend with error
+        return redirect(f"/login?error={urllib.parse.quote('Failed to initiate login process')}")
 
 @auth_bp.route('/callback', methods=['GET', 'OPTIONS'])
 def callback():

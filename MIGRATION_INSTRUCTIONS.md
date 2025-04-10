@@ -1,78 +1,104 @@
 # Database Migration Instructions
 
-This document provides instructions for managing database migrations using Flask-Migrate in the Pet Tracker project.
+This document provides instructions for properly migrating the database when schema changes are made.
 
-## Setup on a New Environment
+## Understanding the Migration System
 
-To set up the migration system on a new environment, follow these steps:
+The application uses Flask-Migrate (Alembic) to manage database migrations. This ensures that database schema changes are tracked and can be applied consistently across different environments.
 
-1. Install the required packages:
-   ```bash
-   pip install flask-migrate
-   ```
+## Migration Commands
 
-2. Initialize the migration repository (if it doesn't exist):
-   ```bash
-   flask db init
-   ```
+### Create a Migration
 
-3. Apply existing migrations:
-   ```bash
-   flask db upgrade
-   ```
+When you make changes to your SQLAlchemy models, generate a new migration:
 
-## Creating New Migrations
-
-When you make changes to your database models:
-
-1. Generate a migration script:
-   ```bash
-   flask db migrate -m "Description of your changes"
-   ```
-
-2. Review the generated migration script in `migrations/versions/` to ensure it's correct
-
-3. Apply the migration:
-   ```bash
-   flask db upgrade
-   ```
-
-## Troubleshooting
-
-If you encounter errors during migration:
-
-1. **Column doesn't exist**: If a migration tries to drop a column that doesn't exist, edit the migration file to remove that operation.
-
-2. **Table doesn't exist**: Similar to columns, edit the migration file to remove operations on non-existent tables.
-
-3. **Start fresh**: If you're having persistent issues and are still in development:
-   ```bash
-   # Drop and recreate the database
-   # Then initialize migrations
-   flask db init
-   flask db migrate -m "Initial schema"
-   flask db upgrade
-   ```
-
-## Alternative Database Setup (without migrations)
-
-If you prefer not to use migrations, you can set up the database with:
-
-```python
-python -c "from app import app, db; app.app_context().push(); db.create_all()"
+```bash
+flask db migrate -m "description_of_changes"
 ```
 
-To add the role column specifically:
+This creates a new migration script in the `migrations/versions/` directory.
 
-```python
-python -c "from app import app, db; app.app_context().push(); db.engine.execute('ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT \"user\" NOT NULL;')"
+### Apply Migrations
+
+To apply all pending migrations:
+
+```bash
+flask db upgrade
 ```
 
-## Production Considerations
+### Downgrade Database
 
-For production environments:
+To revert to a previous migration:
 
-1. Always backup your database before applying migrations
-2. Test migrations in a staging environment first
-3. Never run `db.drop_all()` in production
-4. Consider using database-specific tools for large-scale migrations
+```bash
+flask db downgrade
+```
+
+## Troubleshooting Common Issues
+
+### 1. User role column missing
+
+If you encounter errors about the User.role column missing, ensure you:
+
+1. Check that the User model has the role field properly defined:
+   ```python
+   role = db.Column(db.String(20), default='user', nullable=False)
+   ```
+
+2. Check if the column exists in the database:
+   ```sql
+   SELECT column_name, data_type, column_default 
+   FROM information_schema.columns 
+   WHERE table_name = 'user' AND column_name = 'role';
+   ```
+
+3. If the column doesn't exist or has incorrect properties, run:
+   ```bash
+   flask db stamp head  # Mark current state as latest
+   flask db migrate -m "add_user_role_column"  # Create migration for changes
+   flask db upgrade  # Apply the migration
+   ```
+
+### 2. Table doesn't reflect model changes
+
+When your models change but the database doesn't reflect those changes:
+
+1. Make sure all models have `__table_args__ = {'extend_existing': True}` to handle schema reflection correctly
+2. Run a fresh migration:
+   ```bash
+   flask db stamp head
+   flask db migrate
+   flask db upgrade
+   ```
+
+### 3. SQLAlchemy Metadata Reflection Issues
+
+If SQLAlchemy is not correctly reflecting the database schema:
+
+1. Ensure the app context is properly set up before reflecting:
+   ```python
+   with app.app_context():
+       Base.metadata.reflect(db.engine)
+   ```
+
+2. Clear SQLAlchemy's metadata cache before reflecting:
+   ```python
+   Base.metadata.clear()
+   Base.metadata.reflect(db.engine)
+   ```
+
+## Best Practices
+
+1. Always back up your database before running migrations
+2. Review migration scripts before applying them
+3. Test migrations in development before deploying to production
+4. Keep migration scripts under version control
+5. For model changes, consider data migrations in addition to schema migrations
+6. When adding a column with a default value, consider adding it as nullable first, then fill existing rows, then set it to non-nullable
+
+## Recent Migration History
+
+The most recent migration added or confirmed that the User model has a role column with these properties:
+- Data type: VARCHAR(20)
+- Default value: 'user'
+- Constraint: NOT NULL
