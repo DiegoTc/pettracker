@@ -39,6 +39,11 @@ const routes = [
     component: () => import('../views/DeviceForm.vue')
   },
   {
+    path: '/devices/:id/edit',
+    name: 'EditDevice',
+    component: () => import('../views/DeviceForm.vue')
+  },
+  {
     path: '/map',
     name: 'Map',
     component: () => import('../views/Map.vue')
