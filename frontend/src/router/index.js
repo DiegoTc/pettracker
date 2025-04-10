@@ -59,6 +59,11 @@ const routes = [
     component: () => import('../views/Login.vue')
   },
   {
+    path: '/dev-token',
+    name: 'DevToken',
+    component: () => import('../views/DevToken.vue')
+  },
+  {
     path: '/auth/callback',
     name: 'AuthCallback',
     component: () => import('../views/AuthCallback.vue')
@@ -77,8 +82,8 @@ const router = createRouter({
 
 // Navigation guard for authentication
 router.beforeEach((to, from, next) => {
-  // Skip auth check for login and callback routes
-  const publicPages = ['/login', '/auth/callback'];
+  // Skip auth check for login, callback, and dev-token routes
+  const publicPages = ['/login', '/auth/callback', '/dev-token'];
   const authRequired = !publicPages.includes(to.path);
   const loggedIn = localStorage.getItem('access_token');
   

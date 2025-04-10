@@ -56,6 +56,11 @@
               </div>
               <div class="feature">
                 <i class="bi bi-heart-fill text-primary me-2"></i>
+              <div class="mt-4">
+                <router-link to="/dev-token" class="text-secondary">
+                  <small>Developer Token Access</small>
+                </router-link>
+              </div>
                 <span>Health status updates</span>
               </div>
               <div class="feature">

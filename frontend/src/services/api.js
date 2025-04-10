@@ -25,10 +25,14 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`Making API request to ${config.url} with token: ${token.substring(0, 15)}...`);
+    } else {
+      console.warn(`Making API request to ${config.url} WITHOUT authentication token`);
     }
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
