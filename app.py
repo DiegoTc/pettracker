@@ -7,6 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from dotenv import load_dotenv
 from functools import wraps
 
@@ -19,6 +20,7 @@ class Base(DeclarativeBase):
 
 # Initialize extensions
 db = SQLAlchemy(model_class=Base)
+migrate = Migrate()
 jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address)
 login_manager = LoginManager()
@@ -44,6 +46,7 @@ def create_app(config_class='config.Config'):
     
     # Initialize extensions with app
     db.init_app(app)
+    migrate.init_app(app, db)
     
     # Configure JWT
     app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
