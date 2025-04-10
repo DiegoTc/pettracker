@@ -28,7 +28,12 @@ def login_info():
     """Return information about Google login configuration"""
     DEV_REDIRECT_URL = f'https://{os.environ.get("REPLIT_DEV_DOMAIN", "localhost:5000")}/api/auth/callback'
     
+    # Check if Google OAuth is configured
+    google_client_id = current_app.config['GOOGLE_CLIENT_ID']
+    google_client_secret = current_app.config['GOOGLE_CLIENT_SECRET']
+    
     setup_info = {
+        "googleConfigured": bool(google_client_id and google_client_secret),
         "message": "To make Google authentication work:",
         "steps": [
             "1. Go to https://console.cloud.google.com/apis/credentials",
@@ -37,6 +42,15 @@ def login_info():
         ],
         "documentation": "https://docs.replit.com/additional-resources/google-auth-in-flask#set-up-your-oauth-app--client"
     }
+    
+    # Add debug information in development
+    if os.environ.get('FLASK_ENV') != 'production':
+        setup_info['debug'] = {
+            'client_id_set': bool(google_client_id),
+            'client_secret_set': bool(google_client_secret),
+            'env_client_id_set': 'GOOGLE_OAUTH_CLIENT_ID' in os.environ,
+            'env_client_secret_set': 'GOOGLE_OAUTH_CLIENT_SECRET' in os.environ
+        }
     
     return jsonify(setup_info)
 
