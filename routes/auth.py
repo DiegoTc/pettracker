@@ -113,39 +113,39 @@ def login():
 @auth_bp.route('/callback', methods=['GET', 'OPTIONS'])
 def callback():
     """Handle the Google OAuth callback"""
-    # Check if Google OAuth is configured
-    if not current_app.config['GOOGLE_CLIENT_ID'] or not current_app.config['GOOGLE_CLIENT_SECRET']:
-        return jsonify({"error": "Google OAuth not configured"}), 500
-    
-    # Check if this is a direct callback from frontend
-    redirect_to_frontend = request.args.get("redirect_to_frontend") == "true"
-    
-    # Get authorization code from the callback
-    code = request.args.get("code")
-    if not code:
-        return jsonify({"error": "Authorization code missing"}), 400
-    
-    client = get_google_client()
-    
     try:
+        # Log the full request for debugging
+        logger.info(f"Callback received: {request.url}")
+        
+        # Check if Google OAuth is configured
+        if not current_app.config['GOOGLE_CLIENT_ID'] or not current_app.config['GOOGLE_CLIENT_SECRET']:
+            logger.error("Google OAuth not configured")
+            return jsonify({"error": "Google OAuth not configured"}), 500
+        
+        # Get authorization code from the callback
+        code = request.args.get("code")
+        if not code:
+            logger.error("Authorization code missing")
+            return jsonify({"error": "Authorization code missing"}), 400
+        
+        client = get_google_client()
+        
         # Get Google's OAuth 2.0 endpoints
         google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
         token_endpoint = google_provider_cfg["token_endpoint"]
         
-        # Prepare and send token request
+        # Prepare token request
         is_local = "localhost" in request.host or "127.0.0.1" in request.host
         
-        # Print domain for debugging
+        # Debugging
         logger.info(f"Callback - Current host: {request.host}, Is local: {is_local}")
         
+        # Simplify token request by using consistent URLs
         if is_local:
-            # For local development, use the exact same URL as in login method
             auth_response = request.url
             redirect_url = "http://localhost:5000/api/auth/callback"
         else:
-            # For production
             auth_response = request.url.replace("http://", "https://")
-            
             # For Replit environments
             replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
             if replit_domain:
@@ -153,14 +153,19 @@ def callback():
             else:
                 redirect_url = request.base_url.replace("http://", "https://")
             
-        logger.info(f"Callback - Using redirect URL for token request: {redirect_url}")
+        logger.info(f"Using redirect URL for token request: {redirect_url}")
         
+        # Prepare and send token request
         token_url, headers, body = client.prepare_token_request(
             token_endpoint,
             authorization_response=auth_response,
             redirect_url=redirect_url,
             code=code,
         )
+
+        logger.info(f"Token URL: {token_url}")
+        logger.info(f"Token request headers: {headers}")
+        logger.info(f"Token request body: {body}")
         
         token_response = requests.post(
             token_url,
@@ -169,6 +174,7 @@ def callback():
             auth=(current_app.config['GOOGLE_CLIENT_ID'], current_app.config['GOOGLE_CLIENT_SECRET']),
         )
         
+        # Check token response
         if token_response.status_code != 200:
             logger.error(f"Token request failed: {token_response.status_code} {token_response.text}")
             return jsonify({"error": "Failed to obtain access token from Google"}), 500
@@ -182,14 +188,17 @@ def callback():
         uri, headers, body = client.add_token(userinfo_endpoint)
         userinfo_response = requests.get(uri, headers=headers, data=body)
         
+        # Check userinfo response
         if userinfo_response.status_code != 200:
             logger.error(f"Userinfo request failed: {userinfo_response.status_code} {userinfo_response.text}")
             return jsonify({"error": "Failed to obtain user information from Google"}), 500
             
         userinfo = userinfo_response.json()
+        logger.info(f"Received user info: {userinfo}")
         
         # Verify user info
         if not userinfo.get("email_verified"):
+            logger.error("User email not verified by Google")
             return jsonify({"error": "User email not verified by Google"}), 400
         
         # Get user data
@@ -225,7 +234,7 @@ def callback():
         # Login the user
         login_user(user)
         
-        # Create JWT token - Convert user.id to string to prevent "Subject must be a string" error
+        # Create JWT token
         access_token = create_access_token(identity=str(user.id))
         
         # Determine frontend URL
@@ -248,8 +257,13 @@ def callback():
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
         logger.error(f"Error details: {traceback.format_exc()}")
-        # Don't expose detailed error information to clients
-        return jsonify({"error": "Authentication failed. Please try again or contact support."}), 500
+        # Return a more informative error for debugging (will remove in production)
+        error_info = {
+            "error": "Authentication failed. Please try again or contact support.",
+            "details": str(e),
+            "trace": traceback.format_exc()
+        }
+        return jsonify(error_info), 500
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
