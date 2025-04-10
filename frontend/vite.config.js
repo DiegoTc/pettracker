@@ -12,9 +12,21 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path
+        rewrite: (path) => path,
+        // Handle login callback redirects
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          // Log responses for debugging
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${proxyRes.statusCode}`);
+          });
+        }
       }
-    }
+    },
+    // Handle CORS for all local development
+    cors: true
   },
   resolve: {
     alias: {

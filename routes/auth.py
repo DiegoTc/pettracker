@@ -89,16 +89,23 @@ def login():
         
         # Set the correct callback URL based on environment
         if is_local:
-            # This should exactly match what's in your Google OAuth settings
+            # For local development, use this callback URL consistently
             callback_url = "http://localhost:5000/api/auth/callback"
+            
+            # Debug
+            logger.info(f"Using local environment callback URL: {callback_url}")
         else:
             # For production environment (Replit)
             replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
             if replit_domain:
                 callback_url = f"https://{replit_domain}/api/auth/callback"
+                logger.info(f"Using Replit domain callback URL: {callback_url}")
             else:
-                # Fallback to generated URL for other environments
-                callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
+                # Fallback to a more reliable URL construction
+                host = request.host
+                protocol = "https" if not "localhost" in host else "http"
+                callback_url = f"{protocol}://{host}/api/auth/callback"
+                logger.info(f"Using fallback callback URL: {callback_url}")
             
         logger.info(f"Using callback URL: {callback_url}")
         
@@ -270,7 +277,9 @@ def callback():
         # Create JWT token
         access_token = create_access_token(identity=str(user.id))
         
-        # Determine frontend URL
+        # Determine frontend URL with better detection
+        is_local = "localhost" in request.host or "127.0.0.1" in request.host
+        
         if is_local:
             # For local development
             frontend_url = "http://localhost:3000"
@@ -280,18 +289,54 @@ def callback():
             if replit_domain:
                 frontend_url = f"https://{replit_domain}"
             else:
-                frontend_url = request.url_root.rstrip('/')
+                # Fallback to request origin or host
+                origin = request.headers.get('Origin')
+                if origin:
+                    frontend_url = origin
+                else:
+                    frontend_url = f"https://{request.host}"
         
         # Redirect to frontend with token
         redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
         logger.info(f"Redirecting to frontend: {redirect_url}")
-        return redirect(redirect_url)
+        
+        # Add CORS headers to the redirect
+        response = redirect(redirect_url)
+        response.headers['Access-Control-Allow-Origin'] = frontend_url
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
     
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
         logger.error(f"Error details: {traceback.format_exc()}")
         # Only return generic error message for security
-        return jsonify({"error": "Authentication failed. Please try again or contact support."}), 500
+        
+        try:
+            # Determine if we need to redirect to frontend with error
+            is_local = "localhost" in request.host or "127.0.0.1" in request.host
+            
+            if is_local:
+                frontend_url = "http://localhost:3000"
+            else:
+                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                if replit_domain:
+                    frontend_url = f"https://{replit_domain}"
+                else:
+                    frontend_url = f"https://{request.host}"
+            
+            # Redirect to frontend login page with error
+            error_message = urllib.parse.quote("Authentication failed. Please try again.")
+            redirect_url = f"{frontend_url}/login?error={error_message}"
+            
+            logger.info(f"Redirecting to frontend with error: {redirect_url}")
+            return redirect(redirect_url)
+        except Exception as redirect_error:
+            # If everything fails, return a simple JSON error
+            logger.error(f"Error redirecting with error: {str(redirect_error)}")
+            return jsonify({
+                "error": "Authentication failed. Please try again or contact support.",
+                "details": "There was a problem with the authentication process."
+            }), 500
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
