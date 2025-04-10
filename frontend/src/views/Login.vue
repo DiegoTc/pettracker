@@ -1,72 +1,57 @@
 <template>
-  <div class="login-page">
+  <div class="container py-5">
     <div class="row justify-content-center">
-      <div class="col-md-6 col-lg-5">
-        <div class="card">
-          <div class="card-header text-center py-4">
-            <h2 class="mb-0">Pet Tracker</h2>
-          </div>
+      <div class="col-md-6">
+        <div class="card shadow">
           <div class="card-body p-4">
-            <div class="text-center mb-4">
-              <h3>Sign In</h3>
-              <p class="text-muted">Use your Google account to sign in</p>
+            <h2 class="text-center mb-4">Log In to PetTracker</h2>
+            
+            <div v-if="loading" class="text-center my-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Redirecting to Google login...</p>
             </div>
             
-            <div v-if="error" class="alert alert-danger">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              {{ error }}
-            </div>
-            
-            <div class="text-center">
-              <button 
-                class="btn btn-primary btn-lg w-100" 
-                @click="loginWithGoogle"
-                :disabled="loading"
-              >
-                <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <i v-else class="bi bi-google me-2"></i>
-                Sign in with Google
-              </button>
-            </div>
-            
-            <div class="text-center mt-4">
-              <p class="text-muted">
-                By signing in, you agree to our Terms of Service and Privacy Policy.
+            <div v-else>
+              <p class="text-center text-muted mb-4">
+                Sign in with your Google account for secure access to your pet tracking dashboard.
               </p>
+              
+              <div v-if="loginInfo.googleConfigured" class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg" @click="loginWithGoogle">
+                  <i class="bi bi-google me-2"></i> Log in with Google
+                </button>
+              </div>
+              
+              <div v-else class="alert alert-warning" role="alert">
+                <strong>Google OAuth not configured!</strong>
+                <p class="mb-0">The Google login feature is not properly configured. Please contact the administrator.</p>
+              </div>
+              
+              <div v-if="error" class="alert alert-danger mt-3" role="alert">
+                {{ error }}
+              </div>
+              
+              <div class="text-center mt-4">
+                <p class="text-muted">
+                  <small>Need help? <a href="#">Contact Support</a></small>
+                </p>
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="card mt-4">
+        <div v-if="isDevEnvironment" class="card mt-4 shadow-sm">
           <div class="card-body">
-            <h5>About Pet Tracker</h5>
-            <p>
-              Pet Tracker is a comprehensive platform that enables you to monitor, interact with, 
-              and care for your pets using advanced tracking technology. Keep track of your pets' 
-              location, activity, and health status in real-time.
+            <h5 class="card-title">Developer Options</h5>
+            <p class="card-text">
+              These options are only available in development mode.
             </p>
-            <div class="features mt-3">
-              <div class="feature">
-                <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                <span>Real-time GPS tracking</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-activity text-primary me-2"></i>
-                <span>Activity monitoring</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-heart-fill text-primary me-2"></i>
-              <div class="mt-4">
-                <router-link to="/dev-token" class="text-secondary">
-                  <small>Developer Token Access</small>
-                </router-link>
-              </div>
-                <span>Health status updates</span>
-              </div>
-              <div class="feature">
-                <i class="bi bi-clock-history text-primary me-2"></i>
-                <span>Location history</span>
-              </div>
+            <div class="d-grid gap-2">
+              <router-link to="/dev-token" class="btn btn-secondary">
+                Get Development Token
+              </router-link>
             </div>
           </div>
         </div>
@@ -76,12 +61,15 @@
 </template>
 
 <script>
-import { authAPI } from '../services/api';
+import { authAPI } from '@/services/api';
 
 export default {
-  name: 'Login',
   data() {
     return {
+      loginInfo: {
+        googleConfigured: false
+      },
+      isDevEnvironment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
       loading: false,
       error: null
     };
@@ -108,61 +96,26 @@ export default {
         this.loading = false;
       }
     },
+    async checkLoginInfo() {
+      try {
+        const response = await authAPI.getLoginInfo();
+        this.loginInfo = response.data;
+      } catch (error) {
+        console.error('Failed to get login info:', error);
+        this.error = 'Failed to check authentication configuration.';
+      }
+    }
   },
   created() {
-    // Check for error message in URL parameters (e.g., after failed OAuth)
+    // Check for error parameter in URL
     const urlParams = new URLSearchParams(window.location.search);
     const errorMsg = urlParams.get('error');
     if (errorMsg) {
       this.error = decodeURIComponent(errorMsg);
     }
+    
+    // Check login configuration
+    this.checkLoginInfo();
   }
-}
+};
 </script>
-
-<style scoped>
-.login-page {
-  min-height: 100vh;
-  padding: 40px 0;
-  background-color: var(--bs-gray-100);
-  display: flex;
-  align-items: center;
-}
-
-.card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  background-color: rgba(var(--bs-primary-rgb), 0.1);
-  border-bottom: none;
-  border-top-left-radius: 12px !important;
-  border-top-right-radius: 12px !important;
-}
-
-.btn-primary {
-  padding: 12px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(var(--bs-primary-rgb), 0.2);
-}
-
-.features {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.feature {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-@media (max-width: 768px) {
-  .login-page {
-    padding: 20px 0;
-  }
-}
-</style>

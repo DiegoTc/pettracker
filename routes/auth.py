@@ -5,11 +5,11 @@ from models import User
 import os
 import json
 import requests
+import traceback
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
-import os
 # Needed for local development only - allows OAuth over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -193,45 +193,31 @@ def callback():
         # Create JWT token - Convert user.id to string to prevent "Subject must be a string" error
         access_token = create_access_token(identity=str(user.id))
         
-        # Check if this is a browser flow or API call
-        request_accepts_json = request.headers.get('Accept', '').startswith('application/json')
-        redirect_param = request.args.get('redirect_to_frontend', 'true').lower() == 'true'
+        # Always redirect to frontend in local dev environment
+        is_local = "localhost" in request.host or "127.0.0.1" in request.host
         
-        if request_accepts_json and not redirect_param:
-            # Return JSON for API clients
-            return jsonify({
-                "message": "Login successful",
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "profile_picture": user.profile_picture
-                },
-                "access_token": access_token
-            })
+        if is_local:
+            # For local development
+            frontend_url = "http://localhost:3000"
+            redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
+            logger.info(f"Redirecting to frontend: {redirect_url}")
+            return redirect(redirect_url)
         else:
-            # Redirect to frontend with token as URL parameter for browser flow
-            is_local = "localhost" in request.host or "127.0.0.1" in request.host
-            
-            if is_local:
-                frontend_url = "http://localhost:3000"
+            # For production environments
+            replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+            if replit_domain:
+                frontend_url = f"https://{replit_domain}"
             else:
-                # For production environments, use the same domain with a different port
-                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-                if replit_domain:
-                    frontend_url = f"https://{replit_domain}" 
-                else:
-                    frontend_url = request.url_root.replace("http://", "https://")
-            
+                frontend_url = request.url_root.rstrip('/')
+                
             redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
             logger.info(f"Redirecting to frontend: {redirect_url}")
             return redirect(redirect_url)
     
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
-        return jsonify({"error": "Authentication failed"}), 500
+        logger.error(f"Error details: {traceback.format_exc()}")
+        return jsonify({"error": "Authentication failed", "details": str(e)}), 500
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
