@@ -70,8 +70,13 @@ export default {
       this.error = null;
       
       try {
-        // Directly redirect to the backend's Google OAuth login endpoint
-        window.location.href = '/api/auth/login';
+        // Use the API client to get the proper backend URL with proxy handling
+        const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+          ? 'http://localhost:5000' 
+          : '';
+        
+        // Redirect to backend's Google OAuth login endpoint
+        window.location.href = `${apiBaseUrl}/api/auth/login`;
       } catch (error) {
         console.error('Login error:', error);
         this.error = 'Failed to initiate login. Please check the server connection.';
