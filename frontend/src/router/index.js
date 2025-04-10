@@ -59,6 +59,11 @@ const routes = [
     component: () => import('../views/Login.vue')
   },
   {
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: () => import('../views/AuthCallback.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')
@@ -70,9 +75,19 @@ const router = createRouter({
   routes
 });
 
-// Navigation guard for authentication (to be implemented)
+// Navigation guard for authentication
 router.beforeEach((to, from, next) => {
-  // For now, allow all navigation
+  // Skip auth check for login and callback routes
+  const publicPages = ['/login', '/auth/callback'];
+  const authRequired = !publicPages.includes(to.path);
+  const loggedIn = localStorage.getItem('access_token');
+  
+  if (authRequired && !loggedIn) {
+    // Store the intended destination for redirect after login
+    localStorage.setItem('login_redirect', to.fullPath);
+    return next('/login');
+  }
+  
   next();
 });
 

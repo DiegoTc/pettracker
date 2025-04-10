@@ -65,6 +65,7 @@
 
 <script>
 import AppLayout from '../components/layout/AppLayout.vue';
+import { petsAPI } from '../services/api';
 
 export default {
   name: 'Pets',
@@ -84,59 +85,23 @@ export default {
   },
   methods: {
     fetchPets() {
-      // Simulate API call for now - will replace with actual API call
-      setTimeout(() => {
-        this.pets = [
-          {
-            id: 1,
-            name: 'Buddy',
-            pet_type: 'Dog',
-            breed: 'Golden Retriever',
-            weight: 28.5,
-            age: '3 years',
-            image_url: null
-          },
-          {
-            id: 2,
-            name: 'Luna',
-            pet_type: 'Cat',
-            breed: 'Maine Coon',
-            weight: 5.2,
-            age: '2 years',
-            image_url: null
-          },
-          {
-            id: 3,
-            name: 'Max',
-            pet_type: 'Dog',
-            breed: 'Labrador',
-            weight: 32.1,
-            age: '5 years',
-            image_url: null
-          }
-        ];
-        this.loading = false;
-      }, 1000);
+      this.loading = true;
       
-      // Real API call will look like this:
-      /*
-      fetch('/api/pets')
-        .then(response => response.json())
-        .then(data => {
-          this.pets = data;
+      petsAPI.getAll()
+        .then(response => {
+          this.pets = response.data;
           this.loading = false;
         })
         .catch(error => {
           console.error('Error fetching pets:', error);
           this.loading = false;
         });
-      */
     },
     navigateTo(route) {
       this.$router.push(route);
     },
     getPetIcon(petType) {
-      switch(petType.toLowerCase()) {
+      switch(petType?.toLowerCase()) {
         case 'dog':
           return 'bi-emoji-smile';
         case 'cat':
@@ -150,9 +115,19 @@ export default {
     confirmDelete(pet) {
       this.petToDelete = pet;
       this.showDeleteModal = true;
-      // In a real implementation, show a modal confirmation dialog
-      // For now, we'll just log a message
-      console.log(`Request to delete pet: ${pet.name}`);
+      
+      if (confirm(`Are you sure you want to delete ${pet.name}?`)) {
+        petsAPI.delete(pet.id)
+          .then(() => {
+            this.pets = this.pets.filter(p => p.id !== pet.id);
+            this.showDeleteModal = false;
+          })
+          .catch(error => {
+            console.error(`Error deleting pet:`, error);
+          });
+      } else {
+        this.showDeleteModal = false;
+      }
     }
   }
 }

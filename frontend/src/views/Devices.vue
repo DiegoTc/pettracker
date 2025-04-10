@@ -87,6 +87,7 @@
 <script>
 import AppLayout from '../components/layout/AppLayout.vue';
 import CardComponent from '../components/common/CardComponent.vue';
+import { devicesAPI } from '../services/api';
 
 export default {
   name: 'Devices',
@@ -105,49 +106,17 @@ export default {
   },
   methods: {
     fetchDevices() {
-      // Simulate API call
-      setTimeout(() => {
-        this.devices = [
-          {
-            id: 1,
-            device_id: 'ABC123',
-            name: 'Buddy\'s Collar',
-            device_type: 'GPS Collar',
-            is_active: true,
-            battery_level: 87,
-            last_ping: new Date().toISOString(),
-            pet: {
-              id: 1,
-              name: 'Buddy'
-            }
-          },
-          {
-            id: 2,
-            device_id: 'XYZ789',
-            name: 'Home Tracker',
-            device_type: 'Smart Tag',
-            is_active: false,
-            battery_level: 32,
-            last_ping: '2023-04-01T15:30:00.000Z',
-            pet: null
-          }
-        ];
-        this.loading = false;
-      }, 1000);
+      this.loading = true;
       
-      // Real API call will look like:
-      /*
-      fetch('/api/devices')
-        .then(response => response.json())
-        .then(data => {
-          this.devices = data;
+      devicesAPI.getAll()
+        .then(response => {
+          this.devices = response.data;
           this.loading = false;
         })
         .catch(error => {
           console.error('Error fetching devices:', error);
           this.loading = false;
         });
-      */
     },
     navigateTo(route) {
       this.$router.push(route);
@@ -157,9 +126,13 @@ export default {
     },
     confirmDelete(device) {
       if (confirm(`Are you sure you want to delete device ${device.name || device.device_id}?`)) {
-        console.log('Delete device:', device.id);
-        // Will implement actual delete API call
-        this.devices = this.devices.filter(d => d.id !== device.id);
+        devicesAPI.delete(device.id)
+          .then(() => {
+            this.devices = this.devices.filter(d => d.id !== device.id);
+          })
+          .catch(error => {
+            console.error('Error deleting device:', error);
+          });
       }
     },
     formatDate(dateString) {
