@@ -110,6 +110,9 @@ def callback():
     if not current_app.config['GOOGLE_CLIENT_ID'] or not current_app.config['GOOGLE_CLIENT_SECRET']:
         return jsonify({"error": "Google OAuth not configured"}), 500
     
+    # Check if this is a direct callback from frontend
+    redirect_to_frontend = request.args.get("redirect_to_frontend") == "true"
+    
     # Get authorization code from the callback
     code = request.args.get("code")
     if not code:
@@ -159,14 +162,23 @@ def callback():
             auth=(current_app.config['GOOGLE_CLIENT_ID'], current_app.config['GOOGLE_CLIENT_SECRET']),
         )
         
+        if token_response.status_code != 200:
+            logger.error(f"Token request failed: {token_response.status_code} {token_response.text}")
+            return jsonify({"error": "Failed to obtain access token from Google"}), 500
+            
         # Parse the token response
-        client.parse_request_body_response(json.dumps(token_response.json()))
+        token_data = token_response.json()
+        client.parse_request_body_response(json.dumps(token_data))
         
         # Get user info from Google
         userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
         uri, headers, body = client.add_token(userinfo_endpoint)
         userinfo_response = requests.get(uri, headers=headers, data=body)
         
+        if userinfo_response.status_code != 200:
+            logger.error(f"Userinfo request failed: {userinfo_response.status_code} {userinfo_response.text}")
+            return jsonify({"error": "Failed to obtain user information from Google"}), 500
+            
         userinfo = userinfo_response.json()
         
         # Verify user info
@@ -176,7 +188,6 @@ def callback():
         # Get user data
         email = userinfo["email"]
         username = email.split("@")[0]  # Use email prefix as username
-        name = userinfo.get("name")
         picture = userinfo.get("picture")
         
         # Find or create user
@@ -192,8 +203,11 @@ def callback():
                 username=username,
                 first_name=first_name,
                 last_name=last_name,
-                profile_picture=picture
+                profile_picture=picture,
+                role="user"  # Ensure role is set
             )
+            
+            logger.info(f"Creating new user: {email}")
             db.session.add(user)
             db.session.commit()
         
@@ -207,15 +221,10 @@ def callback():
         # Create JWT token - Convert user.id to string to prevent "Subject must be a string" error
         access_token = create_access_token(identity=str(user.id))
         
-        # Always redirect to frontend in local dev environment
-        is_local = "localhost" in request.host or "127.0.0.1" in request.host
-        
+        # Determine frontend URL
         if is_local:
             # For local development
             frontend_url = "http://localhost:3000"
-            redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
-            logger.info(f"Redirecting to frontend: {redirect_url}")
-            return redirect(redirect_url)
         else:
             # For production environments
             replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
@@ -223,10 +232,11 @@ def callback():
                 frontend_url = f"https://{replit_domain}"
             else:
                 frontend_url = request.url_root.rstrip('/')
-                
-            redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
-            logger.info(f"Redirecting to frontend: {redirect_url}")
-            return redirect(redirect_url)
+        
+        # Redirect to frontend with token
+        redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
+        logger.info(f"Redirecting to frontend: {redirect_url}")
+        return redirect(redirect_url)
     
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")

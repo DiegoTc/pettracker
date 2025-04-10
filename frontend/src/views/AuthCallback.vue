@@ -30,8 +30,22 @@ export default {
     } else {
       // If no token but we have a code, we need to redirect to the backend
       const code = urlParams.get('code');
+      const error = urlParams.get("error");
       
-      if (code) {
+      if (error) {
+        console.error("Authentication error:", error);
+        this.error = `Authentication error: ${error}`;
+        setTimeout(() => {
+          this.$router.push(`/login?error=${encodeURIComponent(error)}`);
+        }, 2000);
+      } else if (code) {
+        console.log("Received OAuth code, redirecting to backend for processing");
+        
+        // Redirect to backend with the code
+        // The backend will process the code and redirect back to frontend with token
+        window.location.href = `/api/auth/callback?code=${code}&redirect_to_frontend=true`;
+        }, 2000);
+      } else if (code) {
         console.log('Received OAuth code, redirecting to backend for processing');
         
         // Redirect to backend with the code
