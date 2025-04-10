@@ -231,7 +231,8 @@ def callback():
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
         logger.error(f"Error details: {traceback.format_exc()}")
-        return jsonify({"error": "Authentication failed", "details": str(e)}), 500
+        # Don't expose detailed error information to clients
+        return jsonify({"error": "Authentication failed. Please try again or contact support."}), 500
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
