@@ -1,6 +1,6 @@
 from flask.cli import FlaskGroup
 from app import app, db
-from flask_migrate import Migrate, MigrateCommand, current
+from flask_migrate import Migrate, current
 
 cli = FlaskGroup(app)
 
