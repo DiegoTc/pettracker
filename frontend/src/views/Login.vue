@@ -70,13 +70,19 @@ export default {
       this.error = null;
       
       try {
-        // Use the API client to get the proper backend URL with proxy handling
-        const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-          ? 'http://localhost:5000' 
-          : '';
+        // First, we'll check if Google OAuth is properly configured
+        const response = await fetch('/api/auth/login_info');
+        const loginInfo = await response.json();
         
-        // Redirect to backend's Google OAuth login endpoint
-        window.location.href = `${apiBaseUrl}/api/auth/login`;
+        if (!loginInfo.googleConfigured) {
+          this.error = 'Google authentication is not properly configured. Please contact the administrator.';
+          this.loading = false;
+          return;
+        }
+        
+        // Redirect directly to the API endpoint using relative URL
+        // This will properly leverage Vite's proxy configuration
+        window.location.href = '/api/auth/login';
       } catch (error) {
         console.error('Login error:', error);
         this.error = 'Failed to initiate login. Please check the server connection.';

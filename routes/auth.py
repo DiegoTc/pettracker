@@ -59,26 +59,35 @@ def login_info():
 @limiter.limit("10/minute", methods=['GET'])
 def login():
     """Initiate the Google OAuth flow"""
+    # Log detailed request information for debugging
+    logger.info(f"Login Request - Host: {request.host}, Path: {request.path}, Method: {request.method}")
+    logger.info(f"Login Request - Headers: {dict(request.headers)}")
+    
     # Check if Google OAuth is configured
     if not current_app.config['GOOGLE_CLIENT_ID'] or not current_app.config['GOOGLE_CLIENT_SECRET']:
+        logger.error("Google OAuth not configured - missing client ID or secret")
         return jsonify({"error": "Google OAuth not configured"}), 500
     
     client = get_google_client()
+    logger.info("Google client created successfully")
     
     # Get Google's OAuth 2.0 endpoints
     try:
-        google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+        # Fetch Google's discovery document
+        discovery_response = requests.get(GOOGLE_DISCOVERY_URL)
+        if discovery_response.status_code != 200:
+            logger.error(f"Failed to get Google discovery document: {discovery_response.status_code}")
+            return jsonify({"error": "Could not connect to Google services"}), 500
+            
+        google_provider_cfg = discovery_response.json()
         authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+        logger.info(f"Using Google authorization endpoint: {authorization_endpoint}")
         
-        # Build redirect URL for Google login
-        # Get the exact redirect URL to use in production and development
+        # Determine environment for callback URL
         is_local = "localhost" in request.host or "127.0.0.1" in request.host
+        logger.info(f"Environment - Host: {request.host}, Is local: {is_local}")
         
-        # Print domain for debugging
-        logger.info(f"Current host: {request.host}, Is local: {is_local}")
-        
-        # For development, the URL should always exactly match what's in Google Console
-        # Instead of programmatically building it, let's use a consistent URL
+        # Set the correct callback URL based on environment
         if is_local:
             # This should exactly match what's in your Google OAuth settings
             callback_url = "http://localhost:5000/api/auth/callback"
@@ -88,25 +97,30 @@ def login():
             if replit_domain:
                 callback_url = f"https://{replit_domain}/api/auth/callback"
             else:
-                # Fallback to generated URL for other production environments
+                # Fallback to generated URL for other environments
                 callback_url = request.base_url.replace("http://", "https://").replace("/login", "/callback")
             
         logger.info(f"Using callback URL: {callback_url}")
         
+        # Prepare the authorization request URI
         request_uri = client.prepare_request_uri(
             authorization_endpoint,
             redirect_uri=callback_url,
             scope=["openid", "email", "profile"],
         )
         
-        # Direct redirect to Google OAuth instead of returning a JSON response
+        logger.info(f"Redirecting to Google: {request_uri}")
+        
+        # Direct redirect to Google OAuth
         return redirect(request_uri)
     except Exception as e:
         logger.error(f"Error initiating Google OAuth flow: {str(e)}")
         logger.error(f"Error details: {traceback.format_exc()}")
+        
         # If this is an API call expecting JSON, return JSON error
         if 'application/json' in request.headers.get('Accept', ''):
             return jsonify({"error": "Failed to initiate login process"}), 500
+            
         # Otherwise redirect to frontend with error
         return redirect(f"/login?error={urllib.parse.quote('Failed to initiate login process')}")
 
@@ -257,13 +271,8 @@ def callback():
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {str(e)}")
         logger.error(f"Error details: {traceback.format_exc()}")
-        # Return a more informative error for debugging (will remove in production)
-        error_info = {
-            "error": "Authentication failed. Please try again or contact support.",
-            "details": str(e),
-            "trace": traceback.format_exc()
-        }
-        return jsonify(error_info), 500
+        # Only return generic error message for security
+        return jsonify({"error": "Authentication failed. Please try again or contact support."}), 500
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
