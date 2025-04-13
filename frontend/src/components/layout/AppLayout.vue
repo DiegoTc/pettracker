@@ -1,114 +1,102 @@
 <template>
-  <div class="app-layout">
-    <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-expand-lg bg-white py-2 mb-4">
-      <div class="container">
-        <router-link to="/" class="navbar-brand d-flex align-items-center">
-          <i class="bi bi-shield-check me-2 text-primary"></i>
-          <span class="fw-bold">PetTracker</span>
+  <div class="app-container">
+    <!-- Top Bar -->
+    <header class="app-header">
+      <div class="header-logo">
+        <i class="bi bi-heart-fill"></i>
+        <span>PetTracker</span>
+      </div>
+      
+      <nav class="header-nav">
+        <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">
+          Dashboard
         </router-link>
         
-        <div class="d-flex justify-content-center flex-grow-1">
-          <div class="nav-buttons text-center">
-            <router-link to="/" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/' }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-house-door"></i>
-              </div>
-              <div class="nav-text">Home</div>
-            </router-link>
-            
-            <router-link to="/pets" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path.startsWith('/pets') }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-heart"></i>
-              </div>
-              <div class="nav-text">Pets</div>
-            </router-link>
-            
-            <router-link to="/devices" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path.startsWith('/devices') }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-cpu"></i>
-              </div>
-              <div class="nav-text">Devices</div>
-            </router-link>
-            
-            <router-link to="/map" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/map' }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-geo-alt"></i>
-              </div>
-              <div class="nav-text">Map</div>
-            </router-link>
-            
-            <router-link to="/reports" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/reports' }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-bar-chart"></i>
-              </div>
-              <div class="nav-text">Reports</div>
-            </router-link>
-            
-            <router-link to="/api-test" class="nav-button api-test px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/api-test' }">
-              <div class="nav-icon mb-1">
-                <i class="bi bi-wrench-adjustable"></i>
-              </div>
-              <div class="nav-text">API Test</div>
-            </router-link>
+        <router-link to="/pets" class="nav-link" :class="{ active: $route.path.startsWith('/pets') }">
+          My Pets
+        </router-link>
+        
+        <router-link to="/devices" class="nav-link" :class="{ active: $route.path.startsWith('/devices') }">
+          Devices
+        </router-link>
+        
+        <router-link to="/map" class="nav-link" :class="{ active: $route.path === '/map' }">
+          Map
+        </router-link>
+        
+        <router-link to="/reports" class="nav-link" :class="{ active: $route.path === '/reports' }">
+          Reports
+        </router-link>
+        
+        <router-link to="/api-test" class="nav-link" :class="{ active: $route.path === '/api-test' }">
+          API Test
+        </router-link>
+      </nav>
+      
+      <div class="header-actions">
+        <button class="action-button">
+          <i class="bi bi-search"></i>
+        </button>
+        
+        <button class="action-button">
+          <i class="bi bi-bell"></i>
+          <span v-if="false" class="badge">3</span>
+        </button>
+        
+        <div class="dropdown">
+          <button class="action-button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-gear"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+            <li><h6 class="dropdown-header">User Options</h6></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-sliders me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button class="dropdown-item text-danger" @click="logout" :disabled="loading">
+                <span v-if="loading"><i class="bi bi-hourglass-split me-2"></i>Signing Out...</span>
+                <span v-else><i class="bi bi-box-arrow-right me-2"></i>Sign Out</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="user-profile">
+          <div v-if="user.profilePicture" class="avatar">
+            <img :src="user.profilePicture" alt="User profile">
+          </div>
+          <div v-else class="avatar">
+            {{ userInitials }}
           </div>
         </div>
         
-        <div class="user-profile d-flex align-items-center">
-          <div class="user-avatar rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
-            <i class="bi bi-person-circle text-primary"></i>
-          </div>
-          <span class="user-name">{{ user.name }}</span>
-          
-          <!-- User dropdown menu -->
-          <div class="dropdown ms-2">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-gear"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuDropdown">
-              <li><h6 class="dropdown-header">User Options</h6></li>
-              <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
-              <li><a class="dropdown-item" href="#"><i class="bi bi-sliders me-2"></i>Settings</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <button class="dropdown-item text-danger" @click="logout" :disabled="loading">
-                  <span v-if="loading"><i class="bi bi-hourglass-split me-2"></i>Signing Out...</span>
-                  <span v-else><i class="bi bi-box-arrow-right me-2"></i>Sign Out</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-          
-          <!-- Direct logout button for mobile (always visible) -->
-          <button 
-            class="btn btn-sm btn-danger ms-2 d-inline-flex align-items-center sign-out-btn" 
-            @click="logout" 
-            :disabled="loading"
-            title="Sign out"
-          >
-            <i class="bi bi-box-arrow-right"></i>
-            <span class="ms-1 d-none d-sm-inline">Sign Out</span>
-          </button>
-        </div>
+        <!-- Direct logout button (only visible on mobile) -->
+        <button 
+          class="mobile-logout-btn btn btn-danger btn-sm" 
+          @click="logout" 
+          :disabled="loading"
+          title="Sign out"
+        >
+          <i class="bi bi-box-arrow-right"></i>
+          <span class="ms-1">Sign Out</span>
+        </button>
       </div>
-    </nav>
+    </header>
     
     <!-- Main Content -->
-    <main class="main-content bg-light">
-      <div class="container py-4">
-        <slot></slot>
-      </div>
+    <main class="main-content">
+      <slot></slot>
     </main>
     
     <!-- Footer -->
-    <footer class="footer py-4 bg-white border-top">
+    <footer class="footer">
       <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center">
-            <i class="bi bi-shield-check me-2 text-primary"></i>
-            <span class="fw-bold">PetTracker</span>
+        <div class="footer-content">
+          <div class="footer-logo">
+            <i class="bi bi-heart-fill"></i>
+            <span>PetTracker</span>
           </div>
-          <div class="text-muted small">
+          <div class="copyright">
             &copy; {{ new Date().getFullYear() }} PetTracker. All rights reserved.
           </div>
         </div>
@@ -132,6 +120,31 @@ export default {
         id: null
       },
       loading: false
+    }
+  },
+  
+  computed: {
+    /**
+     * Generates user initials for the avatar when no profile picture is available
+     * Uses the first letter of the username, or "U" as fallback
+     */
+    userInitials() {
+      if (!this.user.name || this.user.name === 'User') {
+        // Use email if name is not available
+        if (this.user.email && this.user.email.length > 0) {
+          return this.user.email.charAt(0).toUpperCase();
+        }
+        return 'U';
+      }
+      
+      // Get first letter of each word
+      const nameParts = this.user.name.split(' ');
+      if (nameParts.length === 1) {
+        return nameParts[0].charAt(0).toUpperCase();
+      }
+      
+      // Get first and last part for first and last name
+      return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
     }
   },
   
@@ -252,95 +265,272 @@ export default {
 </script>
 
 <style scoped>
-.app-layout {
+/* Layout */
+.app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-.navbar {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+/* Top Bar */
+.app-header {
+  background-color: var(--background);
+  box-shadow: var(--shadow-sm);
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
-.nav-buttons {
+.header-logo {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  margin-right: 40px;
+}
+
+.header-logo i {
+  margin-right: 10px;
+  font-size: 24px;
+}
+
+.header-nav {
+  display: flex;
+  margin-right: auto;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  height: 70px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--primary);
+}
+
+.nav-link.active {
+  color: var(--primary);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  right: 15px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 3px 3px 0 0;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
 }
 
-.nav-button {
-  color: #666;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-radius: 6px;
-  padding: 10px 12px;
-  transition: all 0.2s;
-}
-
-.nav-button:hover {
-  background-color: #f0f7ff;
-  color: #0d6efd;
-}
-
-.nav-button.active {
-  background-color: #f0f7ff;
-  color: #0d6efd;
-}
-
-.nav-icon {
-  font-size: 18px;
-}
-
-.nav-text {
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.api-test {
-  border: 1px dashed #c5d5f5;
-  background-color: #f0f7ff;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-}
-
-.user-name {
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.sign-out-btn {
+.action-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  background-color: transparent;
+  color: var(--text-light);
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
 }
 
-.sign-out-btn:hover {
-  background-color: #d32f2f;
+.action-button:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--primary);
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: var(--secondary);
   color: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  font-size: 10px;
+  font-weight: 600;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.user-profile {
+  display: flex;
+  align-items: center;
+  margin-left: 15px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #E3F2FD;
+  color: var(--primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Montserrat', sans-serif;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Main Content */
 .main-content {
+  margin-top: 70px;
+  padding: 30px;
   flex: 1;
   background-color: #f5f7fb;
 }
 
+/* Dropdown Menu */
+.dropdown-menu {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  border: none;
+  padding: 8px 0;
+  min-width: 180px;
+  margin-top: 8px;
+}
+
+.dropdown-header {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-light);
+  font-weight: 600;
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+.dropdown-item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #F5F7FB;
+}
+
+.dropdown-item i {
+  margin-right: 10px;
+  font-size: 16px;
+  color: var(--text-light);
+}
+
+.dropdown-divider {
+  margin: 4px 0;
+  border-top: 1px solid var(--border);
+}
+
+/* Footer */
+.footer {
+  background-color: var(--background);
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.footer-logo i {
+  margin-right: 8px;
+}
+
+.copyright {
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* Mobile logout button - only visible on small screens */
+.mobile-logout-btn {
+  display: none;
+}
+
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-  .nav-buttons {
-    flex-wrap: wrap;
-    justify-content: center;
+@media (max-width: 992px) {
+  .header-nav {
+    display: none;
   }
   
-  .nav-button {
-    margin-bottom: 8px;
+  .header-logo {
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .app-header {
+    padding: 0 16px;
   }
   
-  .user-name {
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .main-content {
+    padding: 20px 15px;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .mobile-logout-btn {
+    display: flex;
+    margin-left: 10px;
+    padding: 0 10px;
+    height: 36px;
+  }
+  
+  .mobile-logout-btn span {
     display: none;
   }
 }

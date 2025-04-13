@@ -63,65 +63,91 @@ export default {
   background-color: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-md);
   overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-component:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  justify-content: space-between;
 }
 
 .card-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .card-header-left i {
-  font-size: 18px;
+  margin-right: 10px;
+  font-size: 20px;
   color: var(--primary);
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
+  color: var(--text);
   margin: 0;
 }
 
 .card-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .card-action {
-  background: none;
+  background-color: transparent;
   border: none;
+  color: var(--text-light);
+  padding: 8px;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-light);
-  transition: color 0.2s;
 }
 
-.card-action:hover {
-  color: var(--primary);
+.refresh {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
 }
 
 .more {
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.more span {
+  margin-right: 6px;
+}
+
+.card-action:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--primary);
 }
 
 .card-body {
-  padding: 20px;
+  padding: 24px;
+  flex: 1;
 }
 
 .no-padding .card-body {
@@ -130,17 +156,20 @@ export default {
 
 /* Card types */
 .card-primary {
-  border-top: 3px solid var(--primary);
+  border-top: 4px solid var(--primary);
 }
 
 .card-map {
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .card-map .card-body {
   flex: 1;
+  padding: 0;
+}
+
+.card-table .card-body {
   padding: 0;
 }
 </style>

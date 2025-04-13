@@ -58,10 +58,14 @@ export default {
   background-color: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  padding: 30px 24px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: center;
 }
 
 .action-card:hover {
@@ -70,39 +74,65 @@ export default {
 }
 
 .action-icon {
-  width: 50px;
-  height: 50px;
-  margin: 24px auto 16px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background-color: var(--primary-light);
-  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  margin: 0 auto 20px;
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--primary);
+  font-size: 28px;
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.05);
 }
 
 .action-content {
-  padding: 0 24px;
-  text-align: center;
   flex: 1;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 .action-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 8px;
+  color: var(--text);
 }
 
 .action-description {
-  color: var(--text-light);
   font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 0;
   line-height: 1.5;
-  margin-bottom: 16px;
 }
 
 .action-footer {
-  padding: 24px;
-  text-align: center;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* Button Style Customizations */
+.btn-primary .action-icon {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--primary);
+}
+
+.btn-secondary .action-icon {
+  background-color: rgba(255, 64, 129, 0.1);
+  color: var(--secondary);
+}
+
+.btn-success .action-icon {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success);
+}
+
+.btn-warning .action-icon {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--warning);
 }
 </style>
