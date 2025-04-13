@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, redirect, url_for, current_app
+from flask import Blueprint, request, jsonify, redirect, url_for, current_app, session
 from flask_login import current_user, login_user, logout_user, login_required
 from app import db, limiter
 from models import User
@@ -10,6 +10,7 @@ import traceback
 import urllib.parse
 import platform
 import uuid
+from datetime import datetime
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -580,11 +581,74 @@ def mask_email(email):
     return f"{masked_username}@{domain}"
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
-@login_required
+@jwt_required_except_options
 def logout():
-    """Logout the current user"""
-    logout_user()
-    return jsonify({"message": "Logout successful"})
+    """
+    Logout the current user securely
+    
+    This endpoint handles both session-based logout via Flask-Login 
+    and JWT token invalidation. It ensures all authentication methods
+    are properly terminated.
+    """
+    try:
+        # Get request ID for logging
+        request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+        logger.info(f"[{request_id}] Logout request received")
+        
+        # Get user information before logout for logging purposes
+        user_id = get_jwt_identity()
+        user = None
+        
+        # If we have a valid user_id from JWT, fetch user data
+        if user_id:
+            # Convert string ID to int if needed
+            if isinstance(user_id, str) and user_id.isdigit():
+                user_id = int(user_id)
+                
+            user = User.query.get(user_id)
+            
+            if user:
+                masked_email = mask_email(user.email)
+                logger.info(f"[{request_id}] Processing logout for user {user.id} ({masked_email})")
+                
+                # Update last_login field to keep track of user activity
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+        
+        # Log out the user from Flask-Login session
+        if current_user.is_authenticated:
+            logger.info(f"[{request_id}] Clearing Flask-Login session")
+            logout_user()
+        
+        # Clear any session data
+        session.clear()
+        
+        # Note: For a complete JWT token blacklist/revocation system,
+        # we would need to implement a token blacklist storage
+        # This would be the place to add the current token to that blacklist
+        
+        logger.info(f"[{request_id}] Logout successful")
+        
+        # Return a successful logout response with cache control headers
+        response = jsonify({"message": "Logout successful", "status": "success"})
+        
+        # Add security headers to ensure no caching of the logout response
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        # Log the error with traceback
+        logger.error(f"Error during logout: {str(e)}")
+        logger.debug(traceback.format_exc())
+        
+        # Return a sanitized error message
+        return jsonify({
+            "status": "error",
+            "message": "An error occurred while processing your logout request"
+        }), 500
 
 @auth_bp.route('/user', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options

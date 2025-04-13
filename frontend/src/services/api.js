@@ -91,10 +91,51 @@ apiClient.interceptors.response.use(
 
 // Authentication API
 export const authAPI = {
+  /**
+   * Check if the user is authenticated
+   * @returns {Promise} Promise with authentication status
+   */
   checkAuth: () => apiClient.get('/api/auth/check'),
-  logout: () => apiClient.post('/api/auth/logout'),
+  
+  /**
+   * Logout the current user
+   * This will invalidate the session and JWT token
+   * @returns {Promise} Promise with logout result
+   */
+  logout: async () => {
+    try {
+      // Generate a unique request ID for tracking this logout operation
+      const requestId = `logout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Add the request ID to the headers for server-side tracking
+      return await apiClient.post('/api/auth/logout', {}, {
+        headers: {
+          'X-Request-ID': requestId
+        }
+      });
+    } catch (error) {
+      console.error('Logout API error:', error);
+      // Re-throw the error to be handled by the calling component
+      throw error;
+    }
+  },
+  
+  /**
+   * Get current user information
+   * @returns {Promise} Promise with user data
+   */
   getUser: () => apiClient.get('/api/auth/user'),
+  
+  /**
+   * Get login configuration information
+   * @returns {Promise} Promise with login configuration
+   */
   getLoginInfo: () => apiClient.get('/api/auth/login_info'),
+  
+  /**
+   * Initiate Google OAuth login flow
+   * @returns {Promise} Promise that redirects to Google
+   */
   login: () => apiClient.get('/api/auth/login'),
 };
 

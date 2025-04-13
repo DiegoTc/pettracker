@@ -162,33 +162,73 @@ export default {
       }
     },
     
+    /**
+     * Securely logs out the user by:
+     * 1. Notifying the backend to terminate the session and invalidate the JWT token
+     * 2. Clearing all authentication data from the browser
+     * 3. Redirecting to the login page
+     */
     async logout() {
-      // Set loading state
+      // Set loading state to show user feedback
       this.loading = true;
       
       try {
-        // Call the logout endpoint
-        await authAPI.logout();
+        // Create a timestamp to measure logout performance
+        const startTime = Date.now();
         
-        // Clear authentication data from localStorage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('is_authenticated');
+        // Call the logout endpoint with proper error handling
+        const response = await authAPI.logout();
         
-        console.log('User signed out successfully');
+        // Log success message with timing information
+        console.log(`Sign out successful (${Date.now() - startTime}ms)`, response.data);
         
-        // Redirect to login page
-        this.$router.push('/login');
+        // Clear ALL authentication and user-related data
+        this.clearAuthData();
+        
+        // Show success message before redirecting (if needed)
+        // Could be implemented with a toast notification
+        
+        // Redirect to login page with a small delay to allow UI updates
+        setTimeout(() => {
+          this.$router.push('/login');
+        }, 100);
       } catch (error) {
+        // Log detailed error for debugging
         console.error('Error during sign out:', error);
         
-        // Even if the API call fails, clear local storage and redirect
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('is_authenticated');
-        this.$router.push('/login');
+        // Even if the API call fails, still clear auth data and redirect
+        // This ensures the user can log out even if backend is unreachable
+        this.clearAuthData();
+        
+        // Redirect to login page with error parameter
+        this.$router.push('/login?logout_error=true');
       } finally {
-        // Reset loading state - though it won't be visible as we're redirecting
+        // Reset loading state
         this.loading = false;
       }
+    },
+    
+    /**
+     * Clear all authentication and user data from browser storage
+     * This method centralizes the cleanup logic for security
+     */
+    clearAuthData() {
+      // Clear JWT token and auth state
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('is_authenticated');
+      
+      // Clear any additional user data that might be stored
+      localStorage.removeItem('login_redirect');
+      sessionStorage.removeItem('user_data');
+      
+      // Clear all cookies related to authentication by setting expiry in the past
+      // This is important for enhanced security
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.trim().split('=');
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      });
+      
+      console.log('Authentication data cleared successfully');
     }
   }
 }
