@@ -56,7 +56,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { authAPI } from '../services/api';
+import apiClient from '../services/api';
 
 export default {
   data() {
@@ -64,7 +65,8 @@ export default {
       isDevEnvironment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
       loading: false,
       error: null,
-      googleConfigured: true
+      googleConfigured: true,
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
     };
   },
   async created() {
@@ -77,7 +79,8 @@ export default {
     
     // Check if Google OAuth is configured by calling login_info
     try {
-      const response = await axios.get('/api/auth/login_info');
+      console.log('Making API request to get login info');
+      const response = await authAPI.getLoginInfo();
       this.googleConfigured = response.data.googleConfigured;
       
       if (!this.googleConfigured) {
@@ -101,13 +104,11 @@ export default {
       this.loading = true;
       this.error = null;
       
-      // Create absolute URL to ensure we're hitting the backend directly
-      const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? 'http://localhost:5000' 
-        : window.location.origin;
+      // Log information for debugging
+      console.log(`Using API base URL for login: ${this.apiBaseUrl}`);
       
-      // Directly redirect to Google login
-      window.location.href = `${apiBaseUrl}/api/auth/login`;
+      // Directly redirect to Google login using our configured API base URL
+      window.location.href = `${this.apiBaseUrl}/api/auth/login`;
     }
   }
 };

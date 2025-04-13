@@ -7,12 +7,15 @@
 </template>
 
 <script>
+import apiClient from '../services/api';  
+
 export default {
   data() {
     return {
       loading: true,
       error: null,
-      message: 'Processing login...'
+      message: 'Processing login...',
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
     };
   },
   created() {
