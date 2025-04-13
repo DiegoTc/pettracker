@@ -4,8 +4,10 @@ from app import db, limiter
 from models import Device, Pet
 from flask_jwt_extended import get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
+from utils.error_handlers import handle_error, handle_database_error
 import logging
 from datetime import datetime
+from sqlalchemy.exc import SQLAlchemyError
 
 devices_bp = Blueprint('devices', __name__)
 logger = logging.getLogger(__name__)
@@ -38,23 +40,33 @@ def get_devices():
         devices = query.all()
         logger.info(f"Found {len(devices)} devices for user {user_id}")
         return jsonify([device.to_dict() for device in devices])
+    except SQLAlchemyError as db_error:
+        # Handle database errors specifically and securely
+        return handle_database_error(db_error, operation="retrieving devices", 
+                                    user_message="Unable to retrieve your devices. Please try again later.")
     except Exception as e:
-        logger.error(f"Error in get_devices(): {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return jsonify({"error": "Internal server error"}), 500
+        # Handle general errors with sanitized messages
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while retrieving your devices.")
 
 @devices_bp.route('/<int:device_id>', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_device(device_id):
     """Get a specific device by id"""
-    user_id = int(get_jwt_identity())
-    
-    device = Device.query.filter_by(id=device_id, user_id=user_id).first()
-    if not device:
-        return jsonify({"error": "Device not found"}), 404
-    
-    return jsonify(device.to_dict())
+    try:
+        user_id = int(get_jwt_identity())
+        
+        device = Device.query.filter_by(id=device_id, user_id=user_id).first()
+        if not device:
+            return jsonify({"error": "Device not found"}), 404
+        
+        return jsonify(device.to_dict())
+    except SQLAlchemyError as db_error:
+        return handle_database_error(db_error, operation=f"retrieving device {device_id}", 
+                                    user_message="Unable to retrieve device details. Please try again later.")
+    except Exception as e:
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while retrieving device details.")
 
 @devices_bp.route('/', methods=['POST', 'OPTIONS'])
 @jwt_required_except_options
@@ -107,10 +119,15 @@ def create_device():
         db.session.commit()
         logger.info(f"Created device {device.id} for user {user_id}")
         return jsonify(device.to_dict()), 201
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        # Capture database constraint violations, schema errors, etc.
+        return handle_database_error(db_error, operation="creating device", 
+                                    user_message="Unable to create device. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error creating device: {str(e)}")
-        return jsonify({"error": "Failed to create device"}), 500
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while creating the device.")
 
 @devices_bp.route('/<int:device_id>', methods=['PUT', 'OPTIONS'])
 @jwt_required_except_options
@@ -164,10 +181,14 @@ def update_device(device_id):
         db.session.commit()
         logger.info(f"Updated device {device_id}")
         return jsonify(device.to_dict())
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation=f"updating device {device_id}", 
+                                   user_message="Unable to update device. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error updating device: {str(e)}")
-        return jsonify({"error": "Failed to update device"}), 500
+        return handle_error(e, status_code=500,
+                          user_message="An error occurred while updating the device.")
 
 @devices_bp.route('/<int:device_id>/', methods=['DELETE', 'OPTIONS'])
 @jwt_required_except_options
@@ -192,8 +213,9 @@ def delete_device(device_id):
         # First, explicitly delete locations associated with the device
         if location_count > 0:
             from sqlalchemy import text
-            # Direct SQL to avoid potential ORM issues
-            db.session.execute(text(f"DELETE FROM location WHERE device_id = {device.id}"))
+            # Use parameterized query to prevent SQL injection
+            db.session.execute(text("DELETE FROM location WHERE device_id = :device_id"), 
+                              {"device_id": device.id})
             db.session.commit()
             logger.info(f"Deleted {location_count} location records for device {device_id}")
         
@@ -202,10 +224,15 @@ def delete_device(device_id):
         db.session.commit()
         logger.info(f"Successfully deleted device {device_id}")
         return jsonify({"message": "Device deleted successfully"})
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        # Use centralized error handling to avoid leaking database details
+        return handle_database_error(db_error, operation=f"deleting device {device_id}", 
+                                    user_message="Unable to delete device. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error deleting device: {str(e)}")
-        return jsonify({"error": f"Failed to delete device: {str(e)}"}), 500
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while deleting the device.")
 
 @devices_bp.route('/<string:device_identifier>/ping', methods=['POST'])
 def device_ping(device_identifier):
@@ -233,10 +260,16 @@ def device_ping(device_identifier):
     try:
         db.session.commit()
         return jsonify({"message": "Ping recorded successfully"})
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        # Use centralized error handling for database errors
+        return handle_database_error(db_error, operation=f"recording ping for device {device_identifier}", 
+                                    user_message="Unable to record device ping. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error recording ping: {str(e)}")
-        return jsonify({"error": "Failed to record ping"}), 500
+        # Use centralized error handling for general errors
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while recording the device ping.")
 
 @devices_bp.route('/<int:device_id>/assign/<int:pet_id>', methods=['POST', 'OPTIONS'])
 @jwt_required_except_options
@@ -264,10 +297,14 @@ def assign_to_pet(device_id, pet_id):
             "message": f"Device {device.name} assigned to pet {pet.name}",
             "device": device.to_dict()
         })
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation=f"assigning device {device_id} to pet {pet_id}", 
+                                   user_message="Unable to assign device to pet. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error assigning device to pet: {str(e)}")
-        return jsonify({"error": "Failed to assign device to pet"}), 500
+        return handle_error(e, status_code=500,
+                          user_message="An error occurred while assigning the device to the pet.")
 
 @devices_bp.route('/<int:device_id>/unassign', methods=['POST', 'OPTIONS'])
 @jwt_required_except_options
@@ -294,7 +331,11 @@ def unassign_from_pet(device_id):
             "message": "Device unassigned successfully",
             "device": device.to_dict()
         })
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation=f"unassigning device {device_id}", 
+                                   user_message="Unable to unassign device. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error unassigning device: {str(e)}")
-        return jsonify({"error": "Failed to unassign device"}), 500
+        return handle_error(e, status_code=500,
+                          user_message="An error occurred while unassigning the device.")
