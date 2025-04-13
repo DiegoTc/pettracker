@@ -28,8 +28,24 @@ def create_app(config_class='config.Config'):
     app.config.from_object(config_class)
     app.secret_key = os.environ.get("SESSION_SECRET")
     
-    # Enable CORS for all routes
-    CORS(app)
+    # Configure CORS with support for credentials
+    # Determine allowed origins based on environment
+    cors_origins = os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    
+    # Log CORS configuration
+    app.logger.info(f"Configuring CORS with origins: {cors_origins}")
+    
+    # Enable CORS for all routes with proper credentials support
+    CORS(app, 
+         resources={r"/api/*": {
+             "origins": cors_origins,
+             "supports_credentials": True,
+             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "max_age": 86400  # Cache preflight response for 24 hours
+         }},
+         expose_headers=["Content-Type", "Authorization"])
     
     # Initialize extensions with app
     db.init_app(app)

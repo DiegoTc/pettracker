@@ -28,6 +28,10 @@ def get_google_client():
 @auth_bp.route('/login_info', methods=['GET', 'OPTIONS'])
 def login_info():
     """Return information about Google login configuration"""
+    # Handle OPTIONS request explicitly for better CORS support
+    if request.method == 'OPTIONS':
+        return handle_options_request()
+        
     DEV_REDIRECT_URL = f'https://{os.environ.get("REPLIT_DEV_DOMAIN", "localhost:5000")}/api/auth/callback'
     
     # Check if Google OAuth is configured
@@ -51,10 +55,24 @@ def login_info():
             'client_id_set': bool(google_client_id),
             'client_secret_set': bool(google_client_secret),
             'env_client_id_set': 'GOOGLE_OAUTH_CLIENT_ID' in os.environ,
-            'env_client_secret_set': 'GOOGLE_OAUTH_CLIENT_SECRET' in os.environ
+            'env_client_secret_set': 'GOOGLE_OAUTH_CLIENT_SECRET' in os.environ,
+            'request_origin': request.headers.get('Origin', 'Not provided'),
+            'cors_enabled': True
         }
     
-    return jsonify(setup_info)
+    response = jsonify(setup_info)
+    
+    # Ensure CORS headers are present
+    origin = request.headers.get('Origin')
+    if origin:
+        # If origin is provided, ensure it's allowed
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    
+    # Log the response headers for debugging
+    logger.info(f"Login Info Response Headers: {dict(response.headers)}")
+    
+    return response
 
 @auth_bp.route('/login', methods=['GET', 'OPTIONS'])
 @limiter.limit("10/minute", methods=['GET'])
@@ -397,12 +415,28 @@ def check_auth():
     else:
         return jsonify({"authenticated": False})
 
+# Helper function for CORS preflight responses
+def handle_options_request():
+    """Handle OPTIONS preflight request with CORS headers"""
+    response = jsonify({"status": "ok"})
+    # Add CORS headers
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Max-Age', '86400')  # 24 hours
+    return response
+
 # Simple API test endpoint that doesn't require auth
 @auth_bp.route('/test', methods=['GET', 'OPTIONS'])
 def test_api():
     """Test endpoint to verify API connectivity"""
+    # Handle OPTIONS request explicitly for better CORS support
+    if request.method == 'OPTIONS':
+        return handle_options_request()
+        
     from datetime import datetime
-    return jsonify({
+    response = jsonify({
         "status": "success",
         "message": "API is operational",
         "timestamp": datetime.utcnow().isoformat(),
@@ -412,6 +446,11 @@ def test_api():
             "hostname": platform.node()
         }
     })
+    
+    # Log the response for debugging CORS issues
+    logger.info(f"Test API Response Headers: {dict(response.headers)}")
+    
+    return response
 
 # Development/testing only endpoint - should be removed in production
 @auth_bp.route('/dev-token', methods=['GET', 'OPTIONS'])
