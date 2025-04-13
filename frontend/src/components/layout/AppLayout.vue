@@ -1,89 +1,84 @@
 <template>
   <div class="app-layout">
     <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <router-link to="/">
-            <span class="brand-icon"><i class="bi bi-shield-check"></i></span>
-            <span class="brand-name">PetTracker</span>
-          </router-link>
-        </div>
+    <nav class="navbar navbar-expand-lg bg-white py-2 mb-4">
+      <div class="container">
+        <router-link to="/" class="navbar-brand d-flex align-items-center">
+          <i class="bi bi-shield-check me-2 text-primary"></i>
+          <span class="fw-bold">PetTracker</span>
+        </router-link>
         
-        <div class="nav-links">
-          <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">
-            <i class="bi bi-house-door"></i>
-            <span>Home</span>
-          </router-link>
-          
-          <router-link to="/pets" class="nav-link" :class="{ active: $route.path.startsWith('/pets') }">
-            <i class="bi bi-heart"></i>
-            <span>Pets</span>
-          </router-link>
-          
-          <router-link to="/devices" class="nav-link" :class="{ active: $route.path.startsWith('/devices') }">
-            <i class="bi bi-cpu"></i>
-            <span>Devices</span>
-          </router-link>
-          
-          <router-link to="/map" class="nav-link" :class="{ active: $route.path === '/map' }">
-            <i class="bi bi-geo-alt"></i>
-            <span>Map</span>
-          </router-link>
-          
-          <router-link to="/reports" class="nav-link" :class="{ active: $route.path === '/reports' }">
-            <i class="bi bi-bar-chart"></i>
-            <span>Reports</span>
-          </router-link>
-          
-          <router-link to="/api-test" class="nav-link api-test-link" :class="{ active: $route.path === '/api-test' }">
-            <i class="bi bi-wrench-adjustable"></i>
-            <span>API Test</span>
-          </router-link>
-        </div>
-        
-        <div class="nav-actions">
-          <div class="user-menu" @click="toggleUserMenu">
-            <div class="user-avatar">
-              <img v-if="user && user.profilePicture" :src="user.profilePicture" alt="User">
-              <i v-else class="bi bi-person-circle"></i>
-            </div>
-            <span v-if="user" class="user-name">{{ user.name }}</span>
-            <i class="bi bi-chevron-down"></i>
+        <div class="d-flex justify-content-center flex-grow-1">
+          <div class="nav-buttons text-center">
+            <router-link to="/" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/' }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-house-door"></i>
+              </div>
+              <div class="nav-text">Home</div>
+            </router-link>
             
-            <div v-if="showUserMenu" class="dropdown-menu">
-              <router-link to="/profile" class="dropdown-item">
-                <i class="bi bi-person"></i> Profile
-              </router-link>
-              <router-link to="/settings" class="dropdown-item">
-                <i class="bi bi-gear"></i> Settings
-              </router-link>
-              <div class="dropdown-divider"></div>
-              <a href="#" class="dropdown-item" @click.prevent="logout">
-                <i class="bi bi-box-arrow-right"></i> Logout
-              </a>
-            </div>
+            <router-link to="/pets" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path.startsWith('/pets') }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-heart"></i>
+              </div>
+              <div class="nav-text">Pets</div>
+            </router-link>
+            
+            <router-link to="/devices" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path.startsWith('/devices') }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-cpu"></i>
+              </div>
+              <div class="nav-text">Devices</div>
+            </router-link>
+            
+            <router-link to="/map" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/map' }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-geo-alt"></i>
+              </div>
+              <div class="nav-text">Map</div>
+            </router-link>
+            
+            <router-link to="/reports" class="nav-button px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/reports' }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-bar-chart"></i>
+              </div>
+              <div class="nav-text">Reports</div>
+            </router-link>
+            
+            <router-link to="/api-test" class="nav-button api-test px-4 mx-1 text-decoration-none text-center" :class="{ active: $route.path === '/api-test' }">
+              <div class="nav-icon mb-1">
+                <i class="bi bi-wrench-adjustable"></i>
+              </div>
+              <div class="nav-text">API Test</div>
+            </router-link>
           </div>
+        </div>
+        
+        <div class="user-profile d-flex align-items-center">
+          <div class="user-avatar rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
+            <i class="bi bi-person-circle text-primary"></i>
+          </div>
+          <span class="user-name">John D</span>
         </div>
       </div>
     </nav>
     
     <!-- Main Content -->
-    <main class="main-content">
-      <div class="container">
+    <main class="main-content bg-light">
+      <div class="container py-4">
         <slot></slot>
       </div>
     </main>
     
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer py-4 bg-white border-top">
       <div class="container">
-        <div class="footer-content">
-          <div class="footer-logo">
-            <span class="brand-icon"><i class="bi bi-shield-check"></i></span>
-            <span class="brand-name">PetTracker</span>
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-shield-check me-2 text-primary"></i>
+            <span class="fw-bold">PetTracker</span>
           </div>
-          <div class="footer-copyright">
+          <div class="text-muted small">
             &copy; {{ new Date().getFullYear() }} PetTracker. All rights reserved.
           </div>
         </div>
