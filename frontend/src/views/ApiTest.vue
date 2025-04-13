@@ -58,6 +58,7 @@
         </div>
         <div v-else>
           <button class="btn btn-primary me-2" @click="googleLogin">Google Login</button>
+          <button class="btn btn-outline-info me-2" @click="testGoogleRedirect">Test Google Redirect</button>
           <button class="btn btn-outline-secondary" @click="getDevToken">Get Dev Token</button>
         </div>
       </div>
@@ -163,7 +164,7 @@ export default {
   name: 'ApiTestComponent',
   data() {
     return {
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || window.location.origin,
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
       envApiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       editingBaseUrl: false,
       isAuthenticated: !!localStorage.getItem('access_token'),
