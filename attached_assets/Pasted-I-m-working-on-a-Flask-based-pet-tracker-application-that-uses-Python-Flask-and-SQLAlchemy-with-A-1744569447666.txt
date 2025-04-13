@@ -1,0 +1,40 @@
+I'm working on a Flask-based pet tracker application that uses Python, Flask, and SQLAlchemy (with Alembic for migrations) on a PostgreSQL database. Recently, during our Google OAuth authentication flow, the logs started showing the following error:
+
+vbnet
+Copy
+Database error: (psycopg2.errors.UndefinedColumn) column user.role does not exist
+...
+[SQL: SELECT "user".id AS user_id, "user".email AS user_email, ..., "user".role AS user_role, ... FROM "user" WHERE "user".email = %(email_1)s ...]
+This suggests that our code expects a role column in the user table even though it does not exist. I suspect a migration was either missed or not applied.
+
+Please help me resolve this issue by:
+
+Fixing the Schema Issue:
+
+If the role column is required for our user model (for example, to differentiate user permissions), provide a migration script (or an update to the SQLAlchemy model) that adds the role column to the user table with a secure default (e.g., 'user').
+
+Alternatively, if the role field is no longer needed, remove all references to it from the code and adjust the SQL query accordingly.
+
+Improving Error Handling:
+
+Update the authentication endpoint so that if a database error occurs (such as a missing column), it logs the detailed error internally but returns a generic error message to the client, thereby preventing disclosure of sensitive internal details.
+
+Ensuring Security Best Practices:
+
+Confirm that our SQL queries are fully parameterized (as is standard with SQLAlchemy) to prevent SQL injection.
+
+Verify that our error logging mechanism avoids leaking sensitive information to the frontend.
+
+Preventing Future Issues:
+
+Suggest a process or improvements (like automated migration checks or integration into our deployment pipeline) that ensures all necessary database migrations are applied in both development and production.
+
+Provide updated code snippets for:
+
+The migration script or SQLAlchemy model modifications.
+
+The revised authentication handling code with enhanced error handling.
+
+Any configuration changes that enforce secure error logging.
+
+This prompt should help resolve the current error and also guide us in preventing similar issues from occurring in the future.

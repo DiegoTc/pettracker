@@ -404,10 +404,39 @@ def callback():
         except Exception as db_error:
             # Handle other database errors
             db.session.rollback()
-            logger.error(f"[{request_id}] Database error: {str(db_error)}")
+            
+            # Log the complete error with traceback for debugging
+            error_message = str(db_error)
+            logger.error(f"[{request_id}] Database error: {error_message}")
+            logger.error(f"[{request_id}] Error traceback: {traceback.format_exc()}")
+            
+            # Check for common schema errors
+            if "column" in error_message and "does not exist" in error_message:
+                # This is likely a schema error
+                missing_column = None
+                match = re.search(r"column (\w+\.\w+) does not exist", error_message)
+                if match:
+                    missing_column = match.group(1)
+                    logger.error(f"[{request_id}] Schema error detected! Missing column: {missing_column}")
+                    
+                    # Try to run the schema fix and inform the admin
+                    try:
+                        from fix_user_model import ensure_role_column
+                        ensure_role_column()
+                        logger.info(f"[{request_id}] Attempted to fix schema automatically")
+                    except Exception as fix_error:
+                        logger.error(f"[{request_id}] Failed to fix schema: {str(fix_error)}")
+                
+                return safe_error_redirect(
+                    error_message="Database schema needs update. Please contact support.", 
+                    log_message=f"Schema error - missing column: {missing_column or 'unknown'}", 
+                    request_id=request_id
+                )
+            
+            # For all other database errors, use a generic message
             return safe_error_redirect(
                 error_message="Account processing error", 
-                log_message=f"Database error: {str(db_error)}", 
+                log_message=f"Database error: {error_message}", 
                 request_id=request_id
             )
         
