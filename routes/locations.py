@@ -4,9 +4,12 @@ from app import db, limiter
 from models import Location, Device, Pet
 from flask_jwt_extended import get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
+from utils.error_handlers import handle_error, handle_database_error
 import logging
+import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+from sqlalchemy.exc import SQLAlchemyError
 
 locations_bp = Blueprint('locations', __name__)
 logger = logging.getLogger(__name__)
@@ -16,37 +19,48 @@ logger = logging.getLogger(__name__)
 @limiter.limit("120/minute")
 def get_device_locations(device_id):
     """Get location history for a specific device"""
-    user_id = int(get_jwt_identity())
+    try:
+        user_id = int(get_jwt_identity())
+        
+        # Find the device
+        device = Device.query.filter_by(id=device_id, user_id=user_id).first()
+        if not device:
+            return jsonify({"error": "Device not found"}), 404
+        
+        # Get query parameters for filtering
+        limit = request.args.get('limit', default=100, type=int)
+        hours = request.args.get('hours', default=24, type=int)
+        since = request.args.get('since', type=str)
+        
+        # Create base query
+        query = Location.query.filter_by(device_id=device.id)
+        
+        # Apply time filter
+        if since:
+            try:
+                since_time = datetime.fromisoformat(since)
+                query = query.filter(Location.timestamp >= since_time)
+            except ValueError:
+                return jsonify({"error": "Invalid 'since' parameter format. Use ISO format."}), 400
+        else:
+            # Default to last N hours
+            time_threshold = datetime.utcnow() - timedelta(hours=hours)
+            query = query.filter(Location.timestamp >= time_threshold)
+        
+        # Order by timestamp and limit results
+        locations = query.order_by(desc(Location.timestamp)).limit(limit).all()
+        
+        return jsonify([location.to_dict() for location in locations])
     
-    # Find the device
-    device = Device.query.filter_by(id=device_id, user_id=user_id).first()
-    if not device:
-        return jsonify({"error": "Device not found"}), 404
-    
-    # Get query parameters for filtering
-    limit = request.args.get('limit', default=100, type=int)
-    hours = request.args.get('hours', default=24, type=int)
-    since = request.args.get('since', type=str)
-    
-    # Create base query
-    query = Location.query.filter_by(device_id=device.id)
-    
-    # Apply time filter
-    if since:
-        try:
-            since_time = datetime.fromisoformat(since)
-            query = query.filter(Location.timestamp >= since_time)
-        except ValueError:
-            return jsonify({"error": "Invalid 'since' parameter format. Use ISO format."}), 400
-    else:
-        # Default to last N hours
-        time_threshold = datetime.utcnow() - timedelta(hours=hours)
-        query = query.filter(Location.timestamp >= time_threshold)
-    
-    # Order by timestamp and limit results
-    locations = query.order_by(desc(Location.timestamp)).limit(limit).all()
-    
-    return jsonify([location.to_dict() for location in locations])
+    except SQLAlchemyError as db_error:
+        # Handle database-specific errors
+        return handle_database_error(db_error, operation=f"retrieving location history for device {device_id}", 
+                                   user_message="Unable to retrieve location history.")
+    except Exception as e:
+        # Handle general errors
+        request_id = str(uuid.uuid4())[:8]
+        return handle_error(e, status_code=500, log_prefix=request_id,
+                          user_message="An error occurred while retrieving device location history.")
 
 @locations_bp.route('/pet/<int:pet_id>', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
@@ -205,10 +219,16 @@ def record_location():
         db.session.add(location)
         db.session.commit()
         return jsonify({"message": "Location recorded successfully", "location_id": location.id})
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        # Use centralized error handling for database errors
+        return handle_database_error(db_error, operation=f"recording location for device {data['device_id']}", 
+                                    user_message="Unable to record location. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error recording location: {str(e)}")
-        return jsonify({"error": "Failed to record location"}), 500
+        # Use centralized error handling for general errors
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while recording the location.")
 
 @locations_bp.route('/all-pets-latest/', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
@@ -353,7 +373,15 @@ def simulate_device_location():
             "device": device.to_dict(),
             "location": location.to_dict()
         })
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        # Use centralized error handling for database errors
+        return handle_database_error(db_error, operation="simulating device location", 
+                                   user_message="Unable to save simulated location data.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error recording simulated location: {str(e)}")
-        return jsonify({"error": "Failed to record location"}), 500
+        # Use centralized error handling for general errors
+        request_id = str(uuid.uuid4())[:8]
+        logger.error(f"[{request_id}] Error recording simulated location: {str(e)}")
+        return handle_error(e, status_code=500, log_prefix=request_id,
+                          user_message="An error occurred while simulating the device location.")
