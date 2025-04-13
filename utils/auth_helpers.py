@@ -2,6 +2,7 @@ import functools
 import logging
 from flask import request, jsonify, Response
 from flask_jwt_extended import jwt_required, verify_jwt_in_request
+from utils.error_handlers import handle_error
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ def jwt_required_except_options(fn):
                 
             except Exception as e:
                 logger.error(f"JWT verification failed for {route}: {str(e)}")
-                # Re-raise the exception to be handled by the appropriate error handler
-                raise
+                # Return a standardized sanitized error response
+                return handle_error(e, status_code=401, 
+                                   user_message="Authentication required. Please log in to access this resource.")
     return wrapper

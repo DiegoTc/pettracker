@@ -4,9 +4,11 @@ from app import db, limiter
 from models import Pet, User
 from flask_jwt_extended import get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
+from utils.error_handlers import handle_error, handle_database_error
 import logging
 from datetime import datetime
 import traceback
+from sqlalchemy.exc import SQLAlchemyError
 
 pets_bp = Blueprint('pets', __name__)
 logger = logging.getLogger(__name__)
@@ -45,22 +47,33 @@ def get_pets():
         pets = query.all()
         logger.info(f"Found {len(pets)} pets for user {user_id}")
         return jsonify([pet.to_dict() for pet in pets])
+    except SQLAlchemyError as db_error:
+        # Handle database errors specifically
+        return handle_database_error(db_error, operation="retrieving pets", 
+                                    user_message="Unable to retrieve your pets. Please try again later.")
     except Exception as e:
-        logger.error(f"Error in get_pets(): {str(e)}")
-        logger.error(traceback.format_exc())
-        return jsonify({"error": "Internal server error"}), 500
+        # Handle general errors
+        return handle_error(e, status_code=500, 
+                           user_message="An error occurred while retrieving your pets.")
 
 @pets_bp.route('/<int:pet_id>', methods=['GET', 'OPTIONS'])
 @jwt_required_except_options
 def get_pet(pet_id):
     """Get a specific pet by id"""
-    user_id = int(get_jwt_identity())
-    
-    pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
-    if not pet:
-        return jsonify({"error": "Pet not found"}), 404
-    
-    return jsonify(pet.to_dict())
+    try:
+        user_id = int(get_jwt_identity())
+        
+        pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
+        if not pet:
+            return jsonify({"error": "Pet not found"}), 404
+        
+        return jsonify(pet.to_dict())
+    except SQLAlchemyError as db_error:
+        return handle_database_error(db_error, operation=f"retrieving pet {pet_id}", 
+                                    user_message="Unable to retrieve pet details. Please try again later.")
+    except Exception as e:
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while retrieving pet details.")
 
 @pets_bp.route('/', methods=['POST', 'OPTIONS'])
 @jwt_required_except_options
@@ -105,10 +118,14 @@ def create_pet():
         db.session.commit()
         logger.info(f"Created pet {pet.id} for user {user_id}")
         return jsonify(pet.to_dict()), 201
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation="creating pet", 
+                                    user_message="Unable to create pet. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error creating pet: {str(e)}")
-        return jsonify({"error": "Failed to create pet"}), 500
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while creating your pet.")
 
 @pets_bp.route('/<int:pet_id>', methods=['PUT', 'OPTIONS'])
 @jwt_required_except_options
@@ -158,10 +175,14 @@ def update_pet(pet_id):
         db.session.commit()
         logger.info(f"Updated pet {pet_id}")
         return jsonify(pet.to_dict())
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation=f"updating pet {pet_id}", 
+                                    user_message="Unable to update pet. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error updating pet: {str(e)}")
-        return jsonify({"error": "Failed to update pet"}), 500
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while updating your pet.")
 
 @pets_bp.route('/<int:pet_id>', methods=['DELETE', 'OPTIONS'])
 @jwt_required_except_options
@@ -180,7 +201,11 @@ def delete_pet(pet_id):
         db.session.commit()
         logger.info(f"Deleted pet {pet_id}")
         return jsonify({"message": "Pet deleted successfully"})
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        return handle_database_error(db_error, operation=f"deleting pet {pet_id}", 
+                                    user_message="Unable to delete pet. Please try again later.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error deleting pet: {str(e)}")
-        return jsonify({"error": "Failed to delete pet"}), 500
+        return handle_error(e, status_code=500,
+                           user_message="An error occurred while deleting your pet.")
