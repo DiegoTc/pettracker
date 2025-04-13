@@ -1,18 +1,14 @@
 <template>
   <app-layout>
-    <div class="page-header">
-      <div class="d-flex align-items-center">
-        <button class="btn btn-outline-secondary me-3" @click="$router.go(-1)">
-          <i class="bi bi-arrow-left"></i>
-        </button>
-        <h1 class="page-title mb-0">{{ isEditMode ? 'Edit Pet' : 'Add New Pet' }}</h1>
-      </div>
-    </div>
-
-    <div class="form-container">
-      <card-component :title="isEditMode ? 'Edit Pet Information' : 'Pet Information'" icon="bi bi-pencil-square">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-pencil-square text-primary me-2"></i>
+          <h5 class="card-title mb-0">Pet Information</h5>
+        </div>
+        
         <form @submit.prevent="savePet">
-          <div class="form-group">
+          <div class="mb-3">
             <label for="petName" class="form-label">Pet Name</label>
             <input 
               type="text" 
@@ -24,8 +20,8 @@
             >
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
+          <div class="row">
+            <div class="col-md-6 mb-3">
               <label for="petType" class="form-label">Pet Type</label>
               <select id="petType" v-model="pet.pet_type" class="form-select" required>
                 <option value="" disabled selected>Select a pet type</option>
@@ -36,31 +32,31 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="col-md-6 mb-3">
               <label for="breed" class="form-label">Breed</label>
               <input 
                 type="text" 
                 id="breed" 
                 v-model="pet.breed" 
                 class="form-control" 
-                placeholder="Enter breed (optional)"
+                placeholder="Enter breed"
               >
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
+          <div class="row">
+            <div class="col-md-6 mb-3">
               <label for="color" class="form-label">Color</label>
               <input 
                 type="text" 
                 id="color" 
                 v-model="pet.color" 
                 class="form-control" 
-                placeholder="Enter color (optional)"
+                placeholder="Enter color"
               >
             </div>
 
-            <div class="form-group">
+            <div class="col-md-6 mb-3">
               <label for="weight" class="form-label">Weight (kg)</label>
               <input 
                 type="number" 
@@ -69,12 +65,12 @@
                 class="form-control" 
                 step="0.1"
                 min="0"
-                placeholder="Enter weight (optional)"
+                placeholder="Enter weight"
               >
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="mb-3">
             <label for="birthdate" class="form-label">Birthdate</label>
             <input 
               type="date" 
@@ -84,35 +80,34 @@
             >
           </div>
 
-          <div class="form-group">
+          <div class="mb-3">
             <label for="description" class="form-label">Description</label>
             <textarea 
               id="description" 
               v-model="pet.description" 
               class="form-control" 
-              rows="5"
-              placeholder="Enter a description about your pet (optional)"
+              rows="3"
+              placeholder="Enter a description about your pet"
             ></textarea>
           </div>
 
-          <div class="form-group">
+          <div class="mb-3">
             <label for="image" class="form-label">Pet Image</label>
             <div class="image-upload-container">
-              <div class="image-preview" v-if="pet.image_url">
-                <img :src="pet.image_url" alt="Pet preview">
+              <div class="image-preview rounded" v-if="pet.image_url">
+                <img :src="pet.image_url" alt="Pet preview" class="img-fluid">
                 <button type="button" class="btn-remove-image" @click="removeImage">
                   <i class="bi bi-x-circle-fill"></i>
                 </button>
               </div>
-              <div class="image-upload" v-else>
-                <label for="image" class="upload-label">
-                  <i class="bi bi-cloud-upload"></i>
-                  <span>Click to upload image</span>
+              <div v-else class="image-upload rounded border d-flex justify-content-center align-items-center p-4" style="height: 180px; cursor: pointer;">
+                <label for="image" class="upload-label text-center m-0">
+                  <i class="bi bi-cloud-upload fs-3 d-block mb-2 text-primary"></i>
+                  <span class="text-muted">Click to upload image</span>
                 </label>
                 <input 
                   type="file" 
                   id="image" 
-                  class="form-control" 
                   @change="handleImageUpload"
                   accept="image/*"
                   hidden
@@ -121,8 +116,8 @@
             </div>
           </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="$router.go(-1)">
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-light border" @click="$router.go(-1)">
               Cancel
             </button>
             <button type="submit" class="btn btn-primary">
@@ -130,7 +125,7 @@
             </button>
           </div>
         </form>
-      </card-component>
+      </div>
     </div>
   </app-layout>
 </template>

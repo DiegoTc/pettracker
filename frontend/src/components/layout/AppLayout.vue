@@ -119,220 +119,77 @@ export default {
   min-height: 100vh;
 }
 
-/* Top Navigation */
-.top-nav {
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+.navbar {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.nav-container {
+.nav-buttons {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 70px;
-  padding: 0 20px;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
-.nav-logo a {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: var(--text);
-}
-
-.brand-icon {
-  font-size: 24px;
-  color: var(--primary);
-  margin-right: 8px;
-}
-
-.brand-name {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 8px;
-}
-
-.nav-link {
+.nav-button {
+  color: #666;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-decoration: none;
-  color: var(--text-light);
-  padding: 8px 16px;
-  border-radius: var(--radius);
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: all 0.2s;
 }
 
-.nav-link i {
-  font-size: 20px;
-  margin-bottom: 4px;
+.nav-button:hover {
+  background-color: #f0f7ff;
+  color: #0d6efd;
 }
 
-.nav-link span {
+.nav-button.active {
+  background-color: #f0f7ff;
+  color: #0d6efd;
+}
+
+.nav-icon {
+  font-size: 18px;
+}
+
+.nav-text {
   font-size: 12px;
   font-weight: 500;
 }
 
-.nav-link:hover, .nav-link.active {
-  color: var(--primary);
-  background-color: var(--primary-light);
-}
-
-.api-test-link {
-  margin-left: 8px;
-  background-color: #f0f5ff;
-  border: 1px dashed #99b3ff;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-}
-
-.user-menu {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: var(--radius);
-  position: relative;
-}
-
-.user-menu:hover {
-  background-color: var(--background);
+.api-test {
+  border: 1px dashed #c5d5f5;
+  background-color: #f0f7ff;
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--primary-light);
-  color: var(--primary);
-  margin-right: 8px;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-avatar i {
-  font-size: 22px;
 }
 
 .user-name {
   font-weight: 500;
-  margin-right: 8px;
   font-size: 14px;
 }
 
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  min-width: 200px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  text-decoration: none;
-  color: var(--text);
-  transition: background-color 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background-color: var(--background);
-}
-
-.dropdown-divider {
-  height: 1px;
-  background-color: var(--border);
-  margin: 4px 0;
-}
-
-/* Main Content */
 .main-content {
   flex: 1;
-  padding: 32px 0;
-  background-color: var(--background);
-}
-
-/* Footer */
-.footer {
-  background-color: white;
-  border-top: 1px solid var(--border);
-  padding: 24px 0;
-}
-
-.footer-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.footer-logo {
-  display: flex;
-  align-items: center;
-}
-
-.footer-copyright {
-  font-size: 14px;
-  color: var(--text-light);
+  background-color: #f5f7fb;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-  .nav-container {
-    height: auto;
-    flex-direction: column;
-    padding: 16px;
+  .nav-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
   }
   
-  .nav-logo {
-    margin-bottom: 16px;
-  }
-  
-  .nav-links {
-    width: 100%;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  
-  .nav-link {
-    padding: 8px;
+  .nav-button {
+    margin-bottom: 8px;
   }
   
   .user-name {
     display: none;
-  }
-  
-  .footer-content {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
   }
 }
 </style>

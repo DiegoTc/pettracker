@@ -9,8 +9,6 @@ export default {
 </script>
 
 <style>
-@import './assets/styles/pettracker-theme.css';
-
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Quicksand:wght@400;500;600&family=Roboto:wght@400;500&display=swap');
 
@@ -24,15 +22,44 @@ export default {
   box-sizing: border-box;
 }
 
+/* Override Bootstrap styles for light theme */
+.form-label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+  border-color: #dee2e6;
+  padding: 0.5rem 0.75rem;
+  color: #333;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.card {
+  border-radius: 0.5rem;
+  background-color: #fff;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #333;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
   background-color: #f5f7fb;
-  color: var(--text);
+  color: #333;
   min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Montserrat', sans-serif;
+  color: #333;
 }
 
 .text-center {
