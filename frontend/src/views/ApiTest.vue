@@ -420,10 +420,12 @@ export default {
       }
     },
     googleLogin() {
-      window.location.href = '/api/auth/google';
+      console.log(`Redirecting to Google login with base URL: ${this.apiBaseUrl}`);
+      window.location.href = `${this.apiBaseUrl}/api/auth/google`;
     },
     getDevToken() {
-      window.location.href = '/api/auth/dev-token';
+      console.log(`Getting dev token with base URL: ${this.apiBaseUrl}`);
+      window.location.href = `${this.apiBaseUrl}/api/auth/dev-token`;
     },
     logout() {
       localStorage.removeItem('access_token');

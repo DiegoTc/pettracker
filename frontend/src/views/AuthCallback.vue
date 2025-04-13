@@ -59,10 +59,8 @@ export default {
         console.log('Received OAuth code, redirecting to backend for processing');
         this.message = 'Processing OAuth callback...';
         
-        // Create absolute URL to ensure we're hitting the backend directly
-        const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-          ? 'http://localhost:5000' 
-          : window.location.origin;
+        // Log the API base URL for debugging purposes
+        console.log(`Using API base URL for callback: ${this.apiBaseUrl}`);
           
         // Get all existing parameters from the URL
         const existingParams = Array.from(urlParams.entries())
@@ -70,7 +68,8 @@ export default {
           .join('&');
           
         // Redirect to backend with all the original Google parameters
-        window.location.href = `${apiBaseUrl}/api/auth/callback?${existingParams}`;
+        // Using the consistent apiBaseUrl from the data property
+        window.location.href = `${this.apiBaseUrl}/api/auth/callback?${existingParams}`;
       } else {
         // No code or token parameter
         this.error = 'No authentication code or token received';
