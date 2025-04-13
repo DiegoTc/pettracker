@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -11,6 +12,12 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure application logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Create base class for SQLAlchemy models
 class Base(DeclarativeBase):
@@ -87,15 +94,9 @@ def create_app(config_class='config.Config'):
     def index():
         return {'message': 'Pet Tracking API is running'}
     
-    # Configure error handlers
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return {'error': 'Resource not found'}, 404
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
-        return {'error': 'Internal server error'}, 500
+    # Import and register secure error handlers
+    from utils.error_handlers import register_error_handlers
+    register_error_handlers(app)
     
     return app
 
