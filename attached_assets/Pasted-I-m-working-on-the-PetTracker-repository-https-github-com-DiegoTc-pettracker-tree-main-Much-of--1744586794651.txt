@@ -1,0 +1,61 @@
+I’m working on the PetTracker repository (https://github.com/DiegoTc/pettracker/tree/main). Much of the frontend code is based on a static template, and I’d like to make the dashboard fully dynamic by pulling real data from our backend (running at http://localhost:5000). Specifically, I want to update these items on the dashboard:
+
+Total Pets & Devices:
+
+Fetch the actual count of pets and devices from the backend.
+
+If there is no data, display a “0” or a clear “No data available” message.
+
+Recent Activities:
+
+If the backend implements an endpoint for fetching activity logs, display them.
+
+If no activity logs exist, hide the list or show “No recent activity” instead of static placeholder items.
+
+Tracked Locations & Activity:
+
+Currently, these are placeholders showing static values.
+
+Since real data doesn’t exist yet, display “Coming soon” or an empty state if the backend endpoint doesn’t return data.
+
+API Integration & Environment Variables:
+
+Use an environment variable (e.g., import.meta.env.VITE_API_BASE_URL) to ensure all API calls point to http://localhost:5000 (or a configurable URL).
+
+Verify that the frontend uses a centralized API service (e.g., api.js) with proper error handling and a loading state.
+
+User Experience Enhancements:
+
+Add loading indicators where appropriate (for example, a spinner or “Loading…” text) while API data is being fetched.
+
+Handle errors gracefully by displaying user-friendly messages rather than raw error traces.
+
+Implementation Details & Best Practices:
+
+Update the relevant Vue components (e.g., Dashboard.vue, Login.vue) so they call the actual backend endpoints.
+
+Remove or refactor any static template code that displays placeholder data.
+
+Provide sample code or a step-by-step guide that shows how to fetch the data in the created() or setup function (if using Composition API), store it in a reactive property (or Vuex if needed), and render it in the template.
+
+Follow security best practices for handling any tokens or sensitive data.
+
+Please provide:
+
+Code Examples:
+
+Show how to configure the Axios client in api.js (or similar) using import.meta.env.VITE_API_BASE_URL.
+
+Demonstrate how each dashboard element fetches data from the backend (e.g., getPetsCount(), getDevicesCount(), etc.).
+
+Show how to conditionally display “Coming soon” or “No data available” if the backend returns nothing.
+
+Step-by-Step Instructions:
+
+Explain how to integrate these changes into the existing design.
+
+Outline any necessary environment variable or configuration changes.
+
+Include instructions on how to add or modify backend endpoints if they don’t currently exist.
+
+The goal is to replace the current static placeholders with real dynamic data and gracefully handle any missing or “in-development” features.

@@ -172,4 +172,126 @@ export const locationsAPI = {
   simulateLocation: (locationData) => apiClient.post('/api/locations/simulate/', locationData),
 };
 
+// Dashboard API
+export const dashboardAPI = {
+  /**
+   * Get dashboard statistics (pets count, devices count, locations count)
+   * @returns {Promise} Promise with dashboard stats
+   */
+  getStats: async () => {
+    try {
+      // Fetch pets count
+      const petsResponse = await petsAPI.getAll();
+      const petsCount = petsResponse.data.length;
+      
+      // Fetch devices count
+      const devicesResponse = await devicesAPI.getAll();
+      const devicesData = devicesResponse.data;
+      const devicesCount = devicesData.length;
+      
+      // Count active devices
+      const activeDevicesCount = devicesData.filter(device => device.is_active).length;
+      
+      // Fetch recent locations (if available)
+      let locationsCount = 0;
+      let activityScore = null;
+      
+      try {
+        const locationsResponse = await locationsAPI.getRecent(100);
+        locationsCount = locationsResponse.data.length;
+        
+        // Calculate a simple activity score (if locations exist)
+        if (locationsCount > 0) {
+          // Activity score formula could be based on recency and frequency
+          // For now, just a placeholder that scales with location count (0-100)
+          activityScore = Math.min(Math.floor(locationsCount * 5), 100);
+        }
+      } catch (error) {
+        console.warn('Could not fetch locations count:', error);
+        // Will return 0 for locations count
+      }
+      
+      return {
+        totalPets: petsCount,
+        totalDevices: devicesCount,
+        activeDevices: activeDevicesCount,
+        totalLocations: locationsCount,
+        activityScore: activityScore
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Get recent activities by combining location updates and other events
+   * @param {Number} limit Maximum number of activities to return
+   * @returns {Promise} Promise with recent activities
+   */
+  getRecentActivities: async (limit = 5) => {
+    try {
+      // Fetch recent locations
+      const locationsResponse = await locationsAPI.getRecent(limit);
+      const recentLocations = locationsResponse.data;
+      
+      // Transform locations into activity items
+      const activities = await Promise.all(recentLocations.map(async location => {
+        // Get device information
+        let deviceInfo = null;
+        try {
+          const deviceResponse = await devicesAPI.getById(location.device_id);
+          deviceInfo = deviceResponse.data;
+        } catch (error) {
+          console.warn(`Could not fetch device info for device ${location.device_id}:`, error);
+        }
+        
+        // Get pet information if device is assigned to a pet
+        let petInfo = null;
+        if (deviceInfo && deviceInfo.pet_id) {
+          try {
+            const petResponse = await petsAPI.getById(deviceInfo.pet_id);
+            petInfo = petResponse.data;
+          } catch (error) {
+            console.warn(`Could not fetch pet info for pet ${deviceInfo.pet_id}:`, error);
+          }
+        }
+        
+        // Calculate time ago string
+        const locationTime = new Date(location.timestamp);
+        const now = new Date();
+        const diffMs = now - locationTime;
+        const diffMinutes = Math.floor(diffMs / 60000);
+        
+        let timeAgo;
+        if (diffMinutes < 1) {
+          timeAgo = 'Just now';
+        } else if (diffMinutes < 60) {
+          timeAgo = `${diffMinutes} min ago`;
+        } else if (diffMinutes < 1440) {
+          const hours = Math.floor(diffMinutes / 60);
+          timeAgo = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else {
+          const days = Math.floor(diffMinutes / 1440);
+          timeAgo = `${days} day${days > 1 ? 's' : ''} ago`;
+        }
+        
+        return {
+          petName: petInfo ? petInfo.name : (deviceInfo ? deviceInfo.name : 'Unknown'),
+          location: 'GPS Location',  // Placeholder - could be geocoded in the future
+          timeAgo: timeAgo,
+          batteryLevel: location.battery_level || 0,
+          speed: location.speed || 0
+        };
+      }));
+      
+      return activities;
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
+      // Instead of throwing, return empty array
+      return [];
+    }
+  }
+};
+
 export default apiClient;
