@@ -8,16 +8,21 @@ import requests
 import traceback
 import urllib.parse
 import platform
+import uuid
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from utils.auth_helpers import jwt_required_except_options
+from sqlalchemy.exc import IntegrityError
 # Needed for local development only - allows OAuth over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
 logger = logging.getLogger(__name__)
+
+# Set Google OAuth discovery URL
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 # Google OAuth setup
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
@@ -153,112 +158,205 @@ def login():
 @auth_bp.route('/callback', methods=['GET', 'OPTIONS'])
 def callback():
     """Handle the Google OAuth callback"""
-    try:
-        # Log the full request for debugging
-        logger.info(f"Callback received: {request.url}")
+    # Handle OPTIONS request explicitly for better CORS support
+    if request.method == 'OPTIONS':
+        return handle_options_request()
         
-        # Check if Google OAuth is configured
+    # Track the request flow for debugging
+    request_id = uuid.uuid4()
+    logger.info(f"[{request_id}] OAuth callback started, received URL: {request.url}")
+    
+    # Configuration validation at the start
+    try:
+        # Primary try block for the entire auth flow
+        # Validate OAuth configuration first
         if not current_app.config['GOOGLE_CLIENT_ID'] or not current_app.config['GOOGLE_CLIENT_SECRET']:
-            logger.error("Google OAuth not configured")
-            return jsonify({"error": "Google OAuth not configured"}), 500
+            logger.error(f"[{request_id}] Google OAuth not configured - missing client ID or secret")
+            return safe_error_redirect(
+                error_message="Authentication service not properly configured", 
+                log_message="OAuth credentials missing", 
+                request_id=request_id
+            )
         
         # Get authorization code from the callback
         code = request.args.get("code")
         if not code:
-            logger.error("Authorization code missing")
-            return jsonify({"error": "Authorization code missing"}), 400
+            logger.error(f"[{request_id}] Authorization code missing from callback")
+            return safe_error_redirect(
+                error_message="Invalid authentication response", 
+                log_message="No authorization code in callback", 
+                request_id=request_id
+            )
         
-        client = get_google_client()
+        logger.info(f"[{request_id}] Authorization code received successfully")
         
-        # Get Google's OAuth 2.0 endpoints
-        google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
-        token_endpoint = google_provider_cfg["token_endpoint"]
-        
-        # Prepare token request
-        is_local = "localhost" in request.host or "127.0.0.1" in request.host
-        
-        # Debugging
-        logger.info(f"Callback - Current host: {request.host}, Is local: {is_local}")
-        
-        # Simplify token request by using consistent URLs
-        if is_local:
-            auth_response = request.url
-            redirect_url = "http://localhost:5000/api/auth/callback"
-        else:
-            auth_response = request.url.replace("http://", "https://")
-            # For Replit environments
-            replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-            if replit_domain:
-                redirect_url = f"https://{replit_domain}/api/auth/callback"
-            else:
-                redirect_url = request.base_url.replace("http://", "https://")
-            
-        logger.info(f"Using redirect URL for token request: {redirect_url}")
-        
-        # Prepare and send token request
-        token_url, headers, body = client.prepare_token_request(
-            token_endpoint,
-            authorization_response=auth_response,
-            redirect_url=redirect_url,
-            code=code,
-        )
-
-        logger.info(f"Token URL: {token_url}")
-        logger.info(f"Token request headers: {headers}")
-        logger.info(f"Token request body: {body}")
-        
-        token_response = requests.post(
-            token_url,
-            headers=headers,
-            data=body,
-            auth=(current_app.config['GOOGLE_CLIENT_ID'], current_app.config['GOOGLE_CLIENT_SECRET']),
-        )
-        
-        # Check token response
-        if token_response.status_code != 200:
-            logger.error(f"Token request failed: {token_response.status_code} {token_response.text}")
-            return jsonify({"error": "Failed to obtain access token from Google"}), 500
-            
-        # Parse the token response
-        token_data = token_response.json()
-        client.parse_request_body_response(json.dumps(token_data))
-        
-        # Get user info from Google
-        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-        uri, headers, body = client.add_token(userinfo_endpoint)
-        userinfo_response = requests.get(uri, headers=headers, data=body)
-        
-        # Check userinfo response
-        if userinfo_response.status_code != 200:
-            logger.error(f"Userinfo request failed: {userinfo_response.status_code} {userinfo_response.text}")
-            return jsonify({"error": "Failed to obtain user information from Google"}), 500
-            
-        userinfo = userinfo_response.json()
-        logger.info(f"Received user info: {userinfo}")
-        
-        # Verify user info - email is required
-        if not userinfo.get("email"):
-            logger.error("Email missing from Google response")
-            return jsonify({"error": "Email information not provided by Google"}), 400
-            
-        # Check if email is verified (if this field exists in response)
-        if "email_verified" in userinfo and not userinfo.get("email_verified"):
-            logger.error("User email not verified by Google")
-            return jsonify({"error": "User email not verified by Google"}), 400
-        
-        # Get user data
-        email = userinfo["email"]
-        username = email.split("@")[0]  # Use email prefix as username
-        picture = userinfo.get("picture")
-        
+        # Initialize OAuth client
         try:
+            client = get_google_client()
+        except Exception as client_error:
+            logger.error(f"[{request_id}] Failed to initialize OAuth client: {str(client_error)}")
+            return safe_error_redirect(
+                error_message="Authentication setup error", 
+                log_message="OAuth client initialization failed", 
+                request_id=request_id
+            )
+        
+        # 1. FETCH OAUTH CONFIGURATION
+        try:
+            logger.info(f"[{request_id}] Fetching Google OAuth configuration")
+            discovery_response = requests.get(GOOGLE_DISCOVERY_URL, timeout=10)
+            if discovery_response.status_code != 200:
+                logger.error(f"[{request_id}] Failed to get Google discovery document: {discovery_response.status_code}")
+                return safe_error_redirect(
+                    error_message="Could not connect to authentication service",
+                    log_message=f"Discovery document fetch failed with status {discovery_response.status_code}",
+                    request_id=request_id
+                )
+                
+            google_provider_cfg = discovery_response.json()
+            token_endpoint = google_provider_cfg.get("token_endpoint")
+            
+            if not token_endpoint:
+                logger.error(f"[{request_id}] Token endpoint missing from discovery document")
+                return safe_error_redirect(
+                    error_message="Authentication service configuration error",
+                    log_message="Token endpoint missing from discovery document",
+                    request_id=request_id
+                )
+        except requests.RequestException as req_error:
+            logger.error(f"[{request_id}] Request error fetching discovery document: {str(req_error)}")
+            return safe_error_redirect(
+                error_message="Network error connecting to authentication service",
+                log_message=f"Discovery request failed: {str(req_error)}",
+                request_id=request_id
+            )
+        
+        # 2. DETERMINE CORRECT REDIRECT URL
+        # This is critical - must match exactly what was registered with Google
+        frontend_url = get_frontend_url(request)
+        redirect_url = get_auth_redirect_url(request)
+        
+        logger.info(f"[{request_id}] Environment detection - Frontend URL: {frontend_url}, Auth Redirect URL: {redirect_url}")
+        
+        # 3. EXCHANGE CODE FOR TOKEN
+        try:
+            logger.info(f"[{request_id}] Exchanging authorization code for token")
+            
+            # Prepare the token request
+            auth_response = request.url
+            if request.headers.get('X-Forwarded-Proto') == 'https' and auth_response.startswith('http:'):
+                auth_response = auth_response.replace('http:', 'https:', 1)
+                logger.info(f"[{request_id}] Using secure auth response URL: {auth_response}")
+                
+            token_url, headers, body = client.prepare_token_request(
+                token_endpoint,
+                authorization_response=auth_response,
+                redirect_url=redirect_url,
+                code=code,
+            )
+            
+            # Sensitive information, log with care (only in development)
+            if current_app.config.get('DEBUG', False):
+                logger.debug(f"[{request_id}] Token request details - URL: {token_url}")
+                logger.debug(f"[{request_id}] Token request headers: {sanitize_headers(headers)}")
+                # Avoid logging body which may contain sensitive info
+            
+            # Send the token request to Google
+            token_response = requests.post(
+                token_url,
+                headers=headers,
+                data=body,
+                auth=(current_app.config['GOOGLE_CLIENT_ID'], current_app.config['GOOGLE_CLIENT_SECRET']),
+                timeout=10
+            )
+            
+            # Check token response
+            if token_response.status_code != 200:
+                logger.error(f"[{request_id}] Token request failed: {token_response.status_code}")
+                
+                # More detailed logging for debugging, but don't expose to user
+                if current_app.config.get('DEBUG', False):
+                    logger.debug(f"[{request_id}] Token error response: {token_response.text}")
+                    
+                return safe_error_redirect(
+                    error_message="Failed to complete authentication", 
+                    log_message=f"Token request failed with status {token_response.status_code}", 
+                    request_id=request_id
+                )
+                
+            # Parse the token response
+            token_data = token_response.json()
+            client.parse_request_body_response(json.dumps(token_data))
+            logger.info(f"[{request_id}] Token obtained successfully")
+            
+        except Exception as token_error:
+            logger.error(f"[{request_id}] Error obtaining token: {str(token_error)}")
+            return safe_error_redirect(
+                error_message="Authentication process failed", 
+                log_message=f"Token exchange error: {str(token_error)}", 
+                request_id=request_id
+            )
+        
+        # 4. GET USER INFO
+        try:
+            logger.info(f"[{request_id}] Fetching user information from Google")
+            userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+            uri, headers, body = client.add_token(userinfo_endpoint)
+            userinfo_response = requests.get(uri, headers=headers, data=body, timeout=10)
+            
+            # Check userinfo response
+            if userinfo_response.status_code != 200:
+                logger.error(f"[{request_id}] Userinfo request failed: {userinfo_response.status_code}")
+                return safe_error_redirect(
+                    error_message="Could not retrieve user information", 
+                    log_message=f"Userinfo request failed with status {userinfo_response.status_code}", 
+                    request_id=request_id
+                )
+                
+            userinfo = userinfo_response.json()
+            
+            # Verify required user info exists
+            if not userinfo.get("email"):
+                logger.error(f"[{request_id}] Email missing from Google response")
+                return safe_error_redirect(
+                    error_message="Email information not provided", 
+                    log_message="No email in userinfo response", 
+                    request_id=request_id
+                )
+                
+            # Check if email is verified (if this field exists in response)
+            if "email_verified" in userinfo and not userinfo.get("email_verified"):
+                logger.error(f"[{request_id}] User email not verified by Google")
+                return safe_error_redirect(
+                    error_message="Email not verified", 
+                    log_message="User email not verified in userinfo response", 
+                    request_id=request_id
+                )
+            
+            # Extract user data
+            email = userinfo["email"]
+            username = email.split("@")[0]  # Use email prefix as username
+            picture = userinfo.get("picture")
+            first_name = userinfo.get("given_name", "")
+            last_name = userinfo.get("family_name", "")
+            
+            logger.info(f"[{request_id}] User info obtained successfully for email: {mask_email(email)}")
+            
+        except Exception as userinfo_error:
+            logger.error(f"[{request_id}] Error obtaining user information: {str(userinfo_error)}")
+            return safe_error_redirect(
+                error_message="Error retrieving user profile", 
+                log_message=f"Userinfo error: {str(userinfo_error)}", 
+                request_id=request_id
+            )
+        
+        # 5. CREATE OR UPDATE USER IN DATABASE
+        try:
+            logger.info(f"[{request_id}] Creating or updating user in database")
             # Find or create user
             user = User.query.filter_by(email=email).first()
+            
             if not user:
-                # Try to extract first name and last name
-                first_name = userinfo.get("given_name", "")
-                last_name = userinfo.get("family_name", "")
-                
                 # Find a unique username if needed
                 base_username = username
                 counter = 1
@@ -273,89 +371,183 @@ def callback():
                     first_name=first_name,
                     last_name=last_name,
                     profile_picture=picture,
-                    role="user"  # Ensure role is set
+                    role="user"
                 )
                 
-                logger.info(f"Creating new user: {email} with username: {username}")
+                logger.info(f"[{request_id}] Creating new user for email: {mask_email(email)}")
                 db.session.add(user)
                 db.session.commit()
+            else:
+                # Update existing user information
+                user.profile_picture = picture or user.profile_picture
+                user.first_name = first_name or user.first_name
+                user.last_name = last_name or user.last_name
+                logger.info(f"[{request_id}] Updating existing user for email: {mask_email(email)}")
             
             # Update last login time
             user.last_login = db.func.now()
             db.session.commit()
             
-            # Login the user
+            # Login the user using Flask-Login
             login_user(user)
+            logger.info(f"[{request_id}] User logged in successfully: ID {user.id}")
             
-        except Exception as db_error:
-            logger.error(f"Database error while creating/updating user: {str(db_error)}")
-            # Roll back transaction and return error
+        except IntegrityError as integrity_error:
+            # Handle database integrity errors specifically
             db.session.rollback()
-            return jsonify({"error": "Error saving user information"}), 500
+            logger.error(f"[{request_id}] Database integrity error: {str(integrity_error)}")
+            return safe_error_redirect(
+                error_message="Account creation failed", 
+                log_message=f"Database integrity error: {str(integrity_error)}", 
+                request_id=request_id
+            )
+        except Exception as db_error:
+            # Handle other database errors
+            db.session.rollback()
+            logger.error(f"[{request_id}] Database error: {str(db_error)}")
+            return safe_error_redirect(
+                error_message="Account processing error", 
+                log_message=f"Database error: {str(db_error)}", 
+                request_id=request_id
+            )
         
-        # Create JWT token
-        access_token = create_access_token(identity=str(user.id))
+        # 6. CREATE JWT TOKEN AND REDIRECT
+        try:
+            # Create JWT token with the user ID
+            access_token = create_access_token(identity=str(user.id))
+            
+            # Redirect to frontend with token
+            callback_url = f"{frontend_url}/auth/callback?token={access_token}"
+            logger.info(f"[{request_id}] Authentication successful, redirecting to: {callback_url}")
+            
+            # Return redirect with CORS headers
+            response = redirect(callback_url)
+            response.headers['Access-Control-Allow-Origin'] = frontend_url
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            return response
+            
+        except Exception as redirect_error:
+            logger.error(f"[{request_id}] Error creating JWT token or redirect: {str(redirect_error)}")
+            return safe_error_redirect(
+                error_message="Authentication succeeded but login failed", 
+                log_message=f"JWT/Redirect error: {str(redirect_error)}", 
+                request_id=request_id
+            )
+    
+    except Exception as e:
+        # Catch-all for any unhandled exceptions
+        logger.error(f"[{request_id}] Unhandled error in OAuth callback: {str(e)}")
+        logger.error(f"[{request_id}] Error details: {traceback.format_exc()}")
+        return safe_error_redirect(
+            error_message="Authentication process failed", 
+            log_message=f"Unhandled error: {str(e)}", 
+            request_id=request_id
+        )
+
+
+# Helper functions for the callback handler
+
+def safe_error_redirect(error_message="Authentication failed", log_message=None, request_id=None):
+    """Create a safe redirect to the frontend with an error message"""
+    try:
+        # Log the detailed error for troubleshooting
+        if log_message:
+            logger.error(f"[{request_id}] {log_message}")
         
-        # Determine frontend URL with better detection
-        is_local = "localhost" in request.host or "127.0.0.1" in request.host
+        # Get frontend URL based on environment
+        frontend_url = get_frontend_url(request)
         
-        if is_local:
-            # For local development
-            frontend_url = "http://localhost:3000"
-        else:
-            # For production environments
-            replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-            if replit_domain:
-                frontend_url = f"https://{replit_domain}"
-            else:
-                # Fallback to request origin or host
-                origin = request.headers.get('Origin')
-                if origin:
-                    frontend_url = origin
-                else:
-                    frontend_url = f"https://{request.host}"
+        # Create error URL with safely encoded message
+        encoded_error = urllib.parse.quote(error_message)
+        redirect_url = f"{frontend_url}/login?error={encoded_error}"
         
-        # Redirect to frontend with token
-        redirect_url = f"{frontend_url}/auth/callback?token={access_token}"
-        logger.info(f"Redirecting to frontend: {redirect_url}")
+        logger.info(f"[{request_id}] Redirecting with error: {redirect_url}")
         
-        # Add CORS headers to the redirect
+        # Return the redirect with appropriate CORS headers
         response = redirect(redirect_url)
         response.headers['Access-Control-Allow-Origin'] = frontend_url
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         return response
+    except Exception as redirect_error:
+        # If redirect fails, return a simple JSON error
+        logger.error(f"[{request_id}] Error creating error redirect: {str(redirect_error)}")
+        return jsonify({
+            "error": "Authentication failed",
+            "message": "Please try again or contact support"
+        }), 500
+
+
+def get_frontend_url(request):
+    """Determine the frontend URL based on the environment"""
+    is_local = "localhost" in request.host or "127.0.0.1" in request.host
     
-    except Exception as e:
-        logger.error(f"Error in Google OAuth callback: {str(e)}")
-        logger.error(f"Error details: {traceback.format_exc()}")
-        # Only return generic error message for security
-        
-        try:
-            # Determine if we need to redirect to frontend with error
-            is_local = "localhost" in request.host or "127.0.0.1" in request.host
-            
-            if is_local:
-                frontend_url = "http://localhost:3000"
-            else:
-                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-                if replit_domain:
-                    frontend_url = f"https://{replit_domain}"
-                else:
-                    frontend_url = f"https://{request.host}"
-            
-            # Redirect to frontend login page with error
-            error_message = urllib.parse.quote("Authentication failed. Please try again.")
-            redirect_url = f"{frontend_url}/login?error={error_message}"
-            
-            logger.info(f"Redirecting to frontend with error: {redirect_url}")
-            return redirect(redirect_url)
-        except Exception as redirect_error:
-            # If everything fails, return a simple JSON error
-            logger.error(f"Error redirecting with error: {str(redirect_error)}")
-            return jsonify({
-                "error": "Authentication failed. Please try again or contact support.",
-                "details": "There was a problem with the authentication process."
-            }), 500
+    if is_local:
+        # For local development
+        return "http://localhost:3000"
+    
+    # For production environments
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if replit_domain:
+        return f"https://{replit_domain}"
+    
+    # Fallback to origin header or host
+    origin = request.headers.get('Origin')
+    if origin:
+        return origin
+    
+    # Last resort fallback
+    return f"https://{request.host}"
+
+
+def get_auth_redirect_url(request):
+    """Get the correct redirect URL for OAuth authentication"""
+    is_local = "localhost" in request.host or "127.0.0.1" in request.host
+    
+    if is_local:
+        # For local development, use the standard localhost URL
+        return "http://localhost:5000/api/auth/callback"
+    
+    # For Replit or production environments
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if replit_domain:
+        return f"https://{replit_domain}/api/auth/callback"
+    
+    # Use the base URL from the request (default to HTTPS)
+    base_url = request.base_url
+    if base_url.startswith('http:') and not is_local:
+        base_url = base_url.replace('http:', 'https:', 1)
+    
+    return base_url
+
+
+def sanitize_headers(headers):
+    """Remove sensitive information from headers for logging"""
+    if not headers:
+        return {}
+    
+    sanitized = headers.copy()
+    sensitive_keys = ['authorization', 'cookie', 'x-csrf-token']
+    
+    for key in headers:
+        if key.lower() in sensitive_keys:
+            sanitized[key] = "[REDACTED]"
+    
+    return sanitized
+
+
+def mask_email(email):
+    """Mask email address for logging to protect user privacy"""
+    if not email or '@' not in email:
+        return "[INVALID_EMAIL]"
+    
+    username, domain = email.split('@', 1)
+    
+    if len(username) <= 2:
+        masked_username = username[0] + "*"
+    else:
+        masked_username = username[0] + "*" * (len(username) - 2) + username[-1]
+    
+    return f"{masked_username}@{domain}"
 
 @auth_bp.route('/logout', methods=['POST', 'OPTIONS'])
 @login_required
