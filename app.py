@@ -75,12 +75,16 @@ def create_app(config_class='config.Config'):
     from routes.devices import devices_bp
     from routes.locations import locations_bp
     from routes.documentation import doc_bp
+    from routes.frontend import frontend_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(pets_bp, url_prefix='/api/pets')
     app.register_blueprint(devices_bp, url_prefix='/api/devices')
     app.register_blueprint(locations_bp, url_prefix='/api/locations')
     app.register_blueprint(doc_bp, url_prefix='')
+    
+    # Register frontend blueprint (should be registered last to avoid conflicting with API routes)
+    app.register_blueprint(frontend_bp, url_prefix='')
     
     # Load the login manager user loader
     from models import User
@@ -89,9 +93,9 @@ def create_app(config_class='config.Config'):
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    # Add a basic route for the API root
-    @app.route('/')
-    def index():
+    # API root is now accessible at /api/
+    @app.route('/api/')
+    def api_index():
         return {'message': 'Pet Tracking API is running'}
     
     # Import and register secure error handlers
