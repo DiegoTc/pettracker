@@ -16,17 +16,26 @@ export default defineConfig({
         // Handle login callback redirects
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
+            console.log('[Proxy Error]', err);
           });
           // Log responses for debugging
           proxy.on('proxyRes', (proxyRes, req, _res) => {
             console.log(`[Proxy] ${req.method} ${req.url} -> ${proxyRes.statusCode}`);
           });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log(`[Proxy Request] ${req.method} ${req.url}`);
+          });
         }
       }
     },
     // Handle CORS for all local development
-    cors: true
+    cors: true,
+    // Log environment variables at server start (excluding secrets)
+    onBeforeStart: () => {
+      console.log('Starting Vite development server with:');
+      console.log('- Environment: ', process.env.NODE_ENV);
+      console.log('- API Base URL: ', process.env.VITE_API_BASE_URL || 'Not defined (will use proxy)');
+    }
   },
   resolve: {
     alias: {

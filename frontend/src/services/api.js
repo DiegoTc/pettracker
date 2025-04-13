@@ -2,32 +2,48 @@ import axios from 'axios';
 
 // Determine the API base URL based on environment
 const getApiBaseUrl = () => {
-  // Use environment variable if provided (for production)
+  // Use environment variable if provided
   if (import.meta.env.VITE_API_BASE_URL) {
+    console.log(`Using API base URL from environment: ${import.meta.env.VITE_API_BASE_URL}`);
     return import.meta.env.VITE_API_BASE_URL;
   }
   
-  // In development, use the relative URL to leverage Vite's proxy
-  return '';
+  // Fallback for development when env var is not defined
+  const fallbackUrl = 'http://localhost:5000';
+  console.log(`No API base URL in environment, using fallback: ${fallbackUrl}`);
+  return fallbackUrl;
 };
+
+// Get the base URL for API calls
+const apiBaseUrl = getApiBaseUrl();
 
 // Create an axios instance with the appropriate base URL
 const apiClient = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: apiBaseUrl,
   // Important: withCredentials is needed for cookies/session to work across domains
   withCredentials: true
 });
 
+// Log the configured base URL
+console.log(`API Client configured with baseURL: ${apiBaseUrl}`);
+
+// Log the full URL for a sample API endpoint
+console.log(`Example API endpoint URL: ${apiBaseUrl}/api/auth/check`);
+
 // Add a request interceptor to include JWT token in headers
 apiClient.interceptors.request.use(
   (config) => {
+    // Construct and log the full URL being called
+    const fullUrl = `${config.baseURL || ''}${config.url}`;
+    console.log(`Making API request to: ${config.method?.toUpperCase() || 'GET'} ${fullUrl}`);
+    
     // Get the token from localStorage if it exists
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(`Making API request to ${config.url} with token: ${token.substring(0, 15)}...`);
+      console.log(`Using auth token: ${token.substring(0, 15)}...`);
     } else {
-      console.warn(`Making API request to ${config.url} WITHOUT authentication token`);
+      console.warn(`No authentication token available for request`);
     }
     return config;
   },
@@ -40,17 +56,19 @@ apiClient.interceptors.request.use(
 // Add a response interceptor for common error handling
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('API Response success:', response.config.method, response.config.url, response.status);
+    // Construct the full URL that was called
+    const fullUrl = `${response.config.baseURL || ''}${response.config.url}`;
+    console.log(`API Response success: ${response.config.method?.toUpperCase() || 'GET'} ${fullUrl} → ${response.status}`);
     return response;
   },
   (error) => {
+    // Construct the full URL that was called
+    const fullUrl = `${error.config?.baseURL || ''}${error.config?.url || ''}`;
+    const method = error.config?.method?.toUpperCase() || 'GET';
+    
     // Log detailed API error information
-    console.error('API Response error:', 
-      error.config?.method, 
-      error.config?.url, 
-      error.response?.status,
-      error.response?.data || error.message
-    );
+    console.error(`API Response error: ${method} ${fullUrl} → ${error.response?.status || 'Network Error'}`);
+    console.error('Error details:', error.response?.data || error.message);
     
     // Handle authentication errors
     if (error.response?.status === 401) {
