@@ -427,6 +427,20 @@ export default {
       console.log(`Getting dev token with base URL: ${this.apiBaseUrl}`);
       window.location.href = `${this.apiBaseUrl}/api/auth/dev-token`;
     },
+    testGoogleRedirect() {
+      // This function just logs the Google redirect URL without actually redirecting
+      const redirectUrl = `${this.apiBaseUrl}/api/auth/login`;
+      console.log('Would redirect to:', redirectUrl);
+      alert(`Google login would redirect to: ${redirectUrl}`);
+      
+      // For testing purposes, show what login URL would be used with the current origin
+      const originRedirectUrl = `${window.location.origin}/api/auth/login`;
+      console.log('If using origin directly, would redirect to:', originRedirectUrl);
+      
+      // Log the difference for debugging
+      console.log('Using API base URL is correct:', redirectUrl);
+      console.log('Using window.location.origin would be incorrect:', originRedirectUrl);
+    },
     logout() {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
