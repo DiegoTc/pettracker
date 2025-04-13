@@ -7,6 +7,7 @@ import json
 import requests
 import traceback
 import urllib.parse
+import platform
 from oauthlib.oauth2 import WebApplicationClient
 import logging
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -395,6 +396,22 @@ def check_auth():
         })
     else:
         return jsonify({"authenticated": False})
+
+# Simple API test endpoint that doesn't require auth
+@auth_bp.route('/test', methods=['GET', 'OPTIONS'])
+def test_api():
+    """Test endpoint to verify API connectivity"""
+    from datetime import datetime
+    return jsonify({
+        "status": "success",
+        "message": "API is operational",
+        "timestamp": datetime.utcnow().isoformat(),
+        "server_info": {
+            "flask_env": os.environ.get('FLASK_ENV', 'production'),
+            "python_version": platform.python_version(),
+            "hostname": platform.node()
+        }
+    })
 
 # Development/testing only endpoint - should be removed in production
 @auth_bp.route('/dev-token', methods=['GET', 'OPTIONS'])

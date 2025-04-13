@@ -171,6 +171,15 @@ export default {
       endpoints: [
         {
           method: 'GET', 
+          url: '/api/auth/test',
+          description: 'Basic API connectivity test',
+          response: null,
+          status: null,
+          responseTime: null,
+          error: null
+        },
+        {
+          method: 'GET', 
           url: '/api/auth/login_info',
           description: 'Get authentication configuration',
           response: null,
