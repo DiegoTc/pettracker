@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Pets from '../views/Pets.vue';
+import ApiTestComponent from '../apiTestComponent.vue';
 
 const routes = [
   {
@@ -69,6 +70,11 @@ const routes = [
     component: () => import('../views/AuthCallback.vue')
   },
   {
+    path: '/api-test',
+    name: 'ApiTest',
+    component: ApiTestComponent
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('../views/NotFound.vue')
@@ -82,8 +88,8 @@ const router = createRouter({
 
 // Navigation guard for authentication
 router.beforeEach((to, from, next) => {
-  // Skip auth check for login, callback, and dev-token routes
-  const publicPages = ['/login', '/auth/callback', '/dev-token'];
+  // Skip auth check for login, callback, dev-token and api-test routes
+  const publicPages = ['/login', '/auth/callback', '/dev-token', '/api-test'];
   const authRequired = !publicPages.includes(to.path);
   const loggedIn = localStorage.getItem('access_token');
   

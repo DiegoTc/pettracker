@@ -35,6 +35,11 @@
             <i class="bi bi-bar-chart"></i>
             <span>Reports</span>
           </router-link>
+          
+          <router-link to="/api-test" class="nav-link api-test-link" :class="{ active: $route.path === '/api-test' }">
+            <i class="bi bi-wrench-adjustable"></i>
+            <span>API Test</span>
+          </router-link>
         </div>
         
         <div class="nav-actions">
@@ -186,6 +191,12 @@ export default {
 .nav-link:hover, .nav-link.active {
   color: var(--primary);
   background-color: var(--primary-light);
+}
+
+.api-test-link {
+  margin-left: 8px;
+  background-color: #f0f5ff;
+  border: 1px dashed #99b3ff;
 }
 
 .nav-actions {
