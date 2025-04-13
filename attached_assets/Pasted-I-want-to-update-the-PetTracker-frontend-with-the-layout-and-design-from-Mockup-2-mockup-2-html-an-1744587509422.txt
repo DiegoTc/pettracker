@@ -1,0 +1,44 @@
+I want to update the PetTracker frontend with the layout and design from Mockup #2 (mockup-2.html and proposal-2.md) in the design-proposals folder, but I need to keep all existing functionality and API integrations intact.
+
+Key Requirements & Instructions:
+
+Maintain Existing Vue Structure & Functionality
+
+The project currently runs with npm run dev using Vite. Do not break the existing routing, authentication flow, or backend communication.
+
+Preserve component logic (for example, how data is fetched from the backend or how forms handle state).
+
+Adopt Mockup #2 UI/UX
+
+Update the Dashboard page to match the layout, styling, and element arrangement shown in mockup-2.html.
+
+Adapt the color scheme, typography, and positioning of elements to match proposal-2.md.
+
+Where the mockup shows placeholder data (e.g., “Recent Activity” lists, stats, etc.), integrate the actual data from our API or, if data is not yet available, display a placeholder that’s consistent with the design.
+
+Update Login Page
+
+Replace the existing login page design with the one described in mockup-2.html (or outlined in proposal-2.md).
+
+Keep the existing login logic, Google OAuth flow, and error handling. Only the styling and layout should change.
+
+Preserve or Enhance Responsiveness
+
+Ensure the new layout remains responsive for mobile and tablet views, or enhance responsiveness if the mockup suggests improvements.
+
+Avoid Breaking Code
+
+Make sure all existing routes (e.g., /login, /dashboard, /pets) still function.
+
+Retain all current APIs or method calls in the Vue components—only the visual presentation should change unless explicitly stated otherwise.
+
+Implementation Details
+
+Provide updated Vue component files (e.g., Dashboard.vue, Login.vue) showing how you integrated the new mockup’s styling and layout.
+
+Explain whether new CSS files, SCSS modules, or additional libraries are introduced.
+
+If any HTML structures need to be reworked, show exactly where the changes occur while still using Vue’s reactive data, props, and computed properties as before.
+
+Goal:
+By the end, the application should look like Mockup #2 in both the dashboard and login screens, while preserving all existing backend calls, routing, authentication, and data-fetch logic. Please provide the updated component code snippets and a brief explanation of how you integrated the new design.
