@@ -81,7 +81,7 @@ export default {
 }
 
 .loading-state.full-height {
-  min-height: 150px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,29 +92,56 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 2rem;
   text-align: center;
   width: 100%;
+  background-color: rgba(245, 247, 251, 0.5);
+  border-radius: var(--radius);
 }
 
 .spinner-container {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.25rem;
 }
 
 .loading-message, .error-message, .empty-message {
-  margin-top: 0.5rem;
-  color: #6c757d;
-  font-size: 0.9rem;
+  margin-top: 1rem;
+  color: var(--text-light);
+  font-size: 1rem;
+  max-width: 350px;
+  line-height: 1.5;
 }
 
 .error-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--warning);
 }
 
 .empty-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  color: #dee2e6;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--text-lighter);
+}
+
+.btn-outline-primary {
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background-color: transparent;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: var(--radius);
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
 }
 </style>

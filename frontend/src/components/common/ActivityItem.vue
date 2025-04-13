@@ -1,20 +1,21 @@
 <template>
   <div class="activity-item">
     <div class="activity-icon">
-      <i class="bi bi-geo-fill"></i>
+      <i class="bi bi-geo-alt"></i>
     </div>
     <div class="activity-content">
-      <h4 class="activity-title">{{ petName }}</h4>
-      <p class="activity-location">{{ location }}</p>
-      <div class="activity-details">
-        <span class="activity-time">
+      <div class="activity-text">
+        <strong>{{ petName }}</strong> was seen at <span class="location">{{ location }}</span>
+      </div>
+      <div class="activity-info">
+        <span>
           <i class="bi bi-clock"></i> {{ timeAgo }}
         </span>
-        <span class="activity-battery">
-          <i class="bi bi-battery-half"></i> {{ batteryLevel }}%
+        <span>
+          <i :class="batteryIcon"></i> {{ batteryLevel }}%
         </span>
-        <span class="activity-speed">
-          <i class="bi bi-speedometer"></i> {{ speed }} km/h
+        <span>
+          <i class="bi bi-speedometer2"></i> {{ speed }} km/h
         </span>
       </div>
     </div>
@@ -60,9 +61,7 @@ export default {
 <style scoped>
 .activity-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -71,50 +70,57 @@ export default {
 }
 
 .activity-icon {
-  width: 36px;
-  height: 36px;
-  background-color: var(--primary-light);
+  width: 42px;
+  height: 42px;
+  background-color: #E3F2FD;
+  border-radius: var(--radius);
   color: var(--primary);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.activity-icon i {
+  font-size: 20px;
 }
 
 .activity-content {
   flex: 1;
 }
 
-.activity-title {
+.activity-text {
   font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 2px 0;
+  margin-bottom: 6px;
   color: var(--text);
 }
 
-.activity-location {
-  font-size: 14px;
-  color: var(--text-light);
-  margin: 0 0 4px 0;
+.activity-text strong {
+  font-weight: 600;
 }
 
-.activity-details {
+.location {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.activity-info {
   display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--text-lighter);
+  flex-wrap: wrap;
 }
 
-.activity-details span {
+.activity-info span {
+  font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  color: var(--text-light);
+  margin-right: 16px;
+  margin-bottom: 4px;
 }
 
-.activity-time i,
-.activity-battery i,
-.activity-speed i {
-  font-size: 12px;
+.activity-info i {
+  margin-right: 6px;
+  font-size: 14px;
 }
 </style>
