@@ -26,12 +26,12 @@
             <label class="form-label">Access Token:</label>
             <div class="input-group">
               <input type="text" class="form-control" :value="token" readonly ref="tokenInput" />
-              <button class="btn btn-outline-secondary" @click="copyToken">
+              <button class="btn btn-outline-primary" @click="copyToken">
                 <i class="bi bi-clipboard me-1"></i> Copy
               </button>
             </div>
             <div v-if="copied" class="text-success mt-1">
-              <small>Token copied to clipboard!</small>
+              <small><i class="bi bi-check-circle-fill"></i> Token copied to clipboard!</small>
             </div>
           </div>
           
