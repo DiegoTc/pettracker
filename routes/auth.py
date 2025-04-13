@@ -456,6 +456,10 @@ def test_api():
 @auth_bp.route('/dev-token', methods=['GET', 'OPTIONS'])
 def get_dev_token():
     """Get a development token for testing - NOT FOR PRODUCTION USE"""
+    # Handle OPTIONS request explicitly for better CORS support
+    if request.method == 'OPTIONS':
+        return handle_options_request()
+        
     # Creating a token for testing purposes in any environment
     # Create a test user if it doesn't exist
     test_email = "test@example.com"
@@ -475,9 +479,19 @@ def get_dev_token():
     # Create JWT token for the test user - make sure to convert id to string
     access_token = create_access_token(identity=str(test_user.id))
     
-    return jsonify({
+    response = jsonify({
         "message": "Development token generated",
         "user_id": test_user.id,
         "access_token": access_token,
         "token": access_token  # Added for compatibility with test_api.py
     })
+    
+    # Ensure CORS headers are present for direct access
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    
+    logger.info(f"Dev Token Response Headers: {dict(response.headers)}")
+    
+    return response
