@@ -59,19 +59,36 @@
             <i class="bi bi-person-circle text-primary"></i>
           </div>
           <span class="user-name">{{ user.name }}</span>
+          
+          <!-- User dropdown menu -->
           <div class="dropdown ms-2">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-gear"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuDropdown">
+              <li><h6 class="dropdown-header">User Options</h6></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-sliders me-2"></i>Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
               <li>
-                <button class="dropdown-item" @click="logout" :disabled="loading">
+                <button class="dropdown-item text-danger" @click="logout" :disabled="loading">
                   <span v-if="loading"><i class="bi bi-hourglass-split me-2"></i>Signing Out...</span>
                   <span v-else><i class="bi bi-box-arrow-right me-2"></i>Sign Out</span>
                 </button>
               </li>
             </ul>
           </div>
+          
+          <!-- Direct logout button for mobile (always visible) -->
+          <button 
+            class="btn btn-sm btn-danger ms-2 d-inline-flex align-items-center sign-out-btn" 
+            @click="logout" 
+            :disabled="loading"
+            title="Sign out"
+          >
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="ms-1 d-none d-sm-inline">Sign Out</span>
+          </button>
         </div>
       </div>
     </nav>
@@ -292,6 +309,19 @@ export default {
 .user-name {
   font-weight: 500;
   font-size: 14px;
+}
+
+.sign-out-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sign-out-btn:hover {
+  background-color: #d32f2f;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
 .main-content {
