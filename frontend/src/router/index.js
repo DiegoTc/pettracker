@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Pets from '../views/Pets.vue';
-import ApiTestComponent from '../apiTestComponent.vue';
+import ApiTestComponent from '../views/ApiTest.vue';
 
 const routes = [
   {
