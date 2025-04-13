@@ -58,7 +58,20 @@
           <div class="user-avatar rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
             <i class="bi bi-person-circle text-primary"></i>
           </div>
-          <span class="user-name">John D</span>
+          <span class="user-name">{{ user.name }}</span>
+          <div class="dropdown ms-2">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-gear"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+              <li>
+                <button class="dropdown-item" @click="logout" :disabled="loading">
+                  <span v-if="loading"><i class="bi bi-hourglass-split me-2"></i>Signing Out...</span>
+                  <span v-else><i class="bi bi-box-arrow-right me-2"></i>Sign Out</span>
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </nav>
@@ -88,25 +101,94 @@
 </template>
 
 <script>
+import { authAPI } from '@/services/api';
+
 export default {
   name: 'AppLayout',
   data() {
     return {
       showUserMenu: false,
       user: {
-        name: 'John Doe',
-        profilePicture: null
-      }
+        name: 'User',
+        profilePicture: null,
+        email: '',
+        id: null
+      },
+      loading: false
     }
   },
+  
+  async mounted() {
+    // Fetch user information when component is mounted
+    this.fetchUserInfo();
+  },
+  
   methods: {
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu;
     },
-    logout() {
-      // Handle logout logic
-      console.log('User logged out');
-      this.$router.push('/login');
+    
+    async fetchUserInfo() {
+      // Only fetch user info if we have a token
+      if (!localStorage.getItem('access_token')) {
+        console.log('No authentication token available, skipping user fetch');
+        return;
+      }
+      
+      try {
+        this.loading = true;
+        const response = await authAPI.getUser();
+        
+        if (response.data) {
+          // Update user data
+          this.user = {
+            name: response.data.username || response.data.first_name || 'User',
+            email: response.data.email || '',
+            id: response.data.id,
+            profilePicture: response.data.profile_picture || null
+          };
+          
+          console.log('User information loaded successfully');
+        }
+      } catch (error) {
+        console.error('Error fetching user information:', error);
+        
+        // If we get an authentication error, redirect to login
+        if (error.response?.status === 401) {
+          this.$router.push('/login');
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async logout() {
+      // Set loading state
+      this.loading = true;
+      
+      try {
+        // Call the logout endpoint
+        await authAPI.logout();
+        
+        // Clear authentication data from localStorage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('is_authenticated');
+        
+        console.log('User signed out successfully');
+        
+        // Redirect to login page
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Error during sign out:', error);
+        
+        // Even if the API call fails, clear local storage and redirect
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('is_authenticated');
+        this.$router.push('/login');
+      } finally {
+        // Reset loading state - though it won't be visible as we're redirecting
+        this.loading = false;
+      }
     }
   }
 }
