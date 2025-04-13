@@ -170,6 +170,24 @@ export default {
       includeAuth: true,
       endpoints: [
         {
+          method: 'GET', 
+          url: '/api/auth/login_info',
+          description: 'Get authentication configuration',
+          response: null,
+          status: null,
+          responseTime: null,
+          error: null
+        },
+        {
+          method: 'GET',
+          url: '/api/auth/google',
+          description: 'Test Google auth redirect (will navigate away)',
+          response: null,
+          status: null,
+          responseTime: null,
+          error: null
+        },
+        {
           method: 'GET',
           url: '/api/auth/check',
           description: 'Check authentication status',
@@ -283,6 +301,17 @@ export default {
       endpoint.status = null;
       endpoint.responseTime = null;
       
+      // Special handling for Google Auth endpoint which causes redirect
+      if (endpoint.url === '/api/auth/google') {
+        if (confirm('Testing Google Auth will redirect you away from this page. Continue?')) {
+          window.location.href = `${this.apiBaseUrl}${endpoint.url}`;
+        } else {
+          endpoint.response = { message: 'Redirect cancelled by user' };
+          endpoint.status = 0;
+        }
+        return;
+      }
+      
       const startTime = performance.now();
       
       try {
@@ -391,6 +420,20 @@ export default {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       this.isAuthenticated = false;
+    },
+    toggleEditBaseUrl() {
+      if (this.editingBaseUrl) {
+        // Save mode - just toggle off edit mode
+        this.editingBaseUrl = false;
+        console.log(`API Base URL changed to: ${this.apiBaseUrl}`);
+      } else {
+        // Edit mode - enable editing
+        this.editingBaseUrl = true;
+      }
+    },
+    setApiBaseUrl(url) {
+      this.apiBaseUrl = url;
+      console.log(`API Base URL set to: ${url}`);
     }
   }
 };

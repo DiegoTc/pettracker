@@ -382,7 +382,14 @@ def check_auth():
             "user": {
                 "id": current_user.id,
                 "email": current_user.email,
-                "username": current_user.username
+                "username": current_user.username,
+                "first_name": current_user.first_name,
+                "last_name": current_user.last_name,
+                "role": current_user.role,
+                "profile_picture": current_user.profile_picture,
+                "pets_count": current_user.pets.count(),
+                "devices_count": current_user.devices.count(),
+                "last_login": current_user.last_login.isoformat() if current_user.last_login else None
             },
             "access_token": access_token
         })
