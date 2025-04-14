@@ -26,8 +26,8 @@ def get_devices():
         pet_id = request.args.get('pet_id', type=int)
         is_active = request.args.get('is_active')
         
-        # Create base query
-        query = Device.query.filter_by(user_id=user_id)
+        # Create base query with eager loading of pet relationship
+        query = Device.query.options(db.joinedload(Device.pet)).filter_by(user_id=user_id)
         
         # Apply filters if provided
         if pet_id:
@@ -57,7 +57,8 @@ def get_device(device_id):
     try:
         user_id = int(get_jwt_identity())
         
-        device = Device.query.filter_by(id=device_id, user_id=user_id).first()
+        # Use joinedload to eager load pet relationship
+        device = Device.query.options(db.joinedload(Device.pet)).filter_by(id=device_id, user_id=user_id).first()
         if not device:
             return jsonify({"error": "Device not found"}), 404
         
@@ -356,6 +357,7 @@ def assign_to_pet(device_id, pet_id):
     
     # Assign device to pet
     device.pet_id = pet.id
+    device.pet = pet  # Set the relationship object for to_dict() to use
     
     # Save to database
     try:

@@ -122,7 +122,7 @@ class Device(db.Model):
     
     def to_dict(self):
         """Convert object to dictionary"""
-        return {
+        result = {
             'id': self.id,
             'imei': self.imei,  # IMEI is now the primary identifier
             'device_id': self.device_id,  # Kept for backward compatibility
@@ -138,6 +138,16 @@ class Device(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+        
+        # Include pet information if this device is assigned to a pet
+        if self.pet_id and self.pet:
+            result['pet'] = {
+                'id': self.pet.id,
+                'name': self.pet.name,
+                'pet_type': self.pet.pet_type
+            }
+            
+        return result
 
 class Location(db.Model):
     """Location model for device location history"""
