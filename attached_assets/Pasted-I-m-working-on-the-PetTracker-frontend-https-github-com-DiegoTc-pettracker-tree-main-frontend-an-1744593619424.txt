@@ -1,0 +1,35 @@
+I'm working on the PetTracker frontend (https://github.com/DiegoTc/pettracker/tree/main/frontend) and encountered an issue with the edit functionality for devices and pets. When I try to edit an existing pet or device, the forms load blank instead of pre-populating with the current data. The "add" functionality is working properly, and I want to keep the same UI styling and behavior for the edit forms.
+
+Requirements:
+
+Data Preloading on Edit:
+
+Ensure that when a user selects to edit a pet or a device, the form fetches and loads the existing data from the backend API.
+
+The retrieved data should automatically fill the corresponding input fields (e.g., pet name, breed, device ID, serial number, etc.) in the edit form.
+
+Maintain Consistent UI and Functionality:
+
+The edit view should use the same CSS styles, layout, and input components as the "add" view so the user experience is uniform.
+
+All validations and real-time input feedback implemented for the "add" form should also apply to the edit form.
+
+API Integration:
+
+Double-check that the API call for fetching the existing device or pet data is correctly implemented and that the response populates the form fields.
+
+If any adjustments to the API service (for example in services/api.js) are needed, include those changes.
+
+Error Handling & Debugging:
+
+Update error handling so that if fetching the existing data fails, an appropriate error message is shown in the UI without breaking the edit screen.
+
+Deliverables:
+
+Provide updated Vue component code snippets (e.g., for PetForm.vue and DeviceForm.vue) that show how the existing item data is loaded (likely in the created() or mounted() lifecycle hooks) and bound to the form fields.
+
+Explain how the form's data model is initialized with the retrieved data so that the edit screen mirrors the "add" screen’s behavior and styling.
+
+Include any modifications to the API service or error handling code that are necessary to support preloading the data.
+
+The goal is to have an edit functionality that displays the current device or pet information (using the same CSS and form layout as the "add" functionality) so that users can seamlessly update their existing entries. Please provide the detailed code and implementation instructions.
