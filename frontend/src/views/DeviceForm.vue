@@ -19,30 +19,75 @@
         <form @submit.prevent="saveDevice">
           <div class="form-row">
             <div class="form-group">
-              <label for="deviceId" class="form-label">
-                Device ID <span class="text-danger">*</span>
-              </label>
-              <div class="input-wrapper" :class="{'is-invalid': errors.device_id}">
+              <div class="label-with-tooltip">
+                <label for="deviceId" class="form-label">
+                  Device ID <span class="text-danger">*</span>
+                </label>
+                <div class="tooltip-wrapper">
+                  <i class="bi bi-info-circle info-icon" 
+                     data-bs-toggle="tooltip" 
+                     data-bs-placement="top" 
+                     title="10-character alphanumeric identifier found on your physical device. Format example: PT12345678 or JT12345678"></i>
+                </div>
+              </div>
+              
+              <div class="input-wrapper" :class="{'is-invalid': errors.device_id, 'is-valid': isDeviceIdValid && device.device_id.length > 0}">
                 <input 
                   type="text" 
                   id="deviceId" 
                   v-model="device.device_id" 
                   class="form-control" 
-                  :class="{'is-invalid': errors.device_id}"
+                  :class="{
+                    'is-invalid': errors.device_id,
+                    'is-valid': isDeviceIdValid && device.device_id.length > 0
+                  }"
                   :disabled="isEditMode"
-                  placeholder="Enter 10-digit device ID (e.g., JT12345678)"
+                  aria-describedby="deviceIdHelp deviceIdError deviceIdFormat"
                   maxlength="10"
                   pattern="^[A-Za-z0-9]{10}$"
                   @input="formatDeviceId"
+                  @focus="deviceIdFocused = true"
+                  @blur="deviceIdFocused = false"
                 >
-                <small class="device-id-format">Format: 10 characters (letters and numbers)</small>
+                <div class="device-id-visual-guide" :class="{'focused': deviceIdFocused || device.device_id.length > 0}">
+                  <div class="character-group" v-for="(group, index) in deviceIdVisualization" :key="index">
+                    <span 
+                      v-for="(char, charIndex) in group" 
+                      :key="`${index}-${charIndex}`"
+                      :class="{
+                        'filled': getDeviceIdCharAt(index * 2 + charIndex) !== '',
+                        'current': getCurrentCharPosition() === index * 2 + charIndex
+                      }"
+                    >
+                      {{ getDeviceIdCharAt(index * 2 + charIndex) || char }}
+                    </span>
+                  </div>
+                </div>
+                <div id="deviceIdFormat" class="format-badge" :class="{'active': device.device_id.length > 0}">
+                  {{ device.device_id.length }}/10
+                </div>
               </div>
-              <div v-if="errors.device_id" class="invalid-feedback d-block">
-                {{ errors.device_id }}
+              
+              <div class="input-feedback-area">
+                <div v-if="errors.device_id" id="deviceIdError" class="invalid-feedback d-block" role="alert">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ errors.device_id }}
+                </div>
+                <div v-else-if="isDeviceIdValid && device.device_id.length > 0" class="valid-feedback d-block">
+                  <i class="bi bi-check-circle-fill me-1"></i> Valid device ID format
+                </div>
+                <div id="deviceIdHelp" class="form-text mt-1" v-if="!isEditMode">
+                  <!-- Format guide remains visible at all times -->
+                  <div class="format-guide">
+                    <i class="bi bi-123 me-1"></i> <strong>Format:</strong> 10 characters (letters and numbers only)
+                  </div>
+                  <div>
+                    <i class="bi bi-lightbulb me-1"></i> <strong>Example:</strong> <code>PT12345678</code> or <code>JT12345678</code>
+                  </div>
+                  <div v-if="!isEditMode && device.device_id.length < 10" class="mt-1 text-muted">
+                    <i class="bi bi-info-circle me-1"></i> Enter the unique ID found on your physical GPS tracker
+                  </div>
+                </div>
               </div>
-              <small class="text-muted" v-if="!isEditMode">
-                Enter the unique 10-digit ID provided with your GPS tracker
-              </small>
             </div>
 
             <div class="form-group">
@@ -180,7 +225,15 @@ export default {
       isLoading: false,
       errors: {},
       globalError: null,
-      requiredFields: ['device_id']
+      requiredFields: ['device_id'],
+      deviceIdFocused: false,
+      deviceIdVisualization: [
+        ['P', 'T'], 
+        ['1', '2'], 
+        ['3', '4'], 
+        ['5', '6'], 
+        ['7', '8']
+      ]
     }
   },
   computed: {
@@ -189,6 +242,12 @@ export default {
     },
     deviceId() {
       return this.$route.params.id;
+    },
+    isDeviceIdValid() {
+      if (!this.device.device_id) return false;
+      
+      const deviceIdPattern = /^[A-Za-z0-9]{10}$/;
+      return deviceIdPattern.test(this.device.device_id);
     }
   },
   mounted() {
@@ -325,6 +384,19 @@ export default {
         // Automatically convert to uppercase for better readability
         this.device.device_id = this.device.device_id.toUpperCase();
       }
+    },
+    
+    // Get character at specified position in device ID
+    getDeviceIdCharAt(index) {
+      if (!this.device.device_id || index >= this.device.device_id.length) {
+        return '';
+      }
+      return this.device.device_id.charAt(index);
+    },
+    
+    // Get current cursor position to highlight in the visual guide
+    getCurrentCharPosition() {
+      return this.device.device_id ? this.device.device_id.length : 0;
     }
   }
 }

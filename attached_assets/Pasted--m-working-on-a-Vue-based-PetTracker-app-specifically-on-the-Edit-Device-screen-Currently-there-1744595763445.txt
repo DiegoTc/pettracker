@@ -1,0 +1,42 @@
+’m working on a Vue-based PetTracker app, specifically on the “Edit Device” screen. Currently, there’s a placeholder in the Device ID field that reads:
+
+java
+Copy
+Enter 10-digit device ID (e.g., JT12345678)
+Why It’s a Problem:
+
+Placeholder Limitations: The instructions disappear as soon as the user starts typing, leaving them without guidance if they forget the required format.
+
+Accessibility Concerns: Screen readers and assistive technologies may not consistently announce placeholder text, making it less reliable for important instructions.
+
+Desired Improvements:
+
+Visible Label or Helper Text
+
+Rather than relying on a placeholder, display a label (e.g., “Device ID (10 characters, letters and numbers)”) so the requirements remain visible at all times.
+
+Optionally add a small helper text under the input (e.g., “Letters and numbers only. Example: JT12345678”) that doesn’t vanish on typing.
+
+Optional Tooltip or Icon
+
+If more explanation is needed, consider a tooltip icon next to the label (a small “?” or “i” icon) that, when hovered or tapped, shows additional instructions.
+
+Validation & Feedback
+
+Include real-time validation or show an error message if the user’s input doesn’t match the 10-character requirement. This prevents confusion once the user moves away from the field.
+
+Code Snippets & Accessibility
+
+Provide Vue code examples demonstrating how to implement a persistent label with helper text instead of using a placeholder.
+
+Show how to include ARIA attributes or descriptive text for screen readers if necessary.
+
+Deliverables:
+
+Updated DeviceForm.vue snippet (or a shared form component) that shows the new label, helper text, or tooltip approach.
+
+Explanations or code references for adding real-time validation feedback (e.g., using a v-if="errorMessage" under the input).
+
+Any required changes to CSS/SCSS to style the helper text or tooltip consistently with the existing design.
+
+The goal is to provide a better user experience where the required format is always visible or easily discoverable, enhancing both clarity and accessibility compared to a placeholder that disappears.
