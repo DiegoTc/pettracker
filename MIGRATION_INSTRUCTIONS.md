@@ -1,104 +1,90 @@
-# Database Migration Instructions
+# IMEI Migration Instructions
 
-This document provides instructions for properly migrating the database when schema changes are made.
+## Quick Guide to Run the Migration
 
-## Understanding the Migration System
+We've provided multiple methods to run the database migration to support IMEI as the primary device identifier:
 
-The application uses Flask-Migrate (Alembic) to manage database migrations. This ensures that database schema changes are tracked and can be applied consistently across different environments.
+### Method 1: Standalone Migration Script (Recommended)
 
-## Migration Commands
-
-### Create a Migration
-
-When you make changes to your SQLAlchemy models, generate a new migration:
+This is the simplest method that doesn't require Flask-Migrate:
 
 ```bash
-flask db migrate -m "description_of_changes"
+# Make sure your DATABASE_URL environment variable is set
+export DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+
+# Run the migration script
+python3 run_imei_migration.py
 ```
 
-This creates a new migration script in the `migrations/versions/` directory.
+### Method 2: Using Flask-Migrate Helper
 
-### Apply Migrations
-
-To apply all pending migrations:
+If you prefer to use Flask-Migrate:
 
 ```bash
-flask db upgrade
+# Install Flask-Migrate if not already installed
+pip install flask-migrate
+
+# Make sure your DATABASE_URL environment variable is set
+export DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+
+# Run the Flask migration helper
+python3 run_flask_migration.py
 ```
 
-### Downgrade Database
+### Method 3: Manual Database Updates
 
-To revert to a previous migration:
+If you prefer to run the SQL directly:
+
+```sql
+-- Step 1: Make device_id nullable
+ALTER TABLE device ALTER COLUMN device_id DROP NOT NULL;
+
+-- Step 2: Update NULL IMEI values (replace with your own logic)
+UPDATE device 
+SET imei = CONCAT('MIGRATED', LPAD(id::text, 10, '0'))
+WHERE imei IS NULL;
+
+-- Step 3: Make IMEI NOT NULL
+ALTER TABLE device ALTER COLUMN imei SET NOT NULL;
+
+-- Step 4: Create index on IMEI
+CREATE INDEX IF NOT EXISTS ix_device_imei ON device (imei);
+```
+
+## What to Expect After Migration
+
+1. The `device_id` field will be optional
+2. The `imei` field will be required
+3. Existing devices without IMEI values will have generated IMEI values
+4. Lookups by both internal ID and IMEI will work
+
+## Verifying the Migration
 
 ```bash
-flask db downgrade
+# Connect to your database
+psql $DATABASE_URL
+
+# Check the device table schema
+\d device
+
+# Verify all devices have IMEI values
+SELECT COUNT(*) FROM device WHERE imei IS NULL;
+
+# View IMEI values that were generated
+SELECT id, device_id, imei FROM device WHERE imei LIKE 'MIGRATED%';
 ```
 
-## Troubleshooting Common Issues
+## Troubleshooting
 
-### 1. User role column missing
+If you encounter issues:
 
-If you encounter errors about the User.role column missing, ensure you:
+1. **Error: IMEI value already exists**  
+   Some devices might have duplicate IMEI values. Use the standalone script which handles this with random suffixes.
 
-1. Check that the User model has the role field properly defined:
-   ```python
-   role = db.Column(db.String(20), default='user', nullable=False)
-   ```
+2. **Error: device_id cannot be NULL**  
+   The migration script might not have successfully made device_id nullable. Run the ALTER TABLE command manually.
 
-2. Check if the column exists in the database:
-   ```sql
-   SELECT column_name, data_type, column_default 
-   FROM information_schema.columns 
-   WHERE table_name = 'user' AND column_name = 'role';
-   ```
+3. **API errors after migration**  
+   Make sure all code that creates devices now provides an IMEI value.
 
-3. If the column doesn't exist or has incorrect properties, run:
-   ```bash
-   flask db stamp head  # Mark current state as latest
-   flask db migrate -m "add_user_role_column"  # Create migration for changes
-   flask db upgrade  # Apply the migration
-   ```
-
-### 2. Table doesn't reflect model changes
-
-When your models change but the database doesn't reflect those changes:
-
-1. Make sure all models have `__table_args__ = {'extend_existing': True}` to handle schema reflection correctly
-2. Run a fresh migration:
-   ```bash
-   flask db stamp head
-   flask db migrate
-   flask db upgrade
-   ```
-
-### 3. SQLAlchemy Metadata Reflection Issues
-
-If SQLAlchemy is not correctly reflecting the database schema:
-
-1. Ensure the app context is properly set up before reflecting:
-   ```python
-   with app.app_context():
-       Base.metadata.reflect(db.engine)
-   ```
-
-2. Clear SQLAlchemy's metadata cache before reflecting:
-   ```python
-   Base.metadata.clear()
-   Base.metadata.reflect(db.engine)
-   ```
-
-## Best Practices
-
-1. Always back up your database before running migrations
-2. Review migration scripts before applying them
-3. Test migrations in development before deploying to production
-4. Keep migration scripts under version control
-5. For model changes, consider data migrations in addition to schema migrations
-6. When adding a column with a default value, consider adding it as nullable first, then fill existing rows, then set it to non-nullable
-
-## Recent Migration History
-
-The most recent migration added or confirmed that the User model has a role column with these properties:
-- Data type: VARCHAR(20)
-- Default value: 'user'
-- Constraint: NOT NULL
+For more details about this architectural change, see the full [IMEI Migration Guide](./IMEI_MIGRATION_GUIDE.md).
