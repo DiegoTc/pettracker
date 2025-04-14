@@ -202,6 +202,7 @@
 import AppLayout from '../components/layout/AppLayout.vue';
 import CardComponent from '../components/common/CardComponent.vue';
 import { devicesAPI, petsAPI } from '../services/api.js';
+import * as bootstrap from 'bootstrap';
 
 export default {
   name: 'DeviceForm',
@@ -255,6 +256,14 @@ export default {
     if (this.isEditMode) {
       this.fetchDeviceDetails();
     }
+    
+    // Initialize Bootstrap tooltips after component is mounted
+    setTimeout(() => {
+      const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+      });
+    }, 100);
   },
   methods: {
     async fetchPets() {
@@ -488,7 +497,31 @@ label .text-danger {
 }
 
 /* Device ID format styling */
-.device-id-format {
+.input-wrapper {
+  position: relative;
+}
+
+/* Label and tooltip */
+.label-with-tooltip {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tooltip-wrapper {
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.info-icon {
+  color: var(--primary);
+  font-size: 16px;
+  cursor: help;
+}
+
+/* Format badge */
+.format-badge {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -496,12 +529,101 @@ label .text-danger {
   background-color: var(--primary-light);
   color: var(--text);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 16px;
   font-size: 12px;
-  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.input-wrapper {
-  position: relative;
+.format-badge.active {
+  opacity: 1;
+}
+
+/* Visual character guide */
+.device-id-visual-guide {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.device-id-visual-guide.focused {
+  opacity: 1;
+}
+
+.character-group {
+  display: flex;
+  background-color: var(--background-lighter);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.character-group span {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--text-lighter);
+  border-right: 1px solid var(--border);
+  background-color: var(--background-light);
+}
+
+.character-group span:last-child {
+  border-right: none;
+}
+
+.character-group span.filled {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: bold;
+}
+
+.character-group span.current {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+/* Feedback area */
+.input-feedback-area {
+  margin-top: 32px;
+}
+
+.form-text {
+  color: var(--text-lighter);
+  font-size: 14px;
+}
+
+.format-guide {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* Valid feedback */
+.valid-feedback {
+  color: #198754;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.valid-feedback i, 
+.invalid-feedback i {
+  margin-right: 4px;
+}
+
+/* Code formatting */
+code {
+  background-color: var(--background-lighter);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--primary);
 }
 </style>
