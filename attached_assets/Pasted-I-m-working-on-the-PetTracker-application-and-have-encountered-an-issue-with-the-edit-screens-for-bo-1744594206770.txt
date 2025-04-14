@@ -1,0 +1,33 @@
+I’m working on the PetTracker application and have encountered an issue with the edit screens for both pets and devices. When I navigate to the edit page (for example, /pets/:id/edit for pets or /devices/:id/edit for devices), the server logs show a successful GET response (HTTP 200) that returns the existing data, yet the form fields remain empty. There are no errors in the browser console or server logs.
+
+What I Need:
+
+Data Retrieval & Binding:
+
+Verify that the API call in the edit component (e.g., PetForm.vue and DeviceForm.vue) correctly fetches the existing data using the ID parameter from the route (like this.$route.params.id or a query parameter).
+
+Ensure that the returned data is properly assigned to the component’s reactive data properties so that every input field is populated with the current data.
+
+v-model Bindings and Form Fields:
+
+Confirm that each input field’s v-model is bound to a property in the component’s data (or Vuex store) that is updated with the fetched data.
+
+Double-check if any conditional rendering (for example, v-if="isEditing") is inadvertently hiding or resetting the form fields.
+
+Lifecycle Hook & Update Timing:
+
+Ensure that the data fetching logic for both pets and devices runs in an appropriate lifecycle hook (e.g., created(), mounted(), or the Composition API’s onMounted()), so the data is retrieved and bound before the form is rendered.
+
+Consistent UI for Add and Edit:
+
+The edit screens should reuse the same layout, CSS styles, and form input components as the add screens. If possible, reuse a single form component for both adding and editing, with differences controlled by passed props (for example, an isEditing flag).
+
+Deliverables:
+
+Provide updated code snippets or a detailed explanation for how the existing pet and device data is fetched and then bound to the form fields in the edit components (e.g., PetForm.vue and DeviceForm.vue).
+
+Demonstrate how each form field (such as Pet Name, Breed, Device ID, Serial Number, etc.) is populated with the correct data from the server response.
+
+Confirm that the UI and styling are consistent with the add functionality, so that editing looks and behaves the same as adding, but with pre-filled data.
+
+The goal is to ensure that when a user navigates to an edit page for either a pet or a device, the form displays all existing details for that item. Please provide your updated code and instructions to resolve this binding issue for both module types.
