@@ -1,0 +1,45 @@
+I'm currently testing the PetTracker application (frontend repo: https://github.com/DiegoTc/pettracker/tree/main/frontend). I have encountered the following two issues:
+
+1. Data Not Persisting in the Database (Pets & Devices):
+When I add a new pet (and likely a device too), the form submits without any visible errors, but the new record is not being saved to the database. This might indicate an issue with the API request, the data handling in the form, or a missing backend validation/logic.
+
+2. Lack of UI Validation for Required Fields:
+In the current UI, it’s not clear which fields are required because there are no visual indicators. Additionally, when trying to submit the form with missing required fields, no error messages are displayed, and the user is not notified.
+
+Requirements:
+
+API/Data Issue (Add Pet/Device):
+
+Review the add pet (and device) functionality to ensure that the API call is properly constructed and that the data is being sent to the backend.
+
+Add any missing validations on the backend (if necessary) or confirm that the frontend is making a correct API call.
+
+Log or display error messages if the data is not persisted, so that the developer/user can easily identify what is missing.
+
+UI Validation Improvements:
+
+Update the form (in Vue components like PetForm.vue and DeviceForm.vue) to visually indicate which fields are required (e.g., by adding an asterisk (*) next to the field label).
+
+Implement inline validation on the frontend so that when a user attempts to submit the form without filling in required fields, a clear and descriptive error message appears near each incomplete field.
+
+Use proper error styling (e.g., red borders for inputs or error text) so that the user is immediately aware of what needs to be corrected.
+
+Deliverables:
+
+Provide updated Vue component code snippets that show:
+
+How to integrate the required field validations (including visual cues and inline error messages).
+
+A demonstration of how the API call is made to add a pet (and/or device) and any error handling if the data is not saved to the DB.
+
+Include any relevant CSS/SCSS changes needed to properly style the required fields and error messages.
+
+Provide debugging instructions or logs that help confirm if the backend is receiving the correct data. If necessary, also update the API service (in services/api.js) with appropriate error handling.
+
+The end goal is to ensure that:
+
+Any attempt to add a pet or device is correctly processed and persisted in the database.
+
+The UI clearly indicates required fields and provides immediate feedback if the form is submitted without those fields.
+
+Please provide the updated code and detailed implementation instructions for both the form submission data issue and the UI validation improvements.
