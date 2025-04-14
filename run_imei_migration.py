@@ -7,14 +7,30 @@ Usage:
     python3 run_imei_migration.py
 
 Requirements:
-    - DATABASE_URL environment variable must be set
+    - DATABASE_URL environment variable must be set (or in .env file)
     - sqlalchemy must be installed
 """
 import os
 import sys
 import random
+import pathlib
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+# Load environment variables from .env file if present
+def load_env():
+    env_path = pathlib.Path('.env')
+    if env_path.exists():
+        print("Loading environment from .env file...")
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip().strip('"\'')
+        return True
+    return False
 
 def run_migration():
     """Run the migration to make IMEI the primary device identifier"""
@@ -130,6 +146,9 @@ def verify_migration():
         sys.exit(1)
 
 if __name__ == "__main__":
+    # Try loading environment variables from .env file
+    load_env()
+    
     run_migration()
     print("\nVerifying migration...")
     verify_migration()

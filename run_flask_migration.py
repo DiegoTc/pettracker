@@ -8,9 +8,28 @@ Usage:
 """
 import os
 import sys
+import pathlib
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate, upgrade
+
+# Load environment variables from .env file if present
+def load_env():
+    env_path = pathlib.Path('.env')
+    if env_path.exists():
+        print("Loading environment from .env file...")
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip().strip('"\'')
+        return True
+    return False
+
+# Try to load environment variables from .env file
+load_env()
 
 # Create basic Flask app with migration support
 app = Flask(__name__)
