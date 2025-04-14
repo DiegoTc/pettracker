@@ -11,20 +11,30 @@
 
     <div class="form-container">
       <card-component :title="isEditMode ? 'Edit Device Information' : 'Device Information'" icon="bi bi-pencil-square">
+        <!-- Global Error Message -->
+        <div v-if="globalError" class="alert alert-danger mb-3">
+          {{ globalError }}
+        </div>
+        
         <form @submit.prevent="saveDevice">
           <div class="form-row">
             <div class="form-group">
-              <label for="deviceId" class="form-label">Device ID</label>
-              <div class="input-wrapper">
+              <label for="deviceId" class="form-label">
+                Device ID <span class="text-danger">*</span>
+              </label>
+              <div class="input-wrapper" :class="{'is-invalid': errors.device_id}">
                 <input 
                   type="text" 
                   id="deviceId" 
                   v-model="device.device_id" 
                   class="form-control" 
-                  required 
+                  :class="{'is-invalid': errors.device_id}"
                   :disabled="isEditMode"
                   placeholder="Enter device ID"
                 >
+              </div>
+              <div v-if="errors.device_id" class="invalid-feedback d-block">
+                {{ errors.device_id }}
               </div>
               <small class="text-muted" v-if="!isEditMode">
                 Enter the unique ID provided with your GPS tracker
@@ -129,8 +139,8 @@
             <button type="button" class="btn btn-secondary" @click="$router.go(-1)">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary">
-              {{ isEditMode ? 'Update Device' : 'Add Device' }}
+            <button type="submit" class="btn btn-primary" :disabled="isLoading">
+              {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Device' : 'Add Device') }}
             </button>
           </div>
         </form>
@@ -184,95 +194,93 @@ export default {
     }
   },
   methods: {
-    fetchPets() {
-      // Simulate API call
-      setTimeout(() => {
-        this.pets = [
-          { id: 1, name: 'Buddy' },
-          { id: 2, name: 'Max' },
-          { id: 3, name: 'Luna' }
-        ];
-      }, 500);
-      
-      // Real API call will look like:
-      /*
-      fetch('/api/pets')
-        .then(response => response.json())
-        .then(data => {
-          this.pets = data;
-        })
-        .catch(error => {
-          console.error('Error fetching pets:', error);
-        });
-      */
+    async fetchPets() {
+      try {
+        const response = await petsAPI.getAll();
+        this.pets = response.data;
+      } catch (error) {
+        console.error('Error fetching pets:', error);
+        this.globalError = 'Failed to load pets list. Please try again.';
+      }
     },
-    fetchDeviceDetails() {
-      // Simulate API call
-      setTimeout(() => {
-        this.device = {
-          id: this.deviceId,
-          device_id: 'ABC123',
-          name: 'Buddy\'s Collar',
-          device_type: 'GPS Collar',
-          serial_number: 'SN123456789',
-          imei: '123456789012345',
-          firmware_version: '1.2.3',
-          is_active: true,
-          pet_id: 1
-        };
-      }, 500);
-      
-      // Real API call will look like:
-      /*
-      fetch(`/api/devices/${this.deviceId}`)
-        .then(response => {
-          if (!response.ok) throw new Error('Device not found');
-          return response.json();
-        })
-        .then(data => {
-          this.device = data;
-        })
-        .catch(error => {
-          console.error('Error fetching device details:', error);
-          this.$router.push('/devices');
-        });
-      */
-    },
-    saveDevice() {
-      this.isLoading = true;
-      
-      console.log('Saving device:', this.device);
-      
-      // Simulate API save
-      setTimeout(() => {
+    
+    async fetchDeviceDetails() {
+      try {
+        this.isLoading = true;
+        const response = await devicesAPI.getById(this.deviceId);
+        this.device = response.data;
         this.isLoading = false;
-        this.$router.push('/devices');
-      }, 1000);
-      
-      // Real API call will look like:
-      /*
-      const url = this.isEditMode ? `/api/devices/${this.deviceId}` : '/api/devices';
-      const method = this.isEditMode ? 'PUT' : 'POST';
-      
-      fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.device)
-      })
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to save device');
-          return response.json();
-        })
-        .then(data => {
+      } catch (error) {
+        console.error('Error fetching device details:', error);
+        this.isLoading = false;
+        this.globalError = 'Failed to load device details. Please try again.';
+        
+        // Redirect back to devices list if the device is not found
+        if (error.response && error.response.status === 404) {
           this.$router.push('/devices');
-        })
-        .catch(error => {
-          console.error('Error saving device:', error);
+        }
+      }
+    },
+    
+    async saveDevice() {
+      this.isLoading = true;
+      this.errors = {};
+      this.globalError = null;
+      
+      try {
+        // Validate form fields
+        this.validateForm();
+        
+        // If no validation errors, proceed with API call
+        if (Object.keys(this.errors).length === 0) {
+          console.log('Saving device:', this.device);
+          
+          // Use devicesAPI service to create or update the device
+          if (this.isEditMode) {
+            const response = await devicesAPI.update(this.deviceId, this.device);
+            console.log('Device updated successfully:', response.data);
+          } else {
+            const response = await devicesAPI.create(this.device);
+            console.log('Device created successfully:', response.data);
+          }
+          
+          // Navigate back to devices list on success
+          this.$router.push('/devices');
+        } else {
+          // If there are validation errors, stop loading state
           this.isLoading = false;
-        });
-      */
+        }
+      } catch (error) {
+        console.error('Error saving device:', error);
+        this.isLoading = false;
+        
+        // Add global error if server returns error
+        if (error.response) {
+          this.globalError = error.response.data.error || 'Failed to save device. Please try again.';
+          
+          // If the server returns field-specific errors, update the errors object
+          if (error.response.data.errors) {
+            this.errors = { ...this.errors, ...error.response.data.errors };
+          }
+        } else {
+          this.globalError = 'Network error. Please check your connection and try again.';
+        }
+      }
+    },
+    
+    validateForm() {
+      // Reset errors before validation
+      this.errors = {};
+      this.globalError = null;
+      
+      // Validate required fields
+      this.requiredFields.forEach(field => {
+        if (!this.device[field] || this.device[field].trim() === '') {
+          this.errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} is required`;
+        }
+      });
+      
+      return Object.keys(this.errors).length === 0;
     }
   }
 }
@@ -336,5 +344,30 @@ export default {
 
 .btn-secondary:hover {
   background-color: var(--border);
+}
+
+/* Validation styling */
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Required field indicator */
+label .text-danger {
+  font-weight: bold;
 }
 </style>
