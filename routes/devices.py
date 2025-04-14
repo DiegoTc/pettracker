@@ -84,12 +84,24 @@ def create_device():
     if 'name' not in data:
         return jsonify({"error": "Device name is required"}), 400
     
-    # Check if pet_id is valid if provided
+    # Handle pet_id data type conversion and validation
     pet_id = data.get('pet_id')
-    if pet_id:
-        pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
-        if not pet:
-            return jsonify({"error": "Pet not found"}), 404
+    # Convert empty string to None
+    if pet_id == '':
+        pet_id = None
+    # Validate pet_id if it's provided and not None
+    elif pet_id is not None:
+        try:
+            # Convert to integer if it's a string
+            if isinstance(pet_id, str):
+                pet_id = int(pet_id)
+            # Verify that the pet exists and belongs to the user
+            pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
+            if not pet:
+                return jsonify({"error": "Pet not found"}), 404
+        except ValueError:
+            # Handle case where pet_id can't be converted to an integer
+            return jsonify({"error": "Invalid pet ID format"}), 400
     
     # Generate device ID if not provided
     device_id = data.get('device_id', Device.generate_device_id())
@@ -145,17 +157,29 @@ def update_device(device_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
     
-    # Check if pet_id is valid if provided
+    # Handle pet_id data type conversion and validation
     pet_id = data.get('pet_id')
-    if pet_id is not None:
-        if pet_id == 0:
-            # Remove pet assignment
-            device.pet_id = None
-        else:
+    
+    # Convert empty string to None
+    if pet_id == '':
+        device.pet_id = None
+    # Handle explicit unassignment
+    elif pet_id == 0 or pet_id == '0':
+        device.pet_id = None
+    # Validate pet_id if it's provided and not None
+    elif pet_id is not None:
+        try:
+            # Convert to integer if it's a string
+            if isinstance(pet_id, str):
+                pet_id = int(pet_id)
+            # Verify that the pet exists and belongs to the user
             pet = Pet.query.filter_by(id=pet_id, user_id=user_id).first()
             if not pet:
                 return jsonify({"error": "Pet not found"}), 404
             device.pet_id = pet_id
+        except ValueError:
+            # Handle case where pet_id can't be converted to an integer
+            return jsonify({"error": "Invalid pet ID format"}), 400
     
     # Update fields
     if 'name' in data:
