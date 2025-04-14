@@ -1,0 +1,39 @@
+In the PetTracker application, I have a list of devices (for example, at /devices) where each card shows whether or not the device is assigned to a pet. Right now, the UI shows “Not assigned” even though the database confirms that a pet is associated with that device (and the edit screen also shows the correct pet assignment).
+
+Problem:
+
+The devices are actually assigned to pets in the DB, but the list view incorrectly displays “Not assigned.”
+
+When I open the edit form for a device, the correct pet is displayed.
+
+What I Need:
+
+Front-End Review:
+
+Check how the device listing component (e.g., Devices.vue or a similar file) retrieves and displays the pet assignment. Verify if the API response includes the pet_id (or pet object) and ensure that the UI code handles it correctly.
+
+Confirm that there is no mismatch in property names (e.g., if the backend returns assigned_pet but the front-end uses pet).
+
+Back-End Verification:
+
+Make sure the endpoint responsible for listing devices (e.g., GET /api/devices/) includes the pet relationship. If the pet relationship is not eager-loaded or included in the JSON response, the front-end will have no data about pet assignments.
+
+Verify that pet_id or the full pet object is included in the device serializer or response.
+
+UI Fix:
+
+Update the device list UI to display the name of the assigned pet if pet_id or a pet object is returned. For instance, show "Assigned to: Buddy" instead of “Not assigned.”
+
+Provide fallback text (like “Not assigned”) only if pet_id is null (or if there is no pet object).
+
+Deliverables:
+
+Code snippets showing how the updated API response handles the pet relationship in the device list.
+
+Front-end changes (e.g., in Devices.vue) that properly display the assigned pet’s name instead of showing “Not assigned.”
+
+Any additional notes on how to keep the device edit view consistent with the list view.
+
+Goal:
+Get the device list page to correctly show the assigned pet’s name whenever a pet is associated with the device in the database, so that the user sees consistent information between the list page and the edit page.
+
