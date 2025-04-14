@@ -88,6 +88,25 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 0.25rem rgba(33, 150, 243, 0.25);
 }
 
+/* Modern Clean Fields input styling */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper .form-control,
+.input-wrapper .form-select {
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  transition: all 0.2s ease;
+}
+
+.input-wrapper .form-control:focus,
+.input-wrapper .form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
 .card {
   border-radius: var(--radius);
   background-color: var(--card-bg);

@@ -10,7 +10,9 @@
         <div class="mb-3">
           <label class="form-label">API Base URL (Current)</label>
           <div class="input-group">
-            <input type="text" class="form-control" v-model="apiBaseUrl" :disabled="!editingBaseUrl" />
+            <div class="input-wrapper flex-grow-1">
+              <input type="text" class="form-control" v-model="apiBaseUrl" :disabled="!editingBaseUrl" />
+            </div>
             <button class="btn btn-outline-secondary" @click="toggleEditBaseUrl">
               {{ editingBaseUrl ? 'Save' : 'Edit' }}
             </button>
@@ -68,8 +70,10 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h2>API Endpoints Test</h2>
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" v-model="includeAuth" id="includeAuthSwitch">
-          <label class="form-check-label" for="includeAuthSwitch">Include Auth Token</label>
+          <div class="input-wrapper">
+            <input class="form-check-input" type="checkbox" v-model="includeAuth" id="includeAuthSwitch">
+            <label class="form-check-label" for="includeAuthSwitch">Include Auth Token</label>
+          </div>
         </div>
       </div>
       <div class="card-body">
@@ -107,21 +111,27 @@
       <div class="card-body">
         <div class="mb-3 row">
           <div class="col-md-2">
-            <select class="form-select" v-model="customRequest.method">
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-            </select>
+            <div class="input-wrapper">
+              <select class="form-select" v-model="customRequest.method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
           </div>
           <div class="col-md-10">
-            <input type="text" class="form-control" v-model="customRequest.url" placeholder="API endpoint (e.g., /api/pets)" />
+            <div class="input-wrapper">
+              <input type="text" class="form-control" v-model="customRequest.url" placeholder="API endpoint (e.g., /api/pets)" />
+            </div>
           </div>
         </div>
         
         <div class="mb-3" v-if="customRequest.method !== 'GET'">
           <label class="form-label">Request Body (JSON)</label>
-          <textarea class="form-control" v-model="customRequest.body" rows="5" placeholder='{"key": "value"}'></textarea>
+          <div class="input-wrapper">
+            <textarea class="form-control" v-model="customRequest.body" rows="5" placeholder='{"key": "value"}'></textarea>
+          </div>
         </div>
         
         <button class="btn btn-primary" @click="testCustomEndpoint">Send Request</button>
