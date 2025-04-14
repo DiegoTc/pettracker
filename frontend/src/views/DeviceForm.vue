@@ -15,15 +15,17 @@
           <div class="form-row">
             <div class="form-group">
               <label for="deviceId" class="form-label">Device ID</label>
-              <input 
-                type="text" 
-                id="deviceId" 
-                v-model="device.device_id" 
-                class="form-control" 
-                required 
-                :disabled="isEditMode"
-                placeholder="Enter device ID"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="deviceId" 
+                  v-model="device.device_id" 
+                  class="form-control" 
+                  required 
+                  :disabled="isEditMode"
+                  placeholder="Enter device ID"
+                >
+              </div>
               <small class="text-muted" v-if="!isEditMode">
                 Enter the unique ID provided with your GPS tracker
               </small>
@@ -31,13 +33,15 @@
 
             <div class="form-group">
               <label for="deviceName" class="form-label">Device Name</label>
-              <input 
-                type="text" 
-                id="deviceName" 
-                v-model="device.name" 
-                class="form-control" 
-                placeholder="Enter a name for this device"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="deviceName" 
+                  v-model="device.name" 
+                  class="form-control" 
+                  placeholder="Enter a name for this device"
+                >
+              </div>
             </div>
           </div>
           

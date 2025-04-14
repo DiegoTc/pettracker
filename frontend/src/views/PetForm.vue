@@ -10,14 +10,16 @@
         <form @submit.prevent="savePet">
           <div class="mb-3">
             <label for="petName" class="form-label">Pet Name</label>
-            <input 
-              type="text" 
-              id="petName" 
-              v-model="pet.name" 
-              class="form-control" 
-              required 
-              placeholder="Enter pet name"
-            >
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="petName" 
+                v-model="pet.name" 
+                class="form-control" 
+                required 
+                placeholder="Enter pet name"
+              >
+            </div>
           </div>
 
           <div class="row">
@@ -34,61 +36,71 @@
 
             <div class="col-md-6 mb-3">
               <label for="breed" class="form-label">Breed</label>
-              <input 
-                type="text" 
-                id="breed" 
-                v-model="pet.breed" 
-                class="form-control" 
-                placeholder="Enter breed"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="breed" 
+                  v-model="pet.breed" 
+                  class="form-control" 
+                  placeholder="Enter breed"
+                >
+              </div>
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="color" class="form-label">Color</label>
-              <input 
-                type="text" 
-                id="color" 
-                v-model="pet.color" 
-                class="form-control" 
-                placeholder="Enter color"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="color" 
+                  v-model="pet.color" 
+                  class="form-control" 
+                  placeholder="Enter color"
+                >
+              </div>
             </div>
 
             <div class="col-md-6 mb-3">
               <label for="weight" class="form-label">Weight (kg)</label>
-              <input 
-                type="number" 
-                id="weight" 
-                v-model="pet.weight" 
-                class="form-control" 
-                step="0.1"
-                min="0"
-                placeholder="Enter weight"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  id="weight" 
+                  v-model="pet.weight" 
+                  class="form-control" 
+                  step="0.1"
+                  min="0"
+                  placeholder="Enter weight"
+                >
+              </div>
             </div>
           </div>
 
           <div class="mb-3">
             <label for="birthdate" class="form-label">Birthdate</label>
-            <input 
-              type="date" 
-              id="birthdate" 
-              v-model="pet.birthdate" 
-              class="form-control"
-            >
+            <div class="input-wrapper">
+              <input 
+                type="date" 
+                id="birthdate" 
+                v-model="pet.birthdate" 
+                class="form-control"
+              >
+            </div>
           </div>
 
           <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <textarea 
-              id="description" 
-              v-model="pet.description" 
-              class="form-control" 
-              rows="3"
-              placeholder="Enter a description about your pet"
-            ></textarea>
+            <div class="input-wrapper">
+              <textarea 
+                id="description" 
+                v-model="pet.description" 
+                class="form-control" 
+                rows="3"
+                placeholder="Enter a description about your pet"
+              ></textarea>
+            </div>
           </div>
 
           <div class="mb-3">

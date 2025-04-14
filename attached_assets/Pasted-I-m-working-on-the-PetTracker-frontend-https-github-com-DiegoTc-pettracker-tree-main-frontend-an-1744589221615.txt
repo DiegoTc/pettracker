@@ -1,0 +1,44 @@
+I'm working on the PetTracker frontend (https://github.com/DiegoTc/pettracker/tree/main/frontend) and I've noticed that not all screens use consistent input styles. In particular, I really like how the Breed and Color fields are styled in the design proposals—they have the right padding, border, color, spacing, and overall visual appeal.
+
+Goal:
+Update the styling of all form inputs (and related elements such as labels, placeholders, etc.) across the entire frontend, so that every screen in the application (including Login, Registration, Dashboard forms, Pet forms, Device forms, etc.) reflects the same clean, modern design as seen in the Breed and Color fields.
+
+Requirements:
+
+Consistent Input Styles:
+
+Use the same background color, padding, border, border-radius, and hover/focus effects that are present in the Breed and Color fields.
+
+Ensure that the text color, placeholder styles, and label styling are consistent and accessible across all screens.
+
+Global vs. Component-Level CSS:
+
+Either update a global stylesheet (or SASS module) that is used by all Vue components or refactor the input elements into a reusable component that already implements the desired styling.
+
+Ensure that any new CSS classes or variables are integrated in a way that does not break existing layouts or functionality.
+
+Responsive & Accessible:
+
+Verify that the new input styles remain responsive on different device sizes.
+
+Confirm that the color contrasts and font sizes meet accessibility guidelines (WCAG standards).
+
+Review Affected Screens:
+
+Check and update the forms in relevant components/views, e.g., Login.vue, Home.vue (if there are any search or filter inputs), PetForm.vue, DeviceForm.vue, and any other view files that contain user inputs.
+
+Preserve Existing Functionality:
+
+Do not change any business logic, data bindings, or functionality; only modify the presentation (HTML/CSS).
+
+Provide detailed code examples or steps to show how the changes are applied to each screen/component.
+
+Deliverables:
+
+Provide updated code snippets or a patch that shows how the global styles (or shared components) have been updated with the new input styles.
+
+Include an explanation of how the new CSS or component-based styling applies to the forms on each screen.
+
+Ensure that these updates do not break existing form validation, data submission, or layout behavior.
+
+The end goal is a unified and aesthetically pleasing input style across all screens that matches the "Breed and Color" design, enhancing the overall user experience without sacrificing functionality. Please provide the updated code and detailed implementation instructions.
