@@ -85,6 +85,20 @@ def create_device():
     if 'name' not in data:
         return jsonify({"error": "Device name is required"}), 400
     
+    # IMEI is now required
+    if 'imei' not in data or not data['imei']:
+        return jsonify({"error": "IMEI number is required"}), 400
+    
+    # Format and validate IMEI
+    imei = Device.format_imei(data['imei'])
+    if not imei or len(imei) < 8:  # Basic validation for IMEI length
+        return jsonify({"error": "Invalid IMEI format. IMEI must contain at least 8 digits."}), 400
+    
+    # Check if device with the same IMEI already exists
+    existing_device = Device.query.filter_by(imei=imei).first()
+    if existing_device:
+        return jsonify({"error": "Device with this IMEI is already registered"}), 409
+    
     # Handle pet_id data type conversion and validation
     pet_id = data.get('pet_id')
     # Convert empty string to None
@@ -104,30 +118,28 @@ def create_device():
             # Handle case where pet_id can't be converted to an integer
             return jsonify({"error": "Invalid pet ID format"}), 400
     
-    # Generate device ID if not provided
-    device_id = data.get('device_id', Device.generate_device_id())
-    
-    # Check if device with the same ID already exists
-    existing_device = Device.query.filter_by(device_id=device_id).first()
-    if existing_device:
-        return jsonify({"error": "Device ID already registered"}), 409
+    # Generate internal device ID if not provided (for backward compatibility)
+    device_id = data.get('device_id')
+    if device_id:
+        # Check if device with the same internal ID already exists
+        existing_device = Device.query.filter_by(device_id=device_id).first()
+        if existing_device:
+            return jsonify({"error": "Internal device ID already registered"}), 409
+    else:
+        device_id = Device.generate_device_id()
     
     # Sanitize string fields before database insertion
     serial_number = data.get('serial_number')
     if serial_number == '':
         serial_number = None
-        
-    imei = data.get('imei')
-    if imei == '':
-        imei = None
     
     # Create new device
     device = Device(
-        device_id=device_id,
+        imei=imei,  # IMEI is now the primary identifier
+        device_id=device_id,  # Kept for backward compatibility
         name=data['name'],
         device_type=data.get('device_type', '808_tracker'),
         serial_number=serial_number,
-        imei=imei,
         firmware_version=data.get('firmware_version', '1.0'),
         battery_level=data.get('battery_level', 100.0),
         is_active=data.get('is_active', True),

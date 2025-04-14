@@ -1,0 +1,43 @@
+I'm reviewing the device registration flow in our PetTracker application (https://github.com/DiegoTc/pettracker). Currently, our backend API registers a device with several fields including device_id and imei. However, in practice, the client receives an IMEI and not a separate device ID. This inconsistency could be confusing for users and developers.
+
+Observations & Questions:
+
+The API currently registers a device with both device_id (which appears to be generated internally) and an imei field (which is provided by the client).
+
+For device identification in the real world, the IMEI is typically the unique and visible identifier.
+
+Recommendations to Align the System:
+
+Review and Adjust Database Schema:
+
+Consider either merging device_id and imei or making imei the primary, unique identifier for the device.
+
+If keeping a separate device_id is required for internal tracking, ensure that the API response clearly exposes the IMEI as the unique identifier to the client.
+
+Backend API Changes:
+
+Update the device registration endpoint so that when a device is created, the imei is either used as the device's unique identifier or is clearly linked to the internal device_id.
+
+Ensure that any validations, uniqueness constraints, and error messages use the IMEI field appropriately.
+
+Update the API documentation so that clients know to work with the IMEI as the unique identifier.
+
+Frontend Changes:
+
+Update the forms and UI components to show the IMEI instead of (or in addition to) an internal device ID.
+
+Modify input labels and helper texts to clarify that the IMEI is the unique number that identifies the device.
+
+Verify that the API service (in src/services/api.js) properly maps the data so that the IMEI is used for lookups and display.
+
+Deliverables:
+
+Provide updated backend code snippets (Flask routes and SQLAlchemy model updates) that show how device registration now relies on the IMEI as the primary identifier or clearly associates the IMEI to the device.
+
+Show any necessary migrations or schema changes if the database should enforce uniqueness on the IMEI.
+
+Provide updated frontend code (Vue components, form labels, helper texts, and API mapping in api.js) to reflect that the IMEI is the primary reference for devices.
+
+Include a brief explanation of why using the IMEI consistently improves the system's usability and data integrity.
+
+The goal is to ensure that both backend and frontend use a single, clear identifier for devices—the IMEI—and that the API, UI, and data model are aligned accordingly. Please provide the updated code and detailed instructions for implementing these changes.

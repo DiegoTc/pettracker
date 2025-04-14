@@ -83,11 +83,13 @@ class Device(db.Model):
     """Device model for tracking devices"""
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    imei = db.Column(db.String(32), unique=True, nullable=False, index=True)
+    # Keeping device_id as internal reference but it's no longer the primary identifier
+    # Making it nullable for backward compatibility during migration
+    device_id = db.Column(db.String(64), unique=True, nullable=True, index=True)
     name = db.Column(db.String(64))
     device_type = db.Column(db.String(32))
     serial_number = db.Column(db.String(64), unique=True)
-    imei = db.Column(db.String(32), unique=True)
     firmware_version = db.Column(db.String(32))
     battery_level = db.Column(db.Float, default=100.0)
     is_active = db.Column(db.Boolean, default=True)
@@ -103,22 +105,30 @@ class Device(db.Model):
     locations = db.relationship('Location', backref='device', lazy='dynamic', cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f'<Device {self.device_id}>'
+        return f'<Device {self.imei}>'
     
     @staticmethod
     def generate_device_id():
-        """Generate a unique device ID"""
+        """Generate a unique internal device ID (for legacy support)"""
         return str(uuid.uuid4())
+    
+    @staticmethod
+    def format_imei(imei):
+        """Format IMEI string for consistent storage and validation"""
+        if not imei:
+            return None
+        # Remove any non-numeric characters
+        return ''.join(c for c in imei if c.isdigit())
     
     def to_dict(self):
         """Convert object to dictionary"""
         return {
             'id': self.id,
-            'device_id': self.device_id,
+            'imei': self.imei,  # IMEI is now the primary identifier
+            'device_id': self.device_id,  # Kept for backward compatibility
             'name': self.name,
             'device_type': self.device_type,
             'serial_number': self.serial_number,
-            'imei': self.imei,
             'firmware_version': self.firmware_version,
             'battery_level': self.battery_level,
             'is_active': self.is_active,
