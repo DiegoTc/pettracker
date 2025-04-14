@@ -111,13 +111,22 @@ def create_device():
     if existing_device:
         return jsonify({"error": "Device ID already registered"}), 409
     
+    # Sanitize string fields before database insertion
+    serial_number = data.get('serial_number')
+    if serial_number == '':
+        serial_number = None
+        
+    imei = data.get('imei')
+    if imei == '':
+        imei = None
+    
     # Create new device
     device = Device(
         device_id=device_id,
         name=data['name'],
         device_type=data.get('device_type', '808_tracker'),
-        serial_number=data.get('serial_number'),
-        imei=data.get('imei'),
+        serial_number=serial_number,
+        imei=imei,
         firmware_version=data.get('firmware_version', '1.0'),
         battery_level=data.get('battery_level', 100.0),
         is_active=data.get('is_active', True),
@@ -187,9 +196,19 @@ def update_device(device_id):
     if 'device_type' in data:
         device.device_type = data['device_type']
     if 'serial_number' in data:
-        device.serial_number = data['serial_number']
+        # Convert empty string to None
+        serial_number = data['serial_number']
+        if serial_number == '':
+            device.serial_number = None
+        else:
+            device.serial_number = serial_number
     if 'imei' in data:
-        device.imei = data['imei']
+        # Convert empty string to None
+        imei = data['imei']
+        if imei == '':
+            device.imei = None
+        else:
+            device.imei = imei
     if 'firmware_version' in data:
         device.firmware_version = data['firmware_version']
     if 'battery_level' in data:

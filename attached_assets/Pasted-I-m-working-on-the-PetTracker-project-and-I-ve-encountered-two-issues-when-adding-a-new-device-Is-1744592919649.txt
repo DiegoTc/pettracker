@@ -1,0 +1,35 @@
+I'm working on the PetTracker project, and I've encountered two issues when adding a new device:
+
+Issue 1 – Backend Data Handling for Serial Number:
+The device creation endpoint is still returning a duplicate key error on the serial_number field when it is an empty string. The error shows that an empty string ("") is being inserted into the serial_number column (which has a unique constraint), causing a conflict.
+
+Requirements for Issue 1:
+
+Update the backend device creation endpoint (in our Flask route handling POST /api/devices/) so that:
+
+If the serial_number field is empty (i.e., an empty string), it should be converted to None (or SQL NULL) before performing the insert.
+
+If a serial number is mandatory, perform proper validation and reject the request with a descriptive error message.
+
+Ensure that other fields (like pet_id or any other optional integer fields) are similarly sanitized if they come in as empty strings.
+
+Issue 2 – UI Enhancement for Device ID Input:
+I would like to improve the device ID input field in the frontend so that users understand the expected format. Specifically:
+
+Display a preformatted input or a placeholder text that indicates the required number of digits for the device ID (e.g., "Enter a 10-digit Device ID" or similar).
+
+Optionally implement an input mask or validation hint that guides users to input only the required number of digits.
+
+The update should be applied in a way that is consistent with the existing styling in our Vue application.
+
+Deliverables:
+
+Backend: Provide updated code snippets for the Flask endpoint handling device creation. The code should demonstrate converting an empty serial_number (and other similar optional fields) to None and ensure that API errors are returned in a user-friendly manner.
+
+Frontend: Provide updated Vue component code or CSS/JS integration for the device ID input field. This should include a placeholder and/or input mask (using libraries like v-mask or plain JavaScript) that indicates the required digit count and enforces proper formatting.
+
+An explanation of the changes and instructions on how to integrate these updates without breaking existing functionality.
+
+The goal is to resolve the duplicate key issue by preventing empty strings from being inserted where they conflict with uniqueness constraints, and to enhance the user experience by clearly indicating the expected device ID format.
+
+Please provide the detailed code examples and instructions for both backend and frontend modifications.

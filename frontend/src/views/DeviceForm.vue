@@ -30,14 +30,18 @@
                   class="form-control" 
                   :class="{'is-invalid': errors.device_id}"
                   :disabled="isEditMode"
-                  placeholder="Enter device ID"
+                  placeholder="Enter 10-digit device ID (e.g., JT12345678)"
+                  maxlength="10"
+                  pattern="^[A-Za-z0-9]{10}$"
+                  @input="formatDeviceId"
                 >
+                <small class="device-id-format">Format: 10 characters (letters and numbers)</small>
               </div>
               <div v-if="errors.device_id" class="invalid-feedback d-block">
                 {{ errors.device_id }}
               </div>
               <small class="text-muted" v-if="!isEditMode">
-                Enter the unique ID provided with your GPS tracker
+                Enter the unique 10-digit ID provided with your GPS tracker
               </small>
             </div>
 
@@ -280,7 +284,30 @@ export default {
         }
       });
       
+      // Validate device ID format
+      if (this.device.device_id && !this.isEditMode) {
+        const deviceIdPattern = /^[A-Za-z0-9]{10}$/;
+        if (!deviceIdPattern.test(this.device.device_id)) {
+          this.errors.device_id = "Device ID must be exactly 10 alphanumeric characters";
+        }
+      }
+      
       return Object.keys(this.errors).length === 0;
+    },
+    
+    formatDeviceId() {
+      // Only allow alphanumeric characters (letters and numbers)
+      if (this.device.device_id) {
+        this.device.device_id = this.device.device_id.replace(/[^A-Za-z0-9]/g, '');
+        
+        // Limit to 10 characters
+        if (this.device.device_id.length > 10) {
+          this.device.device_id = this.device.device_id.substring(0, 10);
+        }
+        
+        // Automatically convert to uppercase for better readability
+        this.device.device_id = this.device.device_id.toUpperCase();
+      }
     }
   }
 }
@@ -369,5 +396,23 @@ export default {
 /* Required field indicator */
 label .text-danger {
   font-weight: bold;
+}
+
+/* Device ID format styling */
+.device-id-format {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: var(--primary-light);
+  color: var(--text);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.input-wrapper {
+  position: relative;
 }
 </style>
