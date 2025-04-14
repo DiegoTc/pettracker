@@ -217,12 +217,22 @@ def update_device(device_id):
         else:
             device.serial_number = serial_number
     if 'imei' in data:
-        # Convert empty string to None
+        # IMEI is a required field and cannot be empty
         imei = data['imei']
-        if imei == '':
-            device.imei = None
-        else:
-            device.imei = imei
+        if not imei:
+            return jsonify({"error": "IMEI is required and cannot be empty"}), 400
+        
+        # Format and validate IMEI
+        formatted_imei = Device.format_imei(imei)
+        if not formatted_imei or len(formatted_imei) < 8:
+            return jsonify({"error": "Invalid IMEI format. IMEI must contain at least 8 digits."}), 400
+        
+        # Check if another device already uses this IMEI
+        existing_device = Device.query.filter(Device.imei == formatted_imei, Device.id != device_id).first()
+        if existing_device:
+            return jsonify({"error": "Another device is already registered with this IMEI"}), 409
+        
+        device.imei = formatted_imei
     if 'firmware_version' in data:
         device.firmware_version = data['firmware_version']
     if 'battery_level' in data:

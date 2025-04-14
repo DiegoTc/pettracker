@@ -20,74 +20,92 @@
           <div class="form-row">
             <div class="form-group">
               <div class="label-with-tooltip">
-                <label for="deviceId" class="form-label">
-                  Device ID <span class="text-danger">*</span>
+                <label for="imei" class="form-label">
+                  IMEI Number <span class="text-danger">*</span>
                 </label>
                 <div class="tooltip-wrapper">
                   <i class="bi bi-info-circle info-icon" 
                      data-bs-toggle="tooltip" 
                      data-bs-placement="top" 
-                     title="10-character alphanumeric identifier found on your physical device. Format example: PT12345678 or JT12345678"></i>
+                     title="The International Mobile Equipment Identity (IMEI) is a unique 15-digit code that identifies your GPS device. It can be found on the device label, packaging, or by contacting the manufacturer."></i>
                 </div>
               </div>
               
-              <div class="input-wrapper" :class="{'is-invalid': errors.device_id, 'is-valid': isDeviceIdValid && device.device_id.length > 0}">
+              <div class="input-wrapper" :class="{'is-invalid': errors.imei, 'is-valid': isImeiValid && device.imei.length > 0}">
+                <input 
+                  type="text" 
+                  id="imei" 
+                  v-model="device.imei" 
+                  class="form-control" 
+                  :class="{
+                    'is-invalid': errors.imei,
+                    'is-valid': isImeiValid && device.imei.length > 0
+                  }"
+                  :disabled="isEditMode && isImeiValid"
+                  aria-describedby="imeiHelp imeiError imeiFormat"
+                  maxlength="20"
+                  pattern="^[0-9]{8,20}$"
+                  @input="formatImei"
+                  @focus="imeiFocused = true"
+                  @blur="imeiFocused = false"
+                  placeholder="Enter IMEI number (e.g., 123456789012345)"
+                >
+                <div id="imeiFormat" class="format-badge" :class="{'active': device.imei.length > 0}">
+                  <i class="bi bi-check-circle-fill" v-if="isImeiValid"></i>
+                  <i class="bi bi-exclamation-circle-fill" v-else-if="device.imei.length > 0"></i>
+                  {{ device.imei.length }} digits
+                </div>
+              </div>
+              
+              <div class="input-feedback-area">
+                <div v-if="errors.imei" id="imeiError" class="invalid-feedback d-block" role="alert">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ errors.imei }}
+                </div>
+                <div v-else-if="isImeiValid && device.imei.length > 0" class="valid-feedback d-block">
+                  <i class="bi bi-check-circle-fill me-1"></i> Valid IMEI format
+                </div>
+                <div id="imeiHelp" class="form-text mt-1">
+                  <!-- Format guide remains visible at all times -->
+                  <div class="format-guide">
+                    <i class="bi bi-123 me-1"></i> <strong>Format:</strong> 8-20 digits (numbers only)
+                  </div>
+                  <div>
+                    <i class="bi bi-lightbulb me-1"></i> <strong>Where to find it:</strong> On the device label, packaging, or by contacting the manufacturer
+                  </div>
+                  <div class="mt-1 text-muted">
+                    <i class="bi bi-info-circle me-1"></i> The IMEI is the unique identifier for your GPS tracker and is required for registration
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Internal Device ID field - Optional and less prominent -->
+            <div class="form-group" v-if="isAdvancedMode">
+              <div class="label-with-tooltip">
+                <label for="deviceId" class="form-label">
+                  Internal Device ID
+                </label>
+                <div class="tooltip-wrapper">
+                  <i class="bi bi-info-circle info-icon" 
+                     data-bs-toggle="tooltip" 
+                     data-bs-placement="top" 
+                     title="Optional internal identifier. In most cases, you should leave this empty and the system will generate one automatically."></i>
+                </div>
+              </div>
+              
+              <div class="input-wrapper">
                 <input 
                   type="text" 
                   id="deviceId" 
                   v-model="device.device_id" 
                   class="form-control" 
-                  :class="{
-                    'is-invalid': errors.device_id,
-                    'is-valid': isDeviceIdValid && device.device_id.length > 0
-                  }"
                   :disabled="isEditMode"
-                  aria-describedby="deviceIdHelp deviceIdError deviceIdFormat"
-                  maxlength="10"
-                  pattern="^[A-Za-z0-9]{10}$"
-                  @input="formatDeviceId"
-                  @focus="deviceIdFocused = true"
-                  @blur="deviceIdFocused = false"
+                  placeholder="Leave empty to auto-generate"
                 >
-                <div class="device-id-visual-guide" :class="{'focused': deviceIdFocused || device.device_id.length > 0}">
-                  <div class="character-group" v-for="(group, index) in deviceIdVisualization" :key="index">
-                    <span 
-                      v-for="(char, charIndex) in group" 
-                      :key="`${index}-${charIndex}`"
-                      :class="{
-                        'filled': getDeviceIdCharAt(index * 2 + charIndex) !== '',
-                        'current': getCurrentCharPosition() === index * 2 + charIndex
-                      }"
-                    >
-                      {{ getDeviceIdCharAt(index * 2 + charIndex) || char }}
-                    </span>
-                  </div>
-                </div>
-                <div id="deviceIdFormat" class="format-badge" :class="{'active': device.device_id.length > 0}">
-                  {{ device.device_id.length }}/10
-                </div>
               </div>
-              
-              <div class="input-feedback-area">
-                <div v-if="errors.device_id" id="deviceIdError" class="invalid-feedback d-block" role="alert">
-                  <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ errors.device_id }}
-                </div>
-                <div v-else-if="isDeviceIdValid && device.device_id.length > 0" class="valid-feedback d-block">
-                  <i class="bi bi-check-circle-fill me-1"></i> Valid device ID format
-                </div>
-                <div id="deviceIdHelp" class="form-text mt-1" v-if="!isEditMode">
-                  <!-- Format guide remains visible at all times -->
-                  <div class="format-guide">
-                    <i class="bi bi-123 me-1"></i> <strong>Format:</strong> 10 characters (letters and numbers only)
-                  </div>
-                  <div>
-                    <i class="bi bi-lightbulb me-1"></i> <strong>Example:</strong> <code>PT12345678</code> or <code>JT12345678</code>
-                  </div>
-                  <div v-if="!isEditMode && device.device_id.length < 10" class="mt-1 text-muted">
-                    <i class="bi bi-info-circle me-1"></i> Enter the unique ID found on your physical GPS tracker
-                  </div>
-                </div>
-              </div>
+              <small class="text-muted">
+                For advanced users only. The system will generate this value automatically if left empty.
+              </small>
             </div>
 
             <div class="form-group">
@@ -134,19 +152,6 @@
           
           <div class="form-row">
             <div class="form-group">
-              <label for="imei" class="form-label">IMEI Number</label>
-              <div class="input-wrapper">
-                <input 
-                  type="text" 
-                  id="imei" 
-                  v-model="device.imei" 
-                  class="form-control"
-                  placeholder="Enter IMEI number (if available)"
-                >
-              </div>
-            </div>
-            
-            <div class="form-group">
               <label for="firmwareVersion" class="form-label">Firmware Version</label>
               <div class="input-wrapper">
                 <input 
@@ -155,6 +160,22 @@
                   v-model="device.firmware_version" 
                   class="form-control"
                   placeholder="Enter firmware version (if known)"
+                >
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="batteryLevel" class="form-label">Battery Level (%)</label>
+              <div class="input-wrapper">
+                <input 
+                  type="number" 
+                  id="batteryLevel" 
+                  v-model="device.battery_level" 
+                  class="form-control"
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="Current battery level"
                 >
               </div>
             </div>
@@ -170,6 +191,13 @@
               >
               <label class="form-check-label" for="isActive">Device is active</label>
             </div>
+          </div>
+          
+          <div class="form-group advanced-settings">
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleAdvancedMode">
+              <i class="bi" :class="isAdvancedMode ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              {{ isAdvancedMode ? 'Hide Advanced Settings' : 'Show Advanced Settings' }}
+            </button>
           </div>
           
           <div class="form-group">
@@ -226,8 +254,10 @@ export default {
       isLoading: false,
       errors: {},
       globalError: null,
-      requiredFields: ['device_id'],
+      requiredFields: ['imei', 'name'],
       deviceIdFocused: false,
+      imeiFocused: false,
+      isAdvancedMode: false,
       deviceIdVisualization: [
         ['P', 'T'], 
         ['1', '2'], 
@@ -245,10 +275,17 @@ export default {
       return this.$route.params.id;
     },
     isDeviceIdValid() {
-      if (!this.device.device_id) return false;
+      if (!this.device.device_id) return true; // Optional now, so empty is valid
       
       const deviceIdPattern = /^[A-Za-z0-9]{10}$/;
       return deviceIdPattern.test(this.device.device_id);
+    },
+    isImeiValid() {
+      if (!this.device.imei) return false;
+      
+      // IMEI should be at least 8 digits, typically 15 digits
+      const imeiPattern = /^[0-9]{8,20}$/;
+      return imeiPattern.test(this.device.imei);
     }
   },
   mounted() {
@@ -369,12 +406,17 @@ export default {
         }
       });
       
-      // Validate device ID format
+      // Validate device ID format if provided (optional field)
       if (this.device.device_id && !this.isEditMode) {
         const deviceIdPattern = /^[A-Za-z0-9]{10}$/;
         if (!deviceIdPattern.test(this.device.device_id)) {
           this.errors.device_id = "Device ID must be exactly 10 alphanumeric characters";
         }
+      }
+      
+      // Validate IMEI format (required field)
+      if (this.device.imei && !this.isImeiValid) {
+        this.errors.imei = "IMEI must contain 8-20 digits (numbers only)";
       }
       
       return Object.keys(this.errors).length === 0;
@@ -406,6 +448,24 @@ export default {
     // Get current cursor position to highlight in the visual guide
     getCurrentCharPosition() {
       return this.device.device_id ? this.device.device_id.length : 0;
+    },
+    
+    // Format IMEI input to only allow digits
+    formatImei() {
+      if (this.device.imei) {
+        // Only allow numeric characters
+        this.device.imei = this.device.imei.replace(/[^0-9]/g, '');
+        
+        // Limit to 20 characters
+        if (this.device.imei.length > 20) {
+          this.device.imei = this.device.imei.substring(0, 20);
+        }
+      }
+    },
+    
+    // Toggle advanced mode to show/hide internal device ID field
+    toggleAdvancedMode() {
+      this.isAdvancedMode = !this.isAdvancedMode;
     }
   }
 }
@@ -625,5 +685,29 @@ code {
   font-family: monospace;
   font-size: 14px;
   color: var(--primary);
+}
+
+/* Advanced settings styling */
+.advanced-settings {
+  margin: 1rem 0;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  text-align: center;
+}
+
+.btn-outline-secondary {
+  border-color: var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--background-lighter);
+  color: var(--primary);
+}
+
+.btn-outline-secondary i {
+  margin-right: 0.25rem;
 }
 </style>
