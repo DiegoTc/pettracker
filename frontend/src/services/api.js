@@ -143,17 +143,23 @@ export const authAPI = {
 export const petsAPI = {
   getAll: () => apiClient.get('/api/pets/'),
   getById: (id) => {
+    // Log the actual ID being requested to help with debugging
+    console.log(`Fetching pet with ID: ${id}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedId = encodeURIComponent(id);
     return apiClient.get(`/api/pets/${formattedId}/`);
   },
   create: (petData) => apiClient.post('/api/pets/', petData),
   update: (id, petData) => {
+    // Log the update operation for debugging
+    console.log(`Updating pet with ID: ${id}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedId = encodeURIComponent(id);
     return apiClient.put(`/api/pets/${formattedId}/`, petData);
   },
   delete: (id) => {
+    // Log the delete operation for debugging
+    console.log(`Deleting pet with ID: ${id}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedId = encodeURIComponent(id);
     return apiClient.delete(`/api/pets/${formattedId}/`);
@@ -172,27 +178,37 @@ export const devicesAPI = {
   },
   create: (deviceData) => apiClient.post('/api/devices/', deviceData),
   update: (id, deviceData) => {
+    // Log update operation for debugging
+    console.log(`Updating device with ID: ${id}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedId = encodeURIComponent(id);
     return apiClient.put(`/api/devices/${formattedId}/`, deviceData);
   },
   delete: (id) => {
+    // Log delete operation for debugging
+    console.log(`Deleting device with ID: ${id}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedId = encodeURIComponent(id);
     return apiClient.delete(`/api/devices/${formattedId}/`);
   },
   assignToPet: (deviceId, petId) => {
+    // Log assignment operation for debugging
+    console.log(`Assigning device ${deviceId} to pet ${petId}`);
     // Ensure ids are properly formatted and URL has trailing slash
     const formattedDeviceId = encodeURIComponent(deviceId);
     const formattedPetId = encodeURIComponent(petId);
     return apiClient.post(`/api/devices/${formattedDeviceId}/assign/${formattedPetId}/`);
   },
   unassignFromPet: (deviceId) => {
+    // Log unassignment operation for debugging
+    console.log(`Unassigning device ${deviceId} from pet`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedDeviceId = encodeURIComponent(deviceId);
     return apiClient.post(`/api/devices/${formattedDeviceId}/unassign/`);
   },
   ping: (deviceId) => {
+    // Log ping operation for debugging
+    console.log(`Pinging device ${deviceId}`);
     // Ensure id is properly formatted and URL has trailing slash
     const formattedDeviceId = encodeURIComponent(deviceId);
     return apiClient.post(`/api/devices/${formattedDeviceId}/ping/`);

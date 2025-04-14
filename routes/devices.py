@@ -50,6 +50,7 @@ def get_devices():
                            user_message="An error occurred while retrieving your devices.")
 
 @devices_bp.route('/<int:device_id>', methods=['GET', 'OPTIONS'])
+@devices_bp.route('/<int:device_id>/', methods=['GET', 'OPTIONS'])  # Add route with trailing slash
 @jwt_required_except_options
 def get_device(device_id):
     """Get a specific device by id"""
@@ -151,6 +152,7 @@ def create_device():
                            user_message="An error occurred while creating the device.")
 
 @devices_bp.route('/<int:device_id>', methods=['PUT', 'OPTIONS'])
+@devices_bp.route('/<int:device_id>/', methods=['PUT', 'OPTIONS'])  # Add route with trailing slash
 @jwt_required_except_options
 def update_device(device_id):
     """Update an existing device"""

@@ -57,6 +57,7 @@ def get_pets():
                            user_message="An error occurred while retrieving your pets.")
 
 @pets_bp.route('/<int:pet_id>', methods=['GET', 'OPTIONS'])
+@pets_bp.route('/<int:pet_id>/', methods=['GET', 'OPTIONS'])  # Add route with trailing slash
 @jwt_required_except_options
 def get_pet(pet_id):
     """Get a specific pet by id"""
@@ -128,6 +129,7 @@ def create_pet():
                            user_message="An error occurred while creating your pet.")
 
 @pets_bp.route('/<int:pet_id>', methods=['PUT', 'OPTIONS'])
+@pets_bp.route('/<int:pet_id>/', methods=['PUT', 'OPTIONS'])  # Add route with trailing slash
 @jwt_required_except_options
 def update_pet(pet_id):
     """Update an existing pet"""
@@ -185,6 +187,7 @@ def update_pet(pet_id):
                            user_message="An error occurred while updating your pet.")
 
 @pets_bp.route('/<int:pet_id>', methods=['DELETE', 'OPTIONS'])
+@pets_bp.route('/<int:pet_id>/', methods=['DELETE', 'OPTIONS'])  # Add route with trailing slash
 @jwt_required_except_options
 def delete_pet(pet_id):
     """Delete a pet"""
