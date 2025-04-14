@@ -142,6 +142,7 @@
 <script>
 import AppLayout from '../components/layout/AppLayout.vue';
 import CardComponent from '../components/common/CardComponent.vue';
+import { devicesAPI, petsAPI } from '../services/api.js';
 
 export default {
   name: 'DeviceForm',
@@ -162,7 +163,10 @@ export default {
         pet_id: ''
       },
       pets: [],
-      isLoading: false
+      isLoading: false,
+      errors: {},
+      globalError: null,
+      requiredFields: ['device_id']
     }
   },
   computed: {

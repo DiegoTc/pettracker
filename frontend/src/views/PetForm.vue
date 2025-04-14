@@ -6,33 +6,48 @@
           <i class="bi bi-pencil-square text-primary me-2"></i>
           <h5 class="card-title mb-0">Pet Information</h5>
         </div>
+
+        <!-- Global Error Message -->
+        <div v-if="globalError" class="alert alert-danger mb-3">
+          {{ globalError }}
+        </div>
         
         <form @submit.prevent="savePet">
           <div class="mb-3">
-            <label for="petName" class="form-label">Pet Name</label>
-            <div class="input-wrapper">
+            <label for="petName" class="form-label">
+              Pet Name <span class="text-danger">*</span>
+            </label>
+            <div class="input-wrapper" :class="{'is-invalid': errors.name}">
               <input 
                 type="text" 
                 id="petName" 
                 v-model="pet.name" 
                 class="form-control" 
-                required 
+                :class="{'is-invalid': errors.name}"
                 placeholder="Enter pet name"
               >
+            </div>
+            <div v-if="errors.name" class="invalid-feedback d-block">
+              {{ errors.name }}
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="petType" class="form-label">Pet Type</label>
-              <div class="input-wrapper">
-                <select id="petType" v-model="pet.pet_type" class="form-select" required>
+              <label for="petType" class="form-label">
+                Pet Type <span class="text-danger">*</span>
+              </label>
+              <div class="input-wrapper" :class="{'is-invalid': errors.pet_type}">
+                <select id="petType" v-model="pet.pet_type" class="form-select" :class="{'is-invalid': errors.pet_type}">
                   <option value="" disabled selected>Select a pet type</option>
                   <option value="Dog">Dog</option>
                   <option value="Cat">Cat</option>
                   <option value="Bird">Bird</option>
                   <option value="Other">Other</option>
                 </select>
+              </div>
+              <div v-if="errors.pet_type" class="invalid-feedback d-block">
+                {{ errors.pet_type }}
               </div>
             </div>
 
@@ -66,16 +81,20 @@
 
             <div class="col-md-6 mb-3">
               <label for="weight" class="form-label">Weight (kg)</label>
-              <div class="input-wrapper">
+              <div class="input-wrapper" :class="{'is-invalid': errors.weight}">
                 <input 
                   type="number" 
                   id="weight" 
                   v-model="pet.weight" 
-                  class="form-control" 
+                  class="form-control"
+                  :class="{'is-invalid': errors.weight}"
                   step="0.1"
                   min="0"
                   placeholder="Enter weight"
                 >
+              </div>
+              <div v-if="errors.weight" class="invalid-feedback d-block">
+                {{ errors.weight }}
               </div>
             </div>
           </div>
@@ -147,6 +166,7 @@
 <script>
 import AppLayout from '../components/layout/AppLayout.vue';
 import CardComponent from '../components/common/CardComponent.vue';
+import { petsAPI } from '../services/api.js';
 
 export default {
   name: 'PetForm',
@@ -166,7 +186,10 @@ export default {
         description: '',
         image_url: null
       },
-      isLoading: false
+      isLoading: false,
+      errors: {},
+      globalError: null,
+      requiredFields: ['name', 'pet_type']
     }
   },
   computed: {
@@ -183,73 +206,65 @@ export default {
     }
   },
   methods: {
-    fetchPetDetails() {
-      // Simulate API call
-      setTimeout(() => {
-        this.pet = {
-          id: this.petId,
-          name: 'Buddy',
-          pet_type: 'Dog',
-          breed: 'Golden Retriever',
-          color: 'Golden',
-          weight: 28.5,
-          birthdate: '2022-03-15',
-          description: 'Buddy is a friendly and energetic dog who loves to play fetch and go for long walks in the park. He is good with children and other pets.',
-          image_url: null
-        };
-      }, 500);
-      
-      // Real API call will look like:
-      /*
-      fetch(`/api/pets/${this.petId}`)
-        .then(response => {
-          if (!response.ok) throw new Error('Pet not found');
-          return response.json();
-        })
-        .then(data => {
-          this.pet = data;
-        })
-        .catch(error => {
-          console.error('Error fetching pet details:', error);
-          this.$router.push('/pets');
-        });
-      */
-    },
-    savePet() {
-      this.isLoading = true;
-      
-      console.log('Saving pet:', this.pet);
-      
-      // Simulate API save
-      setTimeout(() => {
+    async fetchPetDetails() {
+      try {
+        this.isLoading = true;
+        const response = await petsAPI.getById(this.petId);
+        this.pet = response.data;
         this.isLoading = false;
-        this.$router.push('/pets');
-      }, 1000);
-      
-      // Real API call will look like:
-      /*
-      const url = this.isEditMode ? `/api/pets/${this.petId}` : '/api/pets';
-      const method = this.isEditMode ? 'PUT' : 'POST';
-      
-      fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.pet)
-      })
-        .then(response => {
-          if (!response.ok) throw new Error('Failed to save pet');
-          return response.json();
-        })
-        .then(data => {
+      } catch (error) {
+        console.error('Error fetching pet details:', error);
+        this.isLoading = false;
+        this.globalError = 'Failed to load pet details. Please try again.';
+        // Redirect back to pets list if the pet is not found
+        if (error.response && error.response.status === 404) {
           this.$router.push('/pets');
-        })
-        .catch(error => {
-          console.error('Error saving pet:', error);
+        }
+      }
+    },
+    async savePet() {
+      this.isLoading = true;
+      this.errors = {};
+      
+      try {
+        // Validate form fields
+        this.validateForm();
+        
+        // If no validation errors, proceed with API call
+        if (Object.keys(this.errors).length === 0) {
+          console.log('Saving pet:', this.pet);
+          
+          // Use petsAPI service to create or update the pet
+          if (this.isEditMode) {
+            const response = await petsAPI.update(this.petId, this.pet);
+            console.log('Pet updated successfully:', response.data);
+          } else {
+            const response = await petsAPI.create(this.pet);
+            console.log('Pet created successfully:', response.data);
+          }
+          
+          // Navigate back to pets list on success
+          this.$router.push('/pets');
+        } else {
+          // If there are validation errors, stop loading state
           this.isLoading = false;
-        });
-      */
+        }
+      } catch (error) {
+        console.error('Error saving pet:', error);
+        this.isLoading = false;
+        
+        // Add global error if server returns error
+        if (error.response) {
+          this.globalError = error.response.data.error || 'Failed to save pet. Please try again.';
+          
+          // If the server returns field-specific errors, update the errors object
+          if (error.response.data.errors) {
+            this.errors = { ...this.errors, ...error.response.data.errors };
+          }
+        } else {
+          this.globalError = 'Network error. Please check your connection and try again.';
+        }
+      }
     },
     handleImageUpload(event) {
       const file = event.target.files[0];
@@ -262,6 +277,26 @@ export default {
     },
     removeImage() {
       this.pet.image_url = null;
+    },
+    
+    validateForm() {
+      // Reset errors before validation
+      this.errors = {};
+      this.globalError = null;
+      
+      // Validate required fields
+      this.requiredFields.forEach(field => {
+        if (!this.pet[field] || this.pet[field].trim() === '') {
+          this.errors[field] = `${field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')} is required`;
+        }
+      });
+      
+      // Validate weight if provided (must be positive)
+      if (this.pet.weight !== null && this.pet.weight !== '' && this.pet.weight <= 0) {
+        this.errors.weight = 'Weight must be greater than 0';
+      }
+      
+      return Object.keys(this.errors).length === 0;
     }
   }
 }
@@ -386,5 +421,30 @@ export default {
 .input-wrapper .form-select:focus {
   border-color: var(--primary);
   outline: none;
+}
+
+/* Validation styling */
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Required field indicator */
+label .text-danger {
+  font-weight: bold;
 }
 </style>
