@@ -209,13 +209,36 @@ export default {
     async fetchPetDetails() {
       try {
         this.isLoading = true;
+        console.log('Fetching pet details for ID:', this.petId);
         const response = await petsAPI.getById(this.petId);
-        this.pet = response.data;
+        
+        // Log the response to help debugging
+        console.log('Pet details received:', response.data);
+        
+        // Format the birthdate before assigning to the form
+        // Most APIs return dates in ISO format (YYYY-MM-DD)
+        const petData = { ...response.data };
+        if (petData.birthdate) {
+          // Ensure birthdate is in the format YYYY-MM-DD for the date input
+          const date = new Date(petData.birthdate);
+          if (!isNaN(date.getTime())) {
+            petData.birthdate = date.toISOString().split('T')[0];
+          }
+        }
+        
+        // Update the pet data
+        this.pet = petData;
         this.isLoading = false;
       } catch (error) {
         console.error('Error fetching pet details:', error);
         this.isLoading = false;
         this.globalError = 'Failed to load pet details. Please try again.';
+        
+        // Show more detailed error information in the console
+        if (error.response) {
+          console.error('Error response:', error.response.status, error.response.data);
+        }
+        
         // Redirect back to pets list if the pet is not found
         if (error.response && error.response.status === 404) {
           this.$router.push('/pets');

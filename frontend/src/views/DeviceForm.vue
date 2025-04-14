@@ -211,13 +211,30 @@ export default {
     async fetchDeviceDetails() {
       try {
         this.isLoading = true;
+        console.log('Fetching device details for ID:', this.deviceId);
         const response = await devicesAPI.getById(this.deviceId);
-        this.device = response.data;
+        
+        // Log the response to help debugging
+        console.log('Device details received:', response.data);
+        
+        // Handle pet_id as a special case (convert null to empty string for the form)
+        const deviceData = { ...response.data };
+        if (deviceData.pet_id === null) {
+          deviceData.pet_id = '';
+        }
+        
+        // Update the device data
+        this.device = deviceData;
         this.isLoading = false;
       } catch (error) {
         console.error('Error fetching device details:', error);
         this.isLoading = false;
         this.globalError = 'Failed to load device details. Please try again.';
+        
+        // Show more detailed error information in the console
+        if (error.response) {
+          console.error('Error response:', error.response.status, error.response.data);
+        }
         
         // Redirect back to devices list if the device is not found
         if (error.response && error.response.status === 404) {

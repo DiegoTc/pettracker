@@ -142,30 +142,81 @@ export const authAPI = {
 // Pets API
 export const petsAPI = {
   getAll: () => apiClient.get('/api/pets/'),
-  getById: (id) => apiClient.get(`/api/pets/${id}/`),
+  getById: (id) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.get(`/api/pets/${formattedId}/`);
+  },
   create: (petData) => apiClient.post('/api/pets/', petData),
-  update: (id, petData) => apiClient.put(`/api/pets/${id}/`, petData),
-  delete: (id) => apiClient.delete(`/api/pets/${id}/`),
+  update: (id, petData) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.put(`/api/pets/${formattedId}/`, petData);
+  },
+  delete: (id) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.delete(`/api/pets/${formattedId}/`);
+  },
 };
 
 // Devices API
 export const devicesAPI = {
   getAll: () => apiClient.get('/api/devices/'),
-  getById: (id) => apiClient.get(`/api/devices/${id}/`),
+  getById: (id) => {
+    // Log the actual ID being requested to help with debugging
+    console.log(`Fetching device with ID: ${id}`);
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.get(`/api/devices/${formattedId}/`);
+  },
   create: (deviceData) => apiClient.post('/api/devices/', deviceData),
-  update: (id, deviceData) => apiClient.put(`/api/devices/${id}/`, deviceData),
-  delete: (id) => apiClient.delete(`/api/devices/${id}/`),
-  assignToPet: (deviceId, petId) => apiClient.post(`/api/devices/${deviceId}/assign/${petId}/`),
-  unassignFromPet: (deviceId) => apiClient.post(`/api/devices/${deviceId}/unassign/`),
-  ping: (deviceId) => apiClient.post(`/api/devices/${deviceId}/ping/`),
+  update: (id, deviceData) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.put(`/api/devices/${formattedId}/`, deviceData);
+  },
+  delete: (id) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedId = encodeURIComponent(id);
+    return apiClient.delete(`/api/devices/${formattedId}/`);
+  },
+  assignToPet: (deviceId, petId) => {
+    // Ensure ids are properly formatted and URL has trailing slash
+    const formattedDeviceId = encodeURIComponent(deviceId);
+    const formattedPetId = encodeURIComponent(petId);
+    return apiClient.post(`/api/devices/${formattedDeviceId}/assign/${formattedPetId}/`);
+  },
+  unassignFromPet: (deviceId) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedDeviceId = encodeURIComponent(deviceId);
+    return apiClient.post(`/api/devices/${formattedDeviceId}/unassign/`);
+  },
+  ping: (deviceId) => {
+    // Ensure id is properly formatted and URL has trailing slash
+    const formattedDeviceId = encodeURIComponent(deviceId);
+    return apiClient.post(`/api/devices/${formattedDeviceId}/ping/`);
+  },
 };
 
 // Locations API
 export const locationsAPI = {
-  getPetLocations: (petId) => apiClient.get(`/api/locations/pet/${petId}/`),
-  getDeviceLocations: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}/`),
-  getPetLatestLocation: (petId) => apiClient.get(`/api/locations/pet/${petId}/latest/`),
-  getDeviceLatestLocation: (deviceId) => apiClient.get(`/api/locations/device/${deviceId}/latest/`),
+  getPetLocations: (petId) => {
+    const formattedId = encodeURIComponent(petId);
+    return apiClient.get(`/api/locations/pet/${formattedId}/`);
+  },
+  getDeviceLocations: (deviceId) => {
+    const formattedId = encodeURIComponent(deviceId);
+    return apiClient.get(`/api/locations/device/${formattedId}/`);
+  },
+  getPetLatestLocation: (petId) => {
+    const formattedId = encodeURIComponent(petId);
+    return apiClient.get(`/api/locations/pet/${formattedId}/latest/`);
+  },
+  getDeviceLatestLocation: (deviceId) => {
+    const formattedId = encodeURIComponent(deviceId);
+    return apiClient.get(`/api/locations/device/${formattedId}/latest/`);
+  },
   getAllPetsLatestLocations: () => apiClient.get('/api/locations/all-pets-latest/'),
   getRecent: (limit = 10) => apiClient.get(`/api/locations/recent/?limit=${limit}`),
   recordLocation: (locationData) => apiClient.post('/api/locations/record/', locationData),
