@@ -25,13 +25,15 @@
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="petType" class="form-label">Pet Type</label>
-              <select id="petType" v-model="pet.pet_type" class="form-select" required>
-                <option value="" disabled selected>Select a pet type</option>
-                <option value="Dog">Dog</option>
-                <option value="Cat">Cat</option>
-                <option value="Bird">Bird</option>
-                <option value="Other">Other</option>
-              </select>
+              <div class="input-wrapper">
+                <select id="petType" v-model="pet.pet_type" class="form-select" required>
+                  <option value="" disabled selected>Select a pet type</option>
+                  <option value="Dog">Dog</option>
+                  <option value="Cat">Cat</option>
+                  <option value="Bird">Bird</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
 
             <div class="col-md-6 mb-3">
@@ -367,5 +369,22 @@ export default {
 
 .btn-secondary:hover {
   background-color: var(--border);
+}
+
+/* Form specific styling */
+.input-wrapper .form-select {
+  appearance: auto;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #cccccc;
+}
+
+.input-wrapper .form-select:hover {
+  border-color: #bbbbbb;
+}
+
+.input-wrapper .form-select:focus {
+  border-color: var(--primary);
+  outline: none;
 }
 </style>

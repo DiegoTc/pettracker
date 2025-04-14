@@ -79,7 +79,7 @@ h1, h2, h3, h4, h5, h6 {
 .form-control, .form-select {
   border-color: var(--border);
   padding: 0.75rem 1rem;
-  color: var(--text);
+  color: #333333;
   border-radius: var(--radius);
 }
 
@@ -97,7 +97,8 @@ h1, h2, h3, h4, h5, h6 {
 .input-wrapper .form-control,
 .input-wrapper .form-select {
   border: 1px solid var(--border);
-  background-color: var(--background);
+  background-color: #ffffff;
+  color: #333333;
   transition: all 0.2s ease;
 }
 
@@ -105,6 +106,12 @@ h1, h2, h3, h4, h5, h6 {
 .input-wrapper .form-select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+/* Style for dropdown options */
+.form-select option {
+  color: #333333;
+  background-color: #ffffff;
 }
 
 .card {
