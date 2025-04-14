@@ -48,48 +48,56 @@
           <div class="form-row">
             <div class="form-group">
               <label for="deviceType" class="form-label">Device Type</label>
-              <select id="deviceType" v-model="device.device_type" class="form-select">
-                <option value="" disabled selected>Select a device type</option>
-                <option value="GPS Collar">GPS Collar</option>
-                <option value="Smart Tag">Smart Tag</option>
-                <option value="Tracker">Tracker</option>
-                <option value="Other">Other</option>
-              </select>
+              <div class="input-wrapper">
+                <select id="deviceType" v-model="device.device_type" class="form-select">
+                  <option value="" disabled selected>Select a device type</option>
+                  <option value="GPS Collar">GPS Collar</option>
+                  <option value="Smart Tag">Smart Tag</option>
+                  <option value="Tracker">Tracker</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
             
             <div class="form-group">
               <label for="serialNumber" class="form-label">Serial Number</label>
-              <input 
-                type="text" 
-                id="serialNumber" 
-                v-model="device.serial_number" 
-                class="form-control"
-                placeholder="Enter serial number (if available)"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="serialNumber" 
+                  v-model="device.serial_number" 
+                  class="form-control"
+                  placeholder="Enter serial number (if available)"
+                >
+              </div>
             </div>
           </div>
           
           <div class="form-row">
             <div class="form-group">
               <label for="imei" class="form-label">IMEI Number</label>
-              <input 
-                type="text" 
-                id="imei" 
-                v-model="device.imei" 
-                class="form-control"
-                placeholder="Enter IMEI number (if available)"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="imei" 
+                  v-model="device.imei" 
+                  class="form-control"
+                  placeholder="Enter IMEI number (if available)"
+                >
+              </div>
             </div>
             
             <div class="form-group">
               <label for="firmwareVersion" class="form-label">Firmware Version</label>
-              <input 
-                type="text" 
-                id="firmwareVersion" 
-                v-model="device.firmware_version" 
-                class="form-control"
-                placeholder="Enter firmware version (if known)"
-              >
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="firmwareVersion" 
+                  v-model="device.firmware_version" 
+                  class="form-control"
+                  placeholder="Enter firmware version (if known)"
+                >
+              </div>
             </div>
           </div>
           
@@ -107,12 +115,14 @@
           
           <div class="form-group">
             <label for="petId" class="form-label">Assign to Pet</label>
-            <select id="petId" v-model="device.pet_id" class="form-select">
-              <option value="">Not assigned</option>
-              <option v-for="pet in pets" :key="pet.id" :value="pet.id">
-                {{ pet.name }}
-              </option>
-            </select>
+            <div class="input-wrapper">
+              <select id="petId" v-model="device.pet_id" class="form-select">
+                <option value="">Not assigned</option>
+                <option v-for="pet in pets" :key="pet.id" :value="pet.id">
+                  {{ pet.name }}
+                </option>
+              </select>
+            </div>
           </div>
 
           <div class="form-actions">

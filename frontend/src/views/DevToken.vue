@@ -25,7 +25,9 @@
           <div class="mb-3">
             <label class="form-label">Access Token:</label>
             <div class="input-group">
-              <input type="text" class="form-control" :value="token" readonly ref="tokenInput" />
+              <div class="input-wrapper flex-grow-1">
+                <input type="text" class="form-control" :value="token" readonly ref="tokenInput" />
+              </div>
               <button class="btn btn-outline-primary" @click="copyToken">
                 <i class="bi bi-clipboard me-1"></i> Copy
               </button>
