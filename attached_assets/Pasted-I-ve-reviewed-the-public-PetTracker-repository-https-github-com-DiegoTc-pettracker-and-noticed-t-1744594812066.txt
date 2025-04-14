@@ -1,0 +1,43 @@
+I've reviewed the public PetTracker repository (https://github.com/DiegoTc/pettracker) and noticed that although the edit functions for pets and devices are making successful API calls (status 200 and proper logging), the edit forms remain blank. No errors are thrown in the browser or server logs.
+
+Context & Observations:
+
+The API methods in api.js have been updated to properly encode IDs and log responses.
+
+In DeviceForm.vue and PetForm.vue, there is logic in the fetchDeviceDetails() and fetchPetDetails() methods to assign the fetched data to a local reactive object (like this.device or this.pet).
+
+Despite these changes, when navigating to the edit route (e.g., /pets/2/edit or /devices/3/edit), the form fields remain empty, meaning the fetched data isn’t being reflected.
+
+What I Need:
+
+Review the Implementation:
+
+Verify in the repository that the fetched data is being assigned to the correct reactive data properties within the edit form components. Check that these properties are declared in the component’s data() function (or via reactive references if using the Composition API) before the asynchronous fetch is completed.
+
+Confirm that each form field’s v-model correctly binds to a property in the reactive data object. For example, if the API returns a pet’s name as data.name, then ensure the form input uses v-model="pet.name".
+
+Reactivity & Assignment:
+
+Check for potential reactivity issues. For instance, if the component’s data object was initialized without the keys that are later assigned from the API, Vue’s reactivity might not update those fields. (If needed, consider using this.$set() or ensuring that the reactive object is fully defined on component initialization.)
+
+Double-check any data transformations (such as date formatting) to ensure that the transformed values are assigned to the same keys expected by the form inputs.
+
+Route Parameters & Lifecycle Hooks:
+
+Ensure that the component correctly reads the edit item’s ID from the route (using this.$route.params.id or a similar mechanism) and that the fetch function is called in the appropriate lifecycle hook (e.g., created() or mounted()).
+
+Verify that any computed properties (such as isEditMode) are set up so that they trigger the data fetch at the right time.
+
+Consistent UI Between Add and Edit:
+
+The edit forms should use the same HTML structure and CSS styling as the add forms. Make sure that nothing in the edit mode logic inadvertently clears or resets the fields after data binding.
+
+Deliverables:
+
+Provide updated code snippets or a detailed explanation on how the existing data (for both pets and devices) is fetched and then bound to the form fields.
+
+Include a diagnostic explanation if reactivity issues are preventing the data from appearing (e.g., missing keys in the initial data object, incorrect v-model bindings, or timing issues in lifecycle hooks).
+
+Outline any additional debugging steps you took to confirm that the data is returned from the API and how you verified that the assignment to form fields is working.
+
+The goal is to ensure that when a user navigates to an edit page (e.g., /pets/2/edit or /devices/3/edit), the current item’s details are correctly loaded and displayed in the form so that users can edit the data seamlessly. Please review the code in the repository and update or explain the necessary changes to fix the blank form issue.
