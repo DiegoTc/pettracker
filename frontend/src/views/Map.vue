@@ -3,12 +3,14 @@
     <div class="page-header">
       <h1 class="page-title">Pet Tracker Map</h1>
       <div class="map-controls">
-        <select v-model="selectedPet" class="form-select select-pet">
-          <option value="all">All Pets</option>
-          <option v-for="pet in pets" :key="pet.id" :value="pet.id">
-            {{ pet.name }}
-          </option>
-        </select>
+        <div class="input-wrapper">
+          <select v-model="selectedPet" class="form-select select-pet">
+            <option value="all">All Pets</option>
+            <option v-for="pet in pets" :key="pet.id" :value="pet.id">
+              {{ pet.name }}
+            </option>
+          </select>
+        </div>
         <button class="btn btn-primary refresh-btn" @click="refreshMap">
           <i class="bi bi-arrow-clockwise"></i> Refresh
         </button>
